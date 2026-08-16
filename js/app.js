@@ -8,7 +8,7 @@ function previewGrade() {
     const score = parseFloat(document.getElementById('courseScore').value);
     const previewEl = document.getElementById('gradePreview');
     if (!isNaN(score) && score >= 0 && score <= 100) {
-        previewEl.innerText = `等第: ${getLetterGrade(score)} ｜ GP: ${getGradePoint(score)}`;
+        previewEl.innerText = `等第: ${getLetterGrade(score)} ｜ GPA: ${getGradePoint(score)}`;
     } else {
         previewEl.innerText = '';
     }

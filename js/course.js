@@ -410,7 +410,7 @@ function showCourseDetail(id) {
     }
 
     let statusText = course.status === '已取得' 
-        ? `✓ 已取得 (${course.score}分 · GP ${getGradePoint(course.score)})`
+        ? `✓ 已取得 (${course.score}分 · GPA ${getGradePoint(course.score)})`
         : (course.status === '未取得' ? `✕ 不及格 (${course.score}分)` : '⏳ 修讀中 / 預排');
 
     let reminderText = (course.reminder && course.reminder.enabled) 
