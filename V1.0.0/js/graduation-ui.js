@@ -159,6 +159,36 @@ function renderGraduationUI(res, data) {
     document.getElementById('v-cum-gpa').innerText = res.grades.cumGpa;
     document.getElementById('v-cum-weighted').innerText = `加權: ${res.grades.cumWeighted} 分`;
 
+    // 🌟 動態同步「畢業檢核頁」的學期下拉選單
+    const gradSemSelect = document.getElementById('gradSemSelect');
+    if (gradSemSelect && data && data.semesterOrder) {
+        gradSemSelect.innerHTML = '';
+        const numLabelMap = { 
+            "一": "大一", "二": "大二", "三": "大三", "四": "大四", 
+            "五": "大五", "六": "大六", "七": "大七", "八": "大八" 
+        };
+        data.semesterOrder.forEach(sem => {
+            const opt = document.createElement('option');
+            opt.value = sem;
+            const match = sem.match(/^([一二三四五六七八九十\d]+)(上|下)$/);
+            if (match) {
+                const y = match[1];
+                const t = match[2] === '上' ? '上' : '下';
+                opt.innerText = `${numLabelMap[y] || y}${t} 平均`;
+            } else {
+                opt.innerText = `${sem} 平均`;
+            }
+            gradSemSelect.appendChild(opt);
+        });
+        gradSemSelect.value = data.currentSemester;
+    }
+
+    // 🌟 顯示當前選定學期的修課學分小結
+    const vSemCredits = document.getElementById('v-sem-credits');
+    if (vSemCredits) {
+        vSemCredits.innerText = `實得 ${res.currentSemSummary.earnedCredits} / 總選 ${res.currentSemSummary.selectedCredits} 學分`;
+    }
+
     // 9. 同步表單設定值
     if (data) {
         const reqElecInput = document.getElementById('reqElecTargetInput');
@@ -181,6 +211,33 @@ function renderGraduationUI(res, data) {
                 cTargetIn.style.display = data.crossMajor.type !== 'none' ? 'inline-block' : 'none';
             }
         }
+    }
+
+    // 🌟 10. 動態控制「課程類別選單」中的跨領域選項顯示狀態
+    const isCrossEnabled = data && data.crossMajor && data.crossMajor.type !== 'none';
+    const optCrossReq = document.getElementById('optCrossReq') || document.querySelector('#courseType option[value="跨領域-必修"]');
+    const optCrossElec = document.getElementById('optCrossElec') || document.querySelector('#courseType option[value="跨領域-選修"]');
+    const courseTypeSelect = document.getElementById('courseType');
+
+    if (optCrossReq) {
+        optCrossReq.style.display = isCrossEnabled ? 'block' : 'none';
+        if (isCrossEnabled && data.crossMajor.name) {
+            optCrossReq.innerText = `🎖️ ${data.crossMajor.name}-必修 (${data.crossMajor.type})`;
+        } else {
+            optCrossReq.innerText = '🎖️ 跨領域-必修 (雙主/輔/學程)';
+        }
+    }
+    if (optCrossElec) {
+        optCrossElec.style.display = isCrossEnabled ? 'block' : 'none';
+        if (isCrossEnabled && data.crossMajor.name) {
+            optCrossElec.innerText = `🎖️ ${data.crossMajor.name}-選修 (${data.crossMajor.type})`;
+        } else {
+            optCrossElec.innerText = '🎖️ 跨領域-選修 (雙主/輔/學程)';
+        }
+    }
+
+    if (!isCrossEnabled && courseTypeSelect && (courseTypeSelect.value === '跨領域-必修' || courseTypeSelect.value === '跨領域-選修')) {
+        courseTypeSelect.value = '系定必修';
     }
 }
 
@@ -239,3 +296,36 @@ function updateCrossConfig() {
     saveData();
     updateAppUI();
 }
+
+// 🌟 畢業檢核頁專屬學期切換
+function changeGradSemester(sem) {
+    appData.currentSemester = sem;
+    saveData();
+    renderSemesterSelect(); // 同步課表頁的選單
+    updateAppUI();
+}
+
+// 🌟 畢業檢核設定列收合 / 展開
+function toggleGradConfig() {
+    const configArea = document.getElementById('gradConfigArea');
+    const icon = document.getElementById('configCollapseIcon');
+    if (configArea) {
+        configArea.classList.toggle('collapsed');
+        const isCollapsed = configArea.classList.contains('collapsed');
+        if (icon) {
+            icon.style.transform = isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+        }
+        localStorage.setItem('nckuee_grad_config_collapsed', isCollapsed ? '1' : '0');
+    }
+}
+
+// 頁面載入時讀取上次的收合狀態
+window.addEventListener('DOMContentLoaded', () => {
+    const isCollapsed = localStorage.getItem('nckuee_grad_config_collapsed');
+    const configArea = document.getElementById('gradConfigArea');
+    const icon = document.getElementById('configCollapseIcon');
+    if (configArea && isCollapsed === '1') {
+        configArea.classList.add('collapsed');
+        if (icon) icon.style.transform = 'rotate(-90deg)';
+    }
+});

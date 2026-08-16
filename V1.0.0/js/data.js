@@ -1,6 +1,6 @@
 const STORAGE_KEY = 'mySchedule';
 
-// 🌟 舊資料相容正規化輔助函式
+// 🌟 課程資料正規化防呆函式
 function normalizeCourseData(c) {
     if (!c) return c;
     return {
@@ -16,7 +16,6 @@ function normalizeCourseData(c) {
         color: c.color || '#2563eb',
         textColor: c.textColor || '#ffffff',
         recurring: c.recurring !== false,
-        // 🌟 新增欄位與預設值
         teacher: c.teacher || "",
         room: c.room || "",
         url: c.url || "",
@@ -33,6 +32,7 @@ function normalizeCourseData(c) {
     };
 }
 
+// 🌟 全域資料結構 (含課表、行事曆、學期起訖與各項門檻)
 let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
     deptName: "我的自訂科系",
     targetCredits: 128, 
@@ -48,13 +48,15 @@ let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
     showWeekend: false,
     crossMajor: { type: "none", name: "", target: 40 },
     wishlist: [],
+    calendarEvents: [],   // 📅 行事曆行程庫
+    semesterDates: {},    // 📅 各學期起訖與週數記錄
     semesterOrder: ["一上", "一下", "二上", "二下", "三上", "三下", "四上", "四下"],
     semesters: {
         "一上": [], "一下": [], "二上": [], "二下": [], "三上": [], "三下": [], "四上": [], "四下": []
     }
 };
 
-// 補強初始預設值與舊課程資料正規化
+// 補強初始預設值與欄位防呆
 if (!appData.deptName) appData.deptName = "我的自訂科系";
 if (!appData.targetCredits) appData.targetCredits = 128;
 if (!appData.targetRequired) appData.targetRequired = 50;
@@ -67,12 +69,14 @@ if (appData.showNight === undefined) appData.showNight = false;
 if (appData.showWeekend === undefined) appData.showWeekend = false;
 if (!appData.crossMajor) appData.crossMajor = { type: "none", name: "", target: 40 };
 if (!appData.wishlist) appData.wishlist = [];
+if (!appData.calendarEvents) appData.calendarEvents = [];
+if (!appData.semesterDates) appData.semesterDates = {};
 if (!appData.semesters) appData.semesters = {};
 if (!appData.semesterOrder || !Array.isArray(appData.semesterOrder) || appData.semesterOrder.length === 0) {
     appData.semesterOrder = ["一上", "一下", "二上", "二下", "三上", "三下", "四上", "四下"];
 }
 
-// 遍歷所有學期與候選庫進行舊資料修復
+// 遍歷修復現有課程與候選清單
 Object.keys(appData.semesters).forEach(sem => {
     appData.semesters[sem] = (appData.semesters[sem] || []).map(normalizeCourseData);
 });
@@ -88,27 +92,32 @@ function saveData() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
 }
 
+// 💾 匯出完整備份 JSON (含課表、行事曆、學期起訖日、畢業設定)
 function exportData() {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData));
-    const downloadAnchorNode = document.createElement('a');
-    downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", "my_schedule_generic.json");
-    document.body.appendChild(downloadAnchorNode);
-    downloadAnchorNode.click();
-    downloadAnchorNode.remove();
+    const todayStr = (typeof formatDate === 'function') ? formatDate(new Date()) : new Date().toISOString().split('T')[0];
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `NCKUEE_課表備份_${appData.deptName || '個人課表'}_${todayStr}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
 }
 
+// 📂 匯入備份 JSON (全域覆蓋、正規化並同步更新所有 UI)
 function importData(event) {
     const file = event.target.files[0];
     if (!file) return;
+
     const reader = new FileReader();
     reader.onload = function(e) {
         try {
             const importedData = JSON.parse(e.target.result);
-            if(importedData && importedData.semesters) {
+            if (importedData && typeof importedData === 'object' && importedData.semesters) {
                 cancelEdit();
-                
-                if (importedData.deptName === undefined) importedData.deptName = "我的自訂科系";
+
+                // 欄位防呆補齊
+                if (!importedData.deptName) importedData.deptName = "我的自訂科系";
                 if (importedData.targetRequired === undefined) importedData.targetRequired = 50;
                 if (importedData.targetElective === undefined) importedData.targetElective = 40;
                 if (importedData.maxOutElective === undefined) importedData.maxOutElective = 0;
@@ -117,27 +126,33 @@ function importData(event) {
                 if (importedData.showWeekend === undefined) importedData.showWeekend = false;
                 if (!importedData.crossMajor) importedData.crossMajor = { type: "none", name: "", target: 40 };
                 if (!importedData.wishlist) importedData.wishlist = [];
+                if (!importedData.calendarEvents) importedData.calendarEvents = [];
+                if (!importedData.semesterDates) importedData.semesterDates = {};
                 if (!importedData.semesterOrder) {
                     importedData.semesterOrder = Object.keys(importedData.semesters);
                 }
-                
-                // 匯入資料正規化
+
+                // 課程正規化
                 Object.keys(importedData.semesters).forEach(sem => {
                     importedData.semesters[sem] = (importedData.semesters[sem] || []).map(normalizeCourseData);
                 });
                 importedData.wishlist = (importedData.wishlist || []).map(normalizeCourseData);
 
+                // 賦值並寫入資料庫
                 appData = importedData;
+                saveData();
+
+                // 刷新介面
                 initTable();
                 updateAppUI();
-                alert("全學期修業規劃載入成功！");
+                alert("🎉 全學期課表、學期時程與行事曆行程已全數成功載入！");
             } else {
-                alert("檔案結構不相容！");
+                alert("❌ 檔案結構不相容，請確認是否為本系統匯出的 JSON 檔！");
             }
         } catch (err) {
-            alert("讀取檔案失敗！");
+            alert("❌ 讀取檔案失敗，請檢查 JSON 檔案格式！");
         }
+        event.target.value = '';
     };
     reader.readAsText(file);
-    event.target.value = '';
 }

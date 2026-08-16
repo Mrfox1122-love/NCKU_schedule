@@ -391,6 +391,7 @@ document.getElementById('courseForm').addEventListener('submit', function(e) {
     }
     saveData();
     updateAppUI();
+    if (window.innerWidth <= 768) toggleSidebar(false);
 });
 
 // 🔍 顯示課程詳細資訊 Modal
@@ -519,3 +520,23 @@ function closeCourseDetail() {
     const modal = document.getElementById('courseDetailModal');
     if (modal) modal.classList.remove('show');
 }
+
+// 📱 開啟手機全螢幕編輯抽屜
+function openMobileEditor() {
+    cancelEdit();
+    toggleSidebar(true);
+}
+
+// 📱 關閉手機抽屜
+function closeSidebarDrawer() {
+    toggleSidebar(false);
+}
+
+// 確保 cancelEdit 也會收合手機抽屜
+const originalCancelEdit = cancelEdit;
+cancelEdit = function() {
+    originalCancelEdit();
+    if (window.innerWidth <= 768) {
+        toggleSidebar(false);
+    }
+};

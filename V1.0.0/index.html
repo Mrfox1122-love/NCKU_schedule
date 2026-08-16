@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>個人專屬課表與畢業學分導航系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="sidebar-open">
+
+<!-- 側邊欄開關按鈕與遮罩 -->
+<button type="button" id="sidebarToggle" class="sidebar-toggle" onclick="toggleSidebar()" title="開啟 / 收合課程工具欄">☰</button>
+<div class="sidebar-mobile-overlay" onclick="toggleSidebar(false)"></div>
+<div id="drawerOverlay" class="drawer-overlay" onclick="toggleChartDrawer(false)"></div>
+
+<!-- 🔍 課程詳細資訊彈窗 Modal -->
+<div id="courseDetailModal" class="course-detail-overlay" onclick="closeCourseDetail(event)">
+    <div class="course-detail-card" onclick="event.stopPropagation()">
+        <div class="course-detail-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span id="modalCourseColorBar" class="modal-color-bar"></span>
+                <h3 id="modalCourseName" class="modal-title">課程名稱</h3>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeCourseDetail()">×</button>
+        </div>
+        <div class="course-detail-body" id="modalCourseContent"></div>
+        <div class="course-detail-footer">
+            <button type="button" class="btn-detail-edit" id="btnModalEdit">✏️ 編輯課程</button>
+            <button type="button" class="btn-detail-del" id="btnModalDelete">🗑️ 刪除</button>
+            <button type="button" class="btn-detail-close" onclick="closeCourseDetail()">關閉</button>
+        </div>
+    </div>
+</div>
+
+<!-- 🖨️ 成績與修業報表專屬 Modal -->
+<div id="reportOverlay" class="report-overlay">
+    <div class="report-container">
+        <div class="report-header-ui">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <h3 style="margin: 0; color: #1e293b;">📄 成績暨修業檢核報表預覽</h3>
+                <select id="reportFormatSelect" onchange="generateReportContent()" style="padding: 6px; border-radius: 6px; border: 1px solid #cbd5e1; font-weight: bold; cursor: pointer; color: #1e3a8a;">
+                    <option value="all">版面：完整輸出 (學期＋類別)</option>
+                    <option value="semester">版面：僅印歷年成績單 (學期制)</option>
+                    <option value="category">版面：僅印修業檢核表 (類別制)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn-print" style="width: auto; margin: 0;" onclick="window.print()">🖨️ 列印 / 存為 PDF</button>
+                <button type="button" style="background: #ef4444; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: bold; cursor: pointer; width: auto; margin: 0;" onclick="closeReport()">✖ 關閉</button>
+            </div>
+        </div>
+        <div id="reportPrintArea" class="report-content"></div>
+    </div>
+</div>
+
+<!-- 📅 行程新增 / 編輯彈窗 -->
+<div id="eventEditModal" class="course-detail-overlay">
+    <div class="course-detail-card" style="max-width: 480px;">
+        <div class="course-detail-header">
+            <h3 id="eventModalTitle" class="modal-title">➕ 新增行程</h3>
+            <button type="button" class="modal-close-btn" onclick="closeEventEditor()">✕</button>
+        </div>
+        <form id="eventForm" onsubmit="event.preventDefault();" style="padding: 16px; display:flex; flex-direction:column; gap:10px;">
+            <div class="form-group">
+                <label class="title-label">行程名稱 *</label>
+                <input type="text" id="eventTitle" required placeholder="例如：期中考、專題討論、系羽練球">
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label class="title-label">日期 *</label>
+                    <input type="date" id="eventDate" required>
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label class="title-label">分類</label>
+                    <select id="eventCategory">
+                        <option value="個人">個人生活</option>
+                        <option value="課業">學業 / 作業</option>
+                        <option value="考試">重要考試</option>
+                        <option value="社團">活動 / 社團</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label class="title-label">開始時間</label>
+                    <input type="time" id="eventStartTime" value="09:00">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label class="title-label">結束時間</label>
+                    <input type="time" id="eventEndTime" value="10:00">
+                </div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label class="title-label">地點</label>
+                    <input type="text" id="eventLocation" placeholder="例如：系K、線上會議">
+                </div>
+                <div class="form-group" style="width: 70px;">
+                    <label class="title-label">代表色</label>
+                    <input type="color" id="eventColor" value="#2563eb">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="title-label">備註事項</label>
+                <textarea id="eventNotes" rows="2" placeholder="備註詳細內容..."></textarea>
+            </div>
+            <div style="display:flex; gap:10px; justify-content: flex-end; margin-top: 10px;">
+                <button type="button" class="btn-detail-close" onclick="closeEventEditor()">取消</button>
+                <button type="button" class="btn-add" style="width:auto; margin:0;" onclick="handleSaveEventForm()">💾 儲存行程</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 📅 行程詳細資訊彈窗 -->
+<div id="eventDetailModal" class="course-detail-overlay">
+    <div class="course-detail-card" style="max-width: 440px;">
+        <div class="course-detail-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span id="detailEventBar" class="modal-color-bar"></span>
+                <h3 id="detailEventTitle" class="modal-title">行程名稱</h3>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeEventDetail()">✕</button>
+        </div>
+        <div class="course-detail-body">
+            <div id="detailEventDate" style="font-weight:bold; color:var(--accent);"></div>
+            <div id="detailEventCat" style="font-size:0.85rem; color:#64748b;"></div>
+            <div id="detailEventLoc" style="font-size:0.85rem; color:#334155;"></div>
+            <div id="detailEventNotes" style="font-size:0.85rem; background:#f8fafc; padding:8px; border-radius:6px; white-space:pre-wrap;"></div>
+        </div>
+        <div class="course-detail-footer">
+            <button type="button" id="btnDetailEventEdit" class="btn-detail-edit">✏️ 編輯</button>
+            <button type="button" id="btnDetailEventDel" class="btn-detail-del">🗑️ 刪除</button>
+            <button type="button" class="btn-detail-close" onclick="closeEventDetail()">關閉</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- 左側控制面板 -->
+    <div id="sidebarPanel" class="sidebar">
+        <div class="sidebar-header">
+            <h2 id="sidebarTitle" style="margin:0; border:none; padding:0;">狐狸出品</h2>
+            <button type="button" class="sidebar-close-btn" onclick="closeSidebarDrawer()" title="關閉抽屜">✕</button>
+        </div>
+        <form id="courseForm">
+            <!-- 📚 基本資料 -->
+            <div class="form-section">
+                <div class="form-section-title">📚 基本修業資料</div>
+                <div class="form-group">
+                    <label class="title-label">課程名稱 <span style="color:#ef4444;">*</span></label>
+                    <input type="text" id="courseName" placeholder="例如: 電子學 (一)" required>
+                </div>
+
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label class="title-label">學分數</label>
+                        <input type="number" id="courseCredits" min="0" max="20" step="0.5" value="3" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="title-label">課程類別</label>
+                        <select id="courseType">
+                            <option value="系定必修">系定必修</option>
+                            <option value="選修-本系">選修-本系</option>
+                            <option value="選修-必選">選修-必選</option>
+                            <option value="選修-外系">選修-外系</option>
+                            <option value="跨領域-必修" id="optCrossReq" style="color:#0284c7; font-weight:bold; display:none;">🎖️ 跨領域-必修 (雙主/輔/學程)</option>
+                            <option value="跨領域-選修" id="optCrossElec" style="color:#0284c7; font-weight:bold; display:none;">🎖️ 跨領域-選修 (雙主/輔/學程)</option>
+                            <option value="通識-人文">通識-人文學</option>
+                            <option value="通識-社科">通識-社會科學</option>
+                            <option value="通識-生醫">通識-生命與健康</option>
+                            <option value="通識-科際">通識-科際整合</option>
+                            <option value="通識-自然">通識-自然與工程科學</option>
+                            <option value="融通">融合通識</option>
+                            <option value="國文">國文 (4)</option>
+                            <option value="英文">英文 (4)</option>
+                            <option value="踏溯台南">踏溯台南 (1)</option>
+                            <option value="體育">體育 (0學分)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group" style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
+                    <label class="title-label" style="color: var(--accent); margin-bottom: 4px;">修讀與成績狀態</label>
+                    <select id="courseStatusMode" onchange="toggleScoreInput()">
+                        <option value="修讀中" selected>⏳ 修讀中 (學期未結束/預排)</option>
+                        <option value="已結算">💯 已結算 (輸入百分制分數)</option>
+                    </select>
+                    <div id="scoreInputGroup" style="display: none; margin-top: 8px;">
+                        <label class="title-label" style="font-size: 0.8rem; margin-bottom: 4px;">百分制分數 (0~100)</label>
+                        <input type="number" id="courseScore" min="0" max="100" value="85" oninput="previewGrade()">
+                        <div id="gradePreview" style="font-size: 0.75rem; color: #1e40af; margin-top: 4px; font-weight: bold; background: #e0f2fe; padding: 4px; border-radius:4px; text-align:center;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 🕐 上課安排 -->
+            <div class="form-section">
+                <div class="form-section-title">🕐 上課時間與時段</div>
+                <div class="time-selector-box">
+                    <label class="title-label" style="color: var(--accent);">選擇上課時段</label>
+                    <select id="courseDay" style="margin-bottom: 8px;">
+                        <option value="1">星期一</option>
+                        <option value="2">星期二</option>
+                        <option value="3">星期三</option>
+                        <option value="4">星期四</option>
+                        <option value="5">星期五</option>
+                        <option value="6" id="optDay6">星期六</option>
+                        <option value="7" id="optDay7">星期日</option>
+                    </select>
+                    
+                    <div class="period-grid">
+                        <input type="checkbox" id="p1" value="1" class="hidden-cb"><label for="p1" class="period-tag">1 (08:00)</label>
+                        <input type="checkbox" id="p2" value="2" class="hidden-cb"><label for="p2" class="period-tag">2 (09:00)</label>
+                        <input type="checkbox" id="p3" value="3" class="hidden-cb"><label for="p3" class="period-tag">3 (10:10)</label>
+                        <input type="checkbox" id="p4" value="4" class="hidden-cb"><label for="p4" class="period-tag">4 (11:10)</label>
+                        
+                        <span id="wrapper-pN" style="display:contents;">
+                            <input type="checkbox" id="pN" value="N" class="hidden-cb"><label for="pN" class="period-tag" style="color:#b45309; font-weight:bold;">N</label>
+                        </span>
+                        
+                        <input type="checkbox" id="p5" value="5" class="hidden-cb"><label for="p5" class="period-tag">5 (13:10)</label>
+                        <input type="checkbox" id="p6" value="6" class="hidden-cb"><label for="p6" class="period-tag">6 (14:10)</label>
+                        <input type="checkbox" id="p7" value="7" class="hidden-cb"><label for="p7" class="period-tag">7 (15:20)</label>
+                        <input type="checkbox" id="p8" value="8" class="hidden-cb"><label for="p8" class="period-tag">8 (16:20)</label>
+                        <input type="checkbox" id="p9" value="9" class="hidden-cb"><label for="p9" class="period-tag">9 (17:20)</label>
+                        
+                        <span id="wrapper-pNight" style="display:contents;">
+                            <input type="checkbox" id="pA" value="A" class="hidden-cb"><label for="pA" class="period-tag" style="color:#6366f1;">A (18:20)</label>
+                            <input type="checkbox" id="pB" value="B" class="hidden-cb"><label for="pB" class="period-tag" style="color:#6366f1;">B (19:15)</label>
+                            <input type="checkbox" id="pC" value="C" class="hidden-cb"><label for="pC" class="period-tag" style="color:#6366f1;">C (20:10)</label>
+                            <input type="checkbox" id="pD" value="D" class="hidden-cb"><label for="pD" class="period-tag" style="color:#6366f1;">D (21:05)</label>
+                        </span>
+                    </div>
+                    
+                    <button type="button" id="btnAddSlot" class="btn-secondary">➕ 鎖定時段 (可跨日連堂)</button>
+                    <div id="slotContainer" class="slot-tags-container"></div>
+                </div>
+
+                <div class="form-group checkbox-group" style="background: #fffbeb; padding: 10px; border-radius: 8px; border: 1px dashed #f59e0b; margin-top: 8px;">
+                    <input type="checkbox" id="courseTentative">
+                    <label for="courseTentative" style="margin:0; color: #b45309; font-weight: bold; cursor: pointer;">🏷️ 設為暫定時段 (多時段候補用，不計學分)</label>
+                </div>
+            </div>
+
+            <!-- 🏫 課程詳細資訊 -->
+            <div class="form-section">
+                <div class="form-section-title">🏫 課程詳細資訊</div>
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label class="title-label">上課教室</label>
+                        <input type="text" id="courseRoom" placeholder="例如: 92215">
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="title-label">授課教師</label>
+                        <input type="text" id="courseTeacher" placeholder="例如: 王大明">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="title-label">課程網址 / 大綱連結</label>
+                    <input type="url" id="courseUrl" placeholder="https://moodle.ncku.edu.tw/...">
+                </div>
+            </div>
+
+            <!-- 📝 備註說明 -->
+            <div class="form-section">
+                <div class="form-section-title">📝 備註說明</div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <textarea id="courseNotes" rows="2" placeholder="備註配分、點名規則、期中日期等..." style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; resize: vertical;"></textarea>
+                </div>
+            </div>
+
+            <!-- 🔔 上課提醒 -->
+            <div class="form-section">
+                <div class="form-section-title">🔔 上課提醒 (設定)</div>
+                <div class="form-group checkbox-group" style="margin-bottom: 8px;">
+                    <input type="checkbox" id="courseReminderEnabled" onchange="toggleReminderOffsetUI()">
+                    <label for="courseReminderEnabled" style="cursor: pointer; font-weight: 600;">啟用上課前提醒</label>
+                </div>
+                <div id="reminderOffsetWrapper" style="display: none;">
+                    <label class="title-label" style="font-size: 0.8rem;">提醒時機</label>
+                    <select id="courseReminderOffset" style="padding: 6px;">
+                        <option value="10">上課前 10 分鐘</option>
+                        <option value="30" selected>上課前 30 分鐘</option>
+                        <option value="60">上課前 60 分鐘</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 🎨 卡片外觀與提交 -->
+            <div class="form-section" style="border-bottom: none;">
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label class="title-label">卡片底色</label>
+                        <input type="color" id="courseColor" value="#2563eb">
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="title-label">字體顏色</label>
+                        <input type="color" id="courseTextColor" value="#ffffff">
+                    </div>
+                </div>
+
+                <div class="form-group checkbox-group" style="margin-bottom: 12px;">
+                    <input type="checkbox" id="courseRecurring" checked>
+                    <label for="courseRecurring" style="margin:0; cursor: pointer;">每週重複</label>
+                </div>
+                
+                <div style="display:flex; gap:8px;">
+                    <button type="submit" id="btnSubmit" class="btn-add" style="flex:2; margin:0;">🚀 加入課表</button>
+                    <button type="button" id="btnSaveWishlist" class="btn-wishlist" style="flex:1; margin:0;" onclick="saveToWishlistFromForm()" title="不排入課表，先存入候選庫比較">⭐ 存候選</button>
+                </div>
+                <button type="button" id="btnCancelEdit" class="btn-cancel" onclick="cancelEdit()" style="margin-top:8px;">❌ 取消修改</button>
+            </div>
+        </form>
+
+        <!-- ⭐ 課程候選庫 -->
+        <div class="wishlist-section">
+            <div class="wishlist-header">
+                <h3>⭐ 課程候選庫 <span id="wishlistCount" class="wishlist-count">0</span></h3>
+                <div class="wishlist-filter-group">
+                    <button type="button" class="btn-wishlist-filter active" id="btnFilterCurrent" onclick="setWishlistFilter('current')">本學期</button>
+                    <button type="button" class="btn-wishlist-filter" id="btnFilterAll" onclick="setWishlistFilter('all')">全部</button>
+                </div>
+            </div>
+            <div id="wishlistContainer" class="wishlist-list">
+                <div class="wishlist-empty">尚無候選課程，可填妥表單點選「存候選」保留比較</div>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+        
+        <h2>存檔與管理</h2>
+        <button class="btn-export" onclick="exportData()">💾 匯出課表 (JSON)</button>
+        <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+        <button class="btn-import" onclick="document.getElementById('importFile').click()">📂 匯入課表 (JSON)</button>
+        <button class="btn-clear" onclick="clearAll()">🗑 清空當前學期</button>
+    </div>
+
+    <!-- 右側主面板 -->
+    <div class="main-content">
+        
+        <!-- 🧭 全局導航列 -->
+        <nav class="app-navigation">
+            <div class="nav-item active" id="nav-home" onclick="switchView('home')">🏠 首頁</div>
+            <div class="nav-item" id="nav-schedule" onclick="switchView('schedule')">📚 課表</div>
+            <div class="nav-item" id="nav-calendar" onclick="switchView('calendar')">📅 行程</div>
+            <div class="nav-item" id="nav-graduation" onclick="switchView('graduation')">🎓 畢業檢核</div>
+            <div class="nav-item" id="nav-report" onclick="switchView('report')">📊 報表匯出</div>
+        </nav>
+
+        <!-- 🏠 View: 首頁 (今日生活入口) -->
+        <div id="view-home" class="app-view active">
+            <!-- 頂部溫馨問候卡片 -->
+            <div class="home-header-card">
+                <div class="home-header-title" id="homeGreetingText">👋 早安！</div>
+                <div class="home-header-date" id="homeDateText">今天是 8 月 17 日</div>
+            </div>
+
+            <!-- 🔔 接下來即將發生 -->
+            <div class="home-section-box">
+                <div class="home-section-title">🔔 接下來</div>
+                <div id="homeUpcomingList" class="home-upcoming-container"></div>
+            </div>
+
+            <!-- 今日兩大板塊 (課表 + 行程) -->
+            <div class="home-grid-layout">
+                <!-- 📚 今日課程 -->
+                <div class="home-section-box">
+                    <div class="home-section-header">
+                        <span class="home-section-title">📚 今日課程</span>
+                        <button type="button" class="btn-home-link" onclick="switchView('schedule')">開啟完整課表 ➔</button>
+                    </div>
+                    <div id="homeCourseList" class="home-item-list"></div>
+                </div>
+
+                <!-- 📅 今日行程 -->
+                <div class="home-section-box">
+                    <div class="home-section-header">
+                        <span class="home-section-title">📅 今日行程</span>
+                        <button type="button" class="btn-home-link" onclick="switchView('calendar')">開啟行事曆 ➔</button>
+                    </div>
+                    <div id="homeEventList" class="home-item-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📚 View: 課表 (桌面/手機雙 Presentation Layer) -->
+        <div id="view-schedule" class="app-view">
+            <!-- 🌟 頂部學期切換列 -->
+            <div class="top-bar">
+                <div class="sem-nav-row">
+                    <button type="button" class="btn-sem-step" id="btnSemPrev" onclick="stepSemester(-1)" title="上一學期">◀</button>
+                    <select id="semSelect" class="sem-select" onchange="switchSemester()"></select>
+                    <button type="button" class="btn-sem-step" id="btnSemNext" onclick="stepSemester(1)" title="下一學期">▶</button>
+                </div>
+                <div class="sem-action-row">
+                    <button type="button" class="btn-add-sem" onclick="addNewSemester()" title="新增下一個學期">➕ 新增學期</button>
+                    <button type="button" class="btn-del-sem" onclick="deleteCurrentSemester()" title="刪除當前選擇的學期">➖ 刪除此學期</button>
+                    <button type="button" class="btn-png" onclick="exportSchedulePNG()" title="存為課表圖片">🖼️ 存為圖片</button>
+                </div>
+            </div>
+
+            <!-- 🌟 課表頁專屬：學期時程設定列 (手機版預設收合，桌機版單行顯示) -->
+            <div class="sem-dates-container" id="semDatesContainer">
+                <div class="sem-dates-toggle-header" onclick="toggleSemDatesCollapse()" title="點擊收合/展開時程設定">
+                    <div style="display:flex; align-items:center; gap:6px;">
+                        <span class="sem-dates-label">📅 學期時程</span>
+                        <span id="semEndDateSummary" class="sem-dates-summary">未設定</span>
+                    </div>
+                    <span id="semDatesCollapseIcon" class="sem-dates-icon">▼</span>
+                </div>
+                <div id="semDatesBody" class="sem-dates-body">
+                    <div class="sem-dates-inputs">
+                        <label class="date-input-item">
+                            <span>開學日</span>
+                            <input type="date" id="semStartDateInput" onchange="onSemesterDatesChange()">
+                        </label>
+                        <label class="date-input-item">
+                            <span>總週數</span>
+                            <input type="number" id="semWeeksInput" min="1" max="30" value="18" onchange="onSemesterDatesChange()" style="width: 44px; text-align: center;">
+                            <span>週</span>
+                        </label>
+                    </div>
+                    <span id="semEndDateText" class="sem-end-badge">結業日：未設定</span>
+                </div>
+            </div>
+
+            <!-- 🌟 共用時段開關膠囊列 (手機與電腦皆可切換) -->
+            <div class="view-options-bar">
+                <div class="options-pills">
+                    <span class="pill-title">👁️ 顯示：</span>
+                    <label class="toggle-pill">
+                        <input type="checkbox" id="toggleNoonCB" onchange="toggleViewOption('showNoon')">
+                        <span>中午 N</span>
+                    </label>
+                    <label class="toggle-pill">
+                        <input type="checkbox" id="toggleNightCB" onchange="toggleViewOption('showNight')">
+                        <span>夜間 A~D</span>
+                    </label>
+                    <label class="toggle-pill">
+                        <input type="checkbox" id="toggleWeekendCB" onchange="toggleViewOption('showWeekend')">
+                        <span>週末 六日</span>
+                    </label>
+                </div>
+                <span id="statFreeTime" class="stat-freetime-badge">☕ 空堂計算中...</span>
+            </div>
+
+            <!-- 🖥️ 桌面版課表 Table -->
+            <div class="schedule-wrapper desktop-schedule-view" id="scheduleCaptureArea">
+                <div id="conflictBannerArea" style="display:none; margin-bottom:12px;"></div>
+                <table id="scheduleTable">
+                    <thead><tr id="scheduleTheadRow"></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- 📱 手機專屬 CSS Grid 課表 (滿版自適應) -->
+            <div class="mobile-schedule-wrapper" id="mobileScheduleArea">
+                <div id="mobileConflictBanner" style="display:none; margin-bottom:8px;"></div>
+                <div class="mobile-grid-container" id="mobileGridBoard"></div>
+            </div>
+
+            <!-- 📱 手機專屬右下角 FAB 新增按鈕 -->
+            <button type="button" class="mobile-fab" onclick="openMobileEditor()" title="新增課程">➕</button>
+        </div>
+
+        <!-- 📅 View: 行程表 -->
+        <div id="view-calendar" class="app-view">
+            <!-- 頂部控制工具列 -->
+            <div class="cal-top-bar">
+                <div class="cal-nav-group">
+                    <button type="button" class="btn-cal-step" onclick="stepCalendar(-1)">◀</button>
+                    <button type="button" class="btn-cal-today" onclick="resetCalendarToday()">今天</button>
+                    <button type="button" class="btn-cal-step" onclick="stepCalendar(1)">▶</button>
+                    <span id="calDisplayTitle" class="cal-display-title">2026 年 8 月</span>
+                </div>
+                <div class="cal-action-group">
+                    <button type="button" class="btn-cal-add" onclick="openEventEditor()">➕ 新增行程</button>
+                </div>
+            </div>
+
+            <!-- 🖥️ 桌面版月曆 -->
+            <div class="desktop-calendar-wrapper">
+                <div class="desktop-cal-grid" id="desktopCalGrid"></div>
+            </div>
+
+            <!-- 📱 手機版月曆 (上方月曆 + 下方清單) -->
+            <div class="mobile-calendar-wrapper">
+                <div class="mobile-mini-cal-card">
+                    <div class="mobile-mini-cal-grid" id="mobileMiniCalGrid"></div>
+                </div>
+                <div class="mobile-agenda-card">
+                    <div id="mobileAgendaDateLabel" class="mobile-agenda-header">📅 選擇日期的行程</div>
+                    <div id="mobileAgendaList" class="mobile-agenda-list"></div>
+                </div>
+            </div>
+
+            <!-- 📱 手機專屬右下角 FAB 新增行程按鈕 -->
+            <button type="button" class="mobile-fab" onclick="openEventEditor()" title="新增行程">➕</button>
+        </div>
+
+        <!-- 🎓 View: 畢業檢核 -->
+        <div id="view-graduation" class="app-view">
+            <div class="progress-board">
+                <div class="progress-info-row">
+                    <div class="progress-info-left">
+                        <span class="progress-badge">🎓 畢業學分總進度</span>
+                        <span id="gradProgressText" class="progress-details-text">有效畢業學分計算中...</span>
+                    </div>
+                    <div id="gradProgressPercent" class="progress-percent-badge">0%</div>
+                </div>
+                <div class="progress-track"><div id="gradProgressBar" class="progress-fill"></div></div>
+            </div>
+
+            <div class="grad-checker-board">
+                <!-- 🌟 點擊可隨時收合 / 展開設定列 -->
+                <div class="config-toggle-header" onclick="toggleGradConfig()" title="點擊收合/展開設定">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:bold; color:var(--accent); font-size:0.92rem;">⚙️ 修業門檻與加修設定</span>
+                        <span id="deptNameTitle" style="font-size:0.82rem; color:#64748b; font-weight:600;">(成大電機 118 級)</span>
+                    </div>
+                    <span id="configCollapseIcon" class="config-collapse-icon">▼</span>
+                </div>
+
+                <!-- ⚙️ 可折疊設定列 (美化雙排膠囊版) -->
+                <div id="gradConfigArea" class="config-bar-modern">
+                    <!-- 第一排：本系學修門檻 -->
+                    <div class="config-row-group">
+                        <div class="config-group-tag tag-primary">🏫 主修門檻</div>
+                        <div class="config-pills-wrap">
+                            <div class="cfg-pill">
+                                <span class="cfg-label">科系</span>
+                                <input type="text" id="deptNameInput" class="cfg-input-text" style="width: 120px;" onchange="updateConfig()">
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-target">總目標</span>
+                                <input type="number" id="gradTargetInput" class="cfg-input-num" onchange="updateConfig()">
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-req">必修</span>
+                                <input type="number" id="reqTargetInput" class="cfg-input-num" onchange="updateConfig()">
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-req-elec">必選</span>
+                                <input type="number" id="reqElecTargetInput" class="cfg-input-num" onchange="updateConfig()">
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-elec">選修</span>
+                                <input type="number" id="elecTargetInput" class="cfg-input-num" onchange="updateConfig()">
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-out">外系上限</span>
+                                <input type="number" id="outMaxInput" class="cfg-input-num" onchange="updateConfig()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 第二排：語文門檻與跨領域設定 -->
+                    <div class="config-row-group">
+                        <div class="config-group-tag tag-secondary">🌐 語文與加修</div>
+                        <div class="config-pills-wrap">
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-lang">英文免修</span>
+                                <select id="englishWaivedSelect" class="cfg-select" onchange="updateConfig()">
+                                    <option value="0">未申請</option>
+                                    <option value="2">免修 2 學分</option>
+                                    <option value="4">免修 4 學分</option>
+                                </select>
+                            </div>
+                            <label class="cfg-pill-check">
+                                <input type="checkbox" id="englishPassedCB" onchange="toggleEnglishThreshold()">
+                                <span>英檢已達標</span>
+                            </label>
+
+                            <div class="cfg-sub-divider"></div>
+
+                            <div class="cfg-pill pill-cross">
+                                <span class="cfg-label text-cross">🎖️ 跨領域</span>
+                                <select id="crossTypeSelect" class="cfg-select" onchange="updateCrossConfig()">
+                                    <option value="none">無</option>
+                                    <option value="雙主修">雙主修</option>
+                                    <option value="輔系">輔系</option>
+                                    <option value="學分學程">學分學程</option>
+                                </select>
+                                <input type="text" id="crossNameInput" placeholder="科系名稱" class="cfg-input-text" style="width: 110px; display: none;" onchange="updateCrossConfig()">
+                                <input type="number" id="crossTargetInput" placeholder="目標" class="cfg-input-num" style="display: none;" onchange="updateCrossConfig()">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 📊 畢業檢核全新美化分區佈局 -->
+                <div class="grad-sections-wrapper">
+                    <!-- 1. 專業學分與成績表現 (等高整齊排列) -->
+                    <div class="grad-sub-section">
+                        <div class="grad-section-label">📊 專業學分與學業成績</div>
+                        <div class="checker-grid-core">
+                            <div class="checker-card" id="card-req">
+                                <div class="title">系定必修學分</div>
+                                <div class="score-group"><div class="expected">預計: <span id="e-req">0</span></div><div class="actual">目前: <span id="v-req">0</span></div></div>
+                                <div class="target" id="t-req">目標: --</div>
+                            </div>
+                            <div class="checker-card" id="card-elec">
+                                <div class="title">系定選修學分</div>
+                                <div class="score-group"><div class="expected">預計: <span id="e-elec">0</span></div><div class="actual">目前: <span id="v-elec">0</span></div></div>
+                                <div class="target" id="t-elec">目標: --</div>
+                                <div id="elec-sub-info" style="font-size:0.65rem; color:var(--text-light); margin-top:4px; line-height:1.4;"></div>
+                            </div>
+                            <div class="checker-card" id="card-cross" style="display:none; border-top: 4px solid #0284c7; background:#f0f9ff;">
+                                <div class="title" id="t-cross-title" style="color:#0369a1; font-weight:bold;">🎖️ 跨領域</div>
+                                <div class="score-group"><div class="expected" style="color:#0284c7;">預計: <span id="e-cross">0</span></div><div class="actual" style="color:#0c4a6e;">目前: <span id="v-cross">0</span></div></div>
+                                <div class="target" id="t-cross-target" style="color:#0369a1; font-weight:bold;">目標: --</div>
+                                <div id="cross-sub-info" style="font-size:0.65rem; color:var(--text-light); margin-top:4px; line-height:1.4;"></div>
+                            </div>
+                            <div class="checker-card" id="card-sem-grade" style="border-top: 4px solid #6366f1; background: #fafafa;">
+                                <div class="title" style="margin-bottom: 4px;">
+                                    <select id="gradSemSelect" onchange="changeGradSemester(this.value)" style="border: 1px solid #c7d2fe; border-radius: 6px; padding: 2px 6px; font-size: 0.82rem; font-weight: bold; color: #4338ca; background: #eef2ff; cursor: pointer; max-width: 100%;">
+                                    </select>
+                                </div>
+                                <div class="score" id="v-sem-gpa" style="color:#4f46e5;">0.00</div>
+                                <div class="target" id="v-sem-weighted" style="font-weight:bold; color:#6b7280;">加權: 0.0 分</div>
+                                <div id="v-sem-credits" style="font-size:0.68rem; color:#64748b; margin-top:4px;">實得 0 / 總選 0 學分</div>
+                            </div>
+                            <div class="checker-card" id="card-cum-grade" style="border-top: 4px solid #06b6d4; background: #fafafa;">
+                                <div class="title" style="color:#0891b2;">歷年總平均</div>
+                                <div class="score" id="v-cum-gpa" style="color:#0891b2;">0.00</div>
+                                <div class="target" id="v-cum-weighted" style="font-weight:bold; color:#6b7280;">加權: 0.0 分</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. 通識教育與校定基本門檻 (左右對齊無多餘空白) -->
+                    <div class="grad-sub-section">
+                        <div class="grad-section-label">🎓 通識教育與校定門檻</div>
+                        <div class="checker-gen-threshold-layout">
+                            <!-- 左側：通識教育詳細卡片 -->
+                            <div class="checker-card" id="card-gen-combined" style="display:flex; flex-direction:column; justify-content:space-between; text-align:center;">
+                                <div>
+                                    <div class="title" style="font-weight: bold; color: #0f172a; font-size:0.95rem;">🎓 通識教育 (領域＋融合)</div>
+                                    <div class="score-group">
+                                        <div class="expected">預計: <span id="e-gen-total">0</span> / <span id="max-gen-expected">19</span></div>
+                                        <div class="actual">實得: <span id="v-gen-total">0</span> / <span id="max-gen-earned">19</span></div>
+                                    </div>
+                                    <div class="target" id="t-gen-summary">門檻：領域 ≥ 4 (跨3領域) ｜ 融合 ≥ 1</div>
+                                </div>
+                                <div id="gen-combined-details" style="font-size:0.75rem; text-align: left; background: rgba(0,0,0,0.02); padding: 8px; border-radius: 6px; margin-top: 8px; line-height: 1.5;"></div>
+                            </div>
+
+                            <!-- 右側：校定 4 大基本門檻 2x2 網格 -->
+                            <div class="checker-thresholds-grid">
+                                <div class="checker-card" id="card-chinese">
+                                    <div class="title">國文門檻</div>
+                                    <div class="score-group"><div class="expected">預計: <span id="e-chinese">0</span></div><div class="actual">目前: <span id="v-chinese">0</span></div></div>
+                                    <div class="target">目標: 4</div>
+                                </div>
+                                <div class="checker-card" id="card-english">
+                                    <div class="title">英文門檻</div>
+                                    <div class="score-group"><div class="expected">預計: <span id="e-english">0</span></div><div class="actual">目前: <span id="v-english">0</span></div></div>
+                                    <div class="target" id="t-english">目標: 4</div>
+                                </div>
+                                <div class="checker-card" id="card-tainan">
+                                    <div class="title">踏溯台南</div>
+                                    <div class="score-group"><div class="expected">預計: <span id="e-tainan">0</span></div><div class="actual">目前: <span id="v-tainan">0</span></div></div>
+                                    <div class="target">目標: 1</div>
+                                </div>
+                                <div class="checker-card" id="card-pe">
+                                    <div class="title">體育必修</div>
+                                    <div class="score-group"><div class="expected">預計: <span id="e-pe">0</span> / 4</div><div class="actual">目前: <span id="v-pe">0</span> / 4</div></div>
+                                    <div class="target">目標: 4 學期</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 📊 View: 報表匯出 -->
+        <div id="view-report" class="app-view">
+            <div style="padding:40px; text-align:center; background:white; border-radius:12px;">
+                <h2 style="color:var(--accent); margin-top:0;">📊 成績報表與圖表</h2>
+                <p style="color:var(--text-light); margin-bottom: 25px;">開啟歷年修業檢核報表，或查看歷年成績趨勢折線圖。</p>
+                <div style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap;">
+                    <button type="button" class="btn-print" onclick="openReport()" style="font-size:1.1rem; padding:15px 25px;">🖨️ 開啟修業檢核報表 (PDF)</button>
+                    <button type="button" class="btn-trend" onclick="toggleChartDrawer(true)" style="font-size:1.1rem; padding:15px 25px;">📈 開啟歷年成績趨勢圖</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="chartDrawer" class="chart-drawer">
+        <div class="drawer-header">
+            <h3>📈 歷年成績變化趨勢 (加權/GPA)</h3>
+            <button type="button" class="close-drawer-btn" onclick="toggleChartDrawer(false)">×</button>
+        </div>
+        <div class="drawer-body">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- 🌟 嚴格完整的 JavaScript 載入順序 (唯一一份，放最底部) -->
+<script src="js/config.js"></script>
+<script src="js/data.js"></script>
+<script src="js/grade.js"></script>
+<script src="js/graduation-rules.js"></script> 
+<script src="js/graduation.js"></script>       
+<script src="js/graduation-ui.js"></script>    
+<script src="js/calendar.js"></script>
+<script src="js/calendar-ui.js"></script>
+<script src="js/home.js"></script>
+<script src="js/schedule.js"></script>
+<script src="js/course.js"></script>
+<script src="js/report.js"></script>
+<script src="js/chart.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
