@@ -659,3 +659,186 @@ td { position: relative; }
     .checker-grid { grid-template-columns: repeat(3, 1fr); }
     .chart-drawer { width: 100%; right: -100%; border-radius: 0; } 
 }
+
+/* ◀ ▶ 學期微步切換按鈕 */
+.btn-sem-step {
+    background: #f1f5f9;
+    color: #1e3a8a;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-sem-step:hover:not(:disabled) {
+    background: #e2e8f0;
+    border-color: #1e3a8a;
+}
+.btn-sem-step:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* 🔍 課程詳細資訊 Modal 樣式 */
+.course-detail-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 3000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    padding: 20px;
+}
+.course-detail-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+.course-detail-card {
+    background: #ffffff;
+    width: 100%;
+    max-width: 460px;
+    border-radius: 12px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes modalPop {
+    from { transform: scale(0.92); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.course-detail-header {
+    padding: 16px 20px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.modal-color-bar {
+    width: 6px;
+    height: 20px;
+    border-radius: 3px;
+    display: inline-block;
+}
+.modal-title {
+    margin: 0;
+    font-size: 1.15rem;
+    color: #0f172a;
+    font-weight: 800;
+}
+.modal-close-btn {
+    background: none;
+    border: none;
+    font-size: 1.6rem;
+    cursor: pointer;
+    color: #64748b;
+    line-height: 1;
+    padding: 0;
+}
+.modal-close-btn:hover { color: #ef4444; }
+
+.course-detail-body {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 65vh;
+    overflow-y: auto;
+    font-size: 0.92rem;
+    color: #334155;
+}
+.detail-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    line-height: 1.45;
+}
+.detail-label {
+    min-width: 70px;
+    color: #64748b;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+.detail-val {
+    flex: 1;
+    color: #0f172a;
+    font-weight: 500;
+}
+.detail-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: bold;
+    background: #e2e8f0;
+    color: #334155;
+}
+.detail-url-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: bold;
+    background: #eff6ff;
+    padding: 4px 10px;
+    border-radius: 6px;
+    border: 1px solid #bfdbfe;
+    font-size: 0.85rem;
+}
+.detail-url-btn:hover { background: #dbeafe; }
+
+.detail-notes-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    white-space: pre-wrap;
+    color: #475569;
+}
+
+.course-detail-footer {
+    padding: 12px 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+.btn-detail-edit {
+    background: #f59e0b; color: white; border: none; padding: 8px 14px;
+    border-radius: 6px; font-weight: bold; cursor: pointer;
+}
+.btn-detail-del {
+    background: #fff1f2; color: #e11d48; border: 1px solid #fecdd3; padding: 8px 12px;
+    border-radius: 6px; font-weight: bold; cursor: pointer;
+}
+.btn-detail-close {
+    background: #e2e8f0; color: #475569; border: none; padding: 8px 14px;
+    border-radius: 6px; font-weight: bold; cursor: pointer;
+}
+
+/* 🖼️ 純淨 PNG 截圖濾鏡 (隱藏所有操作性 UI) */
+.clean-png-capture {
+    background: #ffffff !important;
+    padding: 24px !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+.clean-png-capture .view-options-bar,
+.clean-png-capture #conflictBannerArea,
+.clean-png-capture .course-overlay,
+.clean-png-capture .course-card-link,
+.clean-png-capture .tentative-badge {
+    display: none !important;
+}

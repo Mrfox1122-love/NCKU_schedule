@@ -67,6 +67,26 @@ function renderSemesterSelect() {
         appData.currentSemester = appData.semesterOrder[0] || "一上";
     }
     semSelect.value = appData.currentSemester;
+
+    // 🌟 更新 ◀ ▶ 按鈕禁用狀態
+    const currentIndex = appData.semesterOrder.indexOf(appData.currentSemester);
+    const btnPrev = document.getElementById('btnSemPrev');
+    const btnNext = document.getElementById('btnSemNext');
+    if (btnPrev) btnPrev.disabled = (currentIndex <= 0);
+    if (btnNext) btnNext.disabled = (currentIndex >= appData.semesterOrder.length - 1);
+}
+
+// 🌟 快速學期步進 (上一學期 / 下一學期)
+function stepSemester(direction) {
+    const currentIndex = appData.semesterOrder.indexOf(appData.currentSemester);
+    const targetIndex = currentIndex + direction;
+    if (targetIndex >= 0 && targetIndex < appData.semesterOrder.length) {
+        appData.currentSemester = appData.semesterOrder[targetIndex];
+        cancelEdit();
+        renderSemesterSelect();
+        saveData();
+        updateAppUI();
+    }
 }
 
 function addNewSemester() {
@@ -217,12 +237,10 @@ function updateScheduleStats(currentCourses) {
     statFreeTime.innerHTML = `📚 本週上課: <b>${totalClassPeriods}</b> 節 ｜ ☕ 空堂時間: <b>${totalFreePeriods}</b> 節`;
 }
 
-// ⚠️ 衝堂檢查與 3 行卡片渲染引擎
 function renderSchedule() {
     const activeDays = getActiveDays();
     const activeSlots = getActiveTimeSlots();
 
-    // 1. 清空格子
     activeDays.forEach(day => {
         activeSlots.forEach(slot => {
             const cell = document.getElementById(`cell-${day}-${slot.period}`);
@@ -236,7 +254,6 @@ function renderSchedule() {
     const currentCourses = appData.semesters[appData.currentSemester] || [];
     updateScheduleStats(currentCourses);
 
-    // 2. 收集各格子的課程分佈，計算衝堂
     const cellCourseMap = {};
     activeDays.forEach(day => {
         activeSlots.forEach(slot => {
@@ -257,7 +274,6 @@ function renderSchedule() {
         });
     });
 
-    // 3. 統計衝堂並生成警示資訊
     let hardConflicts = [];
     let tentativeConflicts = [];
 
@@ -272,12 +288,10 @@ function renderSchedule() {
             const hasTentative = courses.some(c => c.isTentative);
 
             if (officialCourses.length >= 2) {
-                // 🔴 正式衝堂
                 if (cell) cell.classList.add('cell-conflict-hard');
                 const names = officialCourses.map(c => `<b>${c.name}</b>`).join(' ↔ ');
                 hardConflicts.push(`週${dayNames[day]} 第 ${period} 節：${names}`);
             } else if (hasTentative) {
-                // 🟡 暫定衝堂
                 if (cell) cell.classList.add('cell-conflict-tentative');
                 const names = courses.map(c => `<b>${c.name}</b>${c.isTentative ? '(暫定)' : ''}`).join(' ↔ ');
                 tentativeConflicts.push(`週${dayNames[day]} 第 ${period} 節：${names}`);
@@ -285,7 +299,6 @@ function renderSchedule() {
         }
     });
 
-    // 4. 更新頂部衝堂橫幅
     const bannerArea = document.getElementById('conflictBannerArea');
     if (bannerArea) {
         if (hardConflicts.length > 0 || tentativeConflicts.length > 0) {
@@ -314,104 +327,80 @@ function renderSchedule() {
         }
     }
 
-    // 5. 渲染課程卡片 (3 行核心資訊：名稱、教室、老師)
-    currentCourses.forEach(course => {
-        const isTentative = course.isTentative === true;
-        const isFailed = (course.status === '未取得');
+    
+    // 5. 渲染課程卡片 (點擊任意位置直接開啟詳細資訊)
+currentCourses.forEach(course => {
+    const isTentative = course.isTentative === true;
+    const isFailed = (course.status === '未取得');
 
-        (course.slots || []).forEach(slotInfo => {
-            if (activeDays.includes(slotInfo.day)) {
-                (slotInfo.periods || []).forEach(p => {
-                    const cell = document.getElementById(`cell-${slotInfo.day}-${p}`);
-                    if (cell) {
-                        const card = document.createElement('div');
-                        let cardClass = 'course-card';
-                        if (isTentative) cardClass += ' tentative-card';
-                        if (isFailed) cardClass += ' failed-card';
-                        
-                        card.className = cardClass;
-                        card.style.backgroundColor = course.color || '#2563eb';
-                        card.style.color = course.textColor || '#ffffff';
-                        
-                        if (course.notes) {
-                            card.title = `📝 備註：${course.notes}`;
-                        }
+    (course.slots || []).forEach(slotInfo => {
+        if (activeDays.includes(slotInfo.day)) {
+            (slotInfo.periods || []).forEach(p => {
+                const cell = document.getElementById(`cell-${slotInfo.day}-${p}`);
+                if (cell) {
+                    const card = document.createElement('div');
+                    let cardClass = 'course-card';
+                    if (isTentative) cardClass += ' tentative-card';
+                    if (isFailed) cardClass += ' failed-card';
+                    
+                    card.className = cardClass;
+                    card.style.backgroundColor = course.color || '#2563eb';
+                    card.style.color = course.textColor || '#ffffff';
+                    card.style.cursor = 'pointer';
+                    
+                    // 🌟 點擊卡片全區開啟詳細資訊
+                    card.onclick = () => { showCourseDetail(course.id); };
 
-                        let safeUrl = '';
-                        if (course.url && /^https?:\/\//i.test(course.url.trim())) {
-                            safeUrl = course.url.trim();
-                        }
-
-                        let roomHtml = course.room ? `<div class="course-card-room" title="教室: ${course.room}">📍 ${course.room}</div>` : '';
-                        let teacherHtml = course.teacher ? `<div class="course-card-teacher" title="教師: ${course.teacher}">👤 ${course.teacher}</div>` : '';
-                        let tentativeBadge = isTentative ? `<span class="tentative-badge">❓ 暫定</span>` : '';
-                        let linkIcon = safeUrl ? `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="course-card-link" title="開啟課程連結" onclick="event.stopPropagation()">🔗</a>` : '';
-
-                        card.innerHTML = `
-                            ${linkIcon}
-                            <div class="course-card-name" title="${course.name}">${course.name}</div>
-                            ${roomHtml}
-                            ${teacherHtml}
-                            ${tentativeBadge}
-                        `;
-                        
-                        const overlay = document.createElement('div');
-                        overlay.className = 'course-overlay';
-                        overlay.style.color = '#ffffff'; 
-                        
-                        if (isTentative) {
-                            const confirmBtn = document.createElement('button');
-                            confirmBtn.className = 'action-btn confirm';
-                            confirmBtn.innerText = '✅ 轉正';
-                            confirmBtn.onclick = (e) => { e.stopPropagation(); confirmTentativeCourse(course.id, course.name); };
-                            overlay.appendChild(confirmBtn);
-                        }
-                        
-                        const editBtn = document.createElement('button');
-                        editBtn.className = 'action-btn edit';
-                        editBtn.innerText = '✏️ 編輯';
-                        editBtn.onclick = (e) => { e.stopPropagation(); startEdit(course.id); };
-                        
-                        const delBtn = document.createElement('button');
-                        delBtn.className = 'action-btn delete';
-                        delBtn.innerText = '🗑️ 刪除';
-                        delBtn.onclick = (e) => { e.stopPropagation(); deleteCourse(course.id); };
-                        
-                        overlay.appendChild(editBtn);
-                        overlay.appendChild(delBtn);
-                        card.appendChild(overlay);
-                        cell.appendChild(card);
+                    let safeUrl = '';
+                    if (course.url && /^https?:\/\//i.test(course.url.trim())) {
+                        safeUrl = course.url.trim();
                     }
-                });
-            }
-        });
-    });
 
-    // 6. 渲染候選清單
+                    let roomHtml = course.room ? `<div class="course-card-room" title="教室: ${course.room}">📍 ${course.room}</div>` : '';
+                    let teacherHtml = course.teacher ? `<div class="course-card-teacher" title="教師: ${course.teacher}">👤 ${course.teacher}</div>` : '';
+                    let tentativeBadge = isTentative ? `<span class="tentative-badge">❓ 暫定</span>` : '';
+                    let linkIcon = safeUrl ? `<a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="course-card-link" title="開啟課程連結" onclick="event.stopPropagation()">🔗</a>` : '';
+
+                    card.innerHTML = `
+                        ${linkIcon}
+                        <div class="course-card-name" title="${course.name}">${course.name}</div>
+                        ${roomHtml}
+                        ${teacherHtml}
+                        ${tentativeBadge}
+                    `;
+                    
+                    cell.appendChild(card);
+                }
+            });
+        }
+    });
+});
+
     if (typeof renderWishlist === 'function') {
         renderWishlist();
     }
 }
 
+// 🖼️ 高質感純淨桌布版 PNG 匯出
 function exportSchedulePNG() {
     const target = document.getElementById('scheduleCaptureArea');
     if (!target) return;
 
-    const originalOverflow = target.style.overflow;
-    target.style.overflow = 'visible';
+    // 加入純淨濾鏡 class
+    target.classList.add('clean-png-capture');
 
     html2canvas(target, {
-        scale: 2,
+        scale: 2.5,
         backgroundColor: '#ffffff',
         useCORS: true
     }).then(canvas => {
-        target.style.overflow = originalOverflow;
+        target.classList.remove('clean-png-capture');
         const link = document.createElement('a');
-        link.download = `${appData.deptName}_${appData.currentSemester}_課表.png`;
+        link.download = `${appData.deptName}_${appData.currentSemester}_桌布課表.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
     }).catch(err => {
-        target.style.overflow = originalOverflow;
+        target.classList.remove('clean-png-capture');
         alert('匯出圖片失敗，請重試！');
     });
 }

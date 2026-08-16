@@ -15,6 +15,25 @@
 <div class="sidebar-mobile-overlay" onclick="toggleSidebar(false)"></div>
 <div id="drawerOverlay" class="drawer-overlay" onclick="toggleChartDrawer(false)"></div>
 
+<!-- 🔍 課程詳細資訊彈窗 Modal -->
+<div id="courseDetailModal" class="course-detail-overlay" onclick="closeCourseDetail(event)">
+    <div class="course-detail-card" onclick="event.stopPropagation()">
+        <div class="course-detail-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span id="modalCourseColorBar" class="modal-color-bar"></span>
+                <h3 id="modalCourseName" class="modal-title">課程名稱</h3>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeCourseDetail()">×</button>
+        </div>
+        <div class="course-detail-body" id="modalCourseContent"></div>
+        <div class="course-detail-footer">
+            <button type="button" class="btn-detail-edit" id="btnModalEdit">✏️ 編輯課程</button>
+            <button type="button" class="btn-detail-del" id="btnModalDelete">🗑️ 刪除</button>
+            <button type="button" class="btn-detail-close" onclick="closeCourseDetail()">關閉</button>
+        </div>
+    </div>
+</div>
+
 <!-- 🖨️ 成績與修業報表專屬 Modal -->
 <div id="reportOverlay" class="report-overlay">
     <div class="report-container">
@@ -41,7 +60,7 @@
     <div id="sidebarPanel" class="sidebar">
         <h2 id="sidebarTitle">狐狸出品</h2>
         <form id="courseForm">
-            <!-- 📚 分區 1：基本資料 -->
+            <!-- 📚 基本資料 -->
             <div class="form-section">
                 <div class="form-section-title">📚 基本修業資料</div>
                 <div class="form-group">
@@ -91,7 +110,7 @@
                 </div>
             </div>
 
-            <!-- 🕐 分區 2：上課安排 -->
+            <!-- 🕐 上課安排 -->
             <div class="form-section">
                 <div class="form-section-title">🕐 上課時間與時段</div>
                 <div class="time-selector-box">
@@ -140,7 +159,7 @@
                 </div>
             </div>
 
-            <!-- 🏫 分區 3：課程詳細資訊 (教師、教室、網址) -->
+            <!-- 🏫 課程詳細資訊 -->
             <div class="form-section">
                 <div class="form-section-title">🏫 課程詳細資訊</div>
                 <div class="form-group" style="display: flex; gap: 10px;">
@@ -159,7 +178,7 @@
                 </div>
             </div>
 
-            <!-- 📝 分區 4：備註說明 -->
+            <!-- 📝 備註說明 -->
             <div class="form-section">
                 <div class="form-section-title">📝 備註說明</div>
                 <div class="form-group" style="margin-bottom: 0;">
@@ -167,7 +186,7 @@
                 </div>
             </div>
 
-            <!-- 🔔 分區 5：上課提醒 -->
+            <!-- 🔔 上課提醒 -->
             <div class="form-section">
                 <div class="form-section-title">🔔 上課提醒 (設定)</div>
                 <div class="form-group checkbox-group" style="margin-bottom: 8px;">
@@ -184,7 +203,7 @@
                 </div>
             </div>
 
-            <!-- 🎨 分區 6：卡片外觀與提交 -->
+            <!-- 🎨 卡片外觀與提交 -->
             <div class="form-section" style="border-bottom: none;">
                 <div class="form-group" style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
@@ -210,7 +229,7 @@
             </div>
         </form>
 
-        <!-- ⭐ 課程收藏與候選清單專區 (支援學期篩選) -->
+        <!-- ⭐ 課程候選庫 -->
         <div class="wishlist-section">
             <div class="wishlist-header">
                 <h3>⭐ 課程候選庫 <span id="wishlistCount" class="wishlist-count">0</span></h3>
@@ -236,9 +255,13 @@
     <!-- 右側主面板 -->
     <div class="main-content">
         <div class="top-bar">
+            <!-- 🌟 升級版快速學期切換列 (含 ◀ ▶ 按鈕) -->
             <div class="sem-selector-wrapper">
                 <label style="font-weight: bold;">當前學期：</label>
+                <button type="button" class="btn-sem-step" id="btnSemPrev" onclick="stepSemester(-1)" title="上一學期">◀</button>
                 <select id="semSelect" class="sem-select" onchange="switchSemester()"></select>
+                <button type="button" class="btn-sem-step" id="btnSemNext" onclick="stepSemester(1)" title="下一學期">▶</button>
+                
                 <button type="button" class="btn-add-sem" onclick="addNewSemester()" title="新增下一個學期">➕ 新增學期</button>
                 <button type="button" class="btn-del-sem" onclick="deleteCurrentSemester()" title="刪除當前選擇的學期">➖ 刪除此學期</button>
             </div>
@@ -312,7 +335,6 @@
                         </div>
                     </div>
 
-                    <!-- 跨領域修業設定 -->
                     <div class="config-item" style="border-left: 2px dashed #cbd5e1; padding-left: 12px; display: flex; align-items: center; gap: 6px;">
                         <label style="color:#0284c7; font-weight:bold;">🎖️ 跨領域修業:</label>
                         <select id="crossTypeSelect" onchange="updateCrossConfig()" style="padding: 4px 8px; border-radius: 6px; border: 1px solid var(--border-color); font-weight: bold; color:#0284c7;">
@@ -400,9 +422,8 @@
             </div>
         </div>
 
-        <!-- 課表區域（含衝堂橫幅、顯示開關與空堂統計條） -->
+        <!-- 課表區域 -->
         <div class="schedule-wrapper" id="scheduleCaptureArea">
-            <!-- ⚠️ 衝堂即時警告橫幅區 -->
             <div id="conflictBannerArea" style="display:none; margin-bottom:12px;"></div>
 
             <div class="view-options-bar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px; background:#f8fafc; padding:8px 14px; border-radius:8px; border:1px solid #e2e8f0;">

@@ -392,3 +392,130 @@ document.getElementById('courseForm').addEventListener('submit', function(e) {
     saveData();
     updateAppUI();
 });
+
+// 🔍 顯示課程詳細資訊 Modal
+function showCourseDetail(id) {
+    const currentCourses = appData.semesters[appData.currentSemester] || [];
+    const course = currentCourses.find(c => c.id === id);
+    if (!course) return;
+
+    document.getElementById('modalCourseName').innerText = course.name;
+    document.getElementById('modalCourseColorBar').style.backgroundColor = course.color || '#2563eb';
+
+    const slotText = (course.slots || []).map(s => `週${dayNames[s.day]} 第 ${s.periods.join(', ')} 節`).join(' ｜ ');
+    
+    let safeUrl = '';
+    if (course.url && /^https?:\/\//i.test(course.url.trim())) {
+        safeUrl = course.url.trim();
+    }
+
+    let statusText = course.status === '已取得' 
+        ? `✓ 已取得 (${course.score}分 · GP ${getGradePoint(course.score)})`
+        : (course.status === '未取得' ? `✕ 不及格 (${course.score}分)` : '⏳ 修讀中 / 預排');
+
+    let reminderText = (course.reminder && course.reminder.enabled) 
+        ? `🔔 上課前 ${course.reminder.offsetMinutes || 30} 分鐘` 
+        : '🔕 未啟用提醒';
+
+    let contentHtml = `
+        <div class="detail-row">
+            <span class="detail-label">修業類別</span>
+            <span class="detail-val">
+                <span class="detail-badge">${course.type}</span>
+                <span class="detail-badge" style="background:#eff6ff; color:#1d4ed8;">${course.credits} 學分</span>
+                ${course.isTentative ? '<span class="detail-badge" style="background:#fef3c7; color:#b45309;">暫定時段</span>' : ''}
+            </span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">上課時段</span>
+            <span class="detail-val" style="font-weight:600; color:#0f172a;">⏰ ${slotText || '未定時段'}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">教室 / 老師</span>
+            <span class="detail-val">
+                ${course.room ? `📍 <b>${course.room}</b>` : '<span style="color:#94a3b8;">未填教室</span>'}
+                ${course.teacher ? ` ｜ 👤 <b>${course.teacher}</b>` : ''}
+            </span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">成績狀態</span>
+            <span class="detail-val">${statusText}</span>
+        </div>
+        <div class="detail-row">
+            <span class="detail-label">提醒設定</span>
+            <span class="detail-val" style="font-size:0.88rem; color:#475569;">${reminderText}</span>
+        </div>
+    `;
+
+    if (safeUrl) {
+        contentHtml += `
+            <div class="detail-row">
+                <span class="detail-label">課程連結</span>
+                <span class="detail-val">
+                    <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="detail-url-btn">🔗 開啟課程網址</a>
+                </span>
+            </div>
+        `;
+    }
+
+    if (course.notes) {
+        contentHtml += `
+            <div class="detail-row" style="flex-direction:column; gap:4px;">
+                <span class="detail-label">📝 備註事項：</span>
+                <div class="detail-notes-box">${course.notes}</div>
+            </div>
+        `;
+    }
+
+    document.getElementById('modalCourseContent').innerHTML = contentHtml;
+
+    // 🌟 動態生成彈窗底部的操作按鈕 (轉正 / 編輯 / 刪除 / 關閉)
+    const footerEl = document.querySelector('.course-detail-footer');
+    footerEl.innerHTML = '';
+
+    if (course.isTentative) {
+        const confirmBtn = document.createElement('button');
+        confirmBtn.type = 'button';
+        confirmBtn.style.cssText = 'background:#10b981; color:white; border:none; padding:8px 14px; border-radius:6px; font-weight:bold; cursor:pointer; margin-right:auto;';
+        confirmBtn.innerText = '✅ 確認轉正';
+        confirmBtn.onclick = () => {
+            closeCourseDetail();
+            confirmTentativeCourse(course.id, course.name);
+        };
+        footerEl.appendChild(confirmBtn);
+    }
+
+    const editBtn = document.createElement('button');
+    editBtn.type = 'button';
+    editBtn.className = 'btn-detail-edit';
+    editBtn.innerText = '✏️ 編輯課程';
+    editBtn.onclick = () => {
+        closeCourseDetail();
+        startEdit(course.id);
+    };
+    footerEl.appendChild(editBtn);
+
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.className = 'btn-detail-del';
+    delBtn.innerText = '🗑️ 刪除';
+    delBtn.onclick = () => {
+        closeCourseDetail();
+        deleteCourse(course.id);
+    };
+    footerEl.appendChild(delBtn);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'btn-detail-close';
+    closeBtn.innerText = '關閉';
+    closeBtn.onclick = closeCourseDetail;
+    footerEl.appendChild(closeBtn);
+
+    document.getElementById('courseDetailModal').classList.add('show');
+}
+
+function closeCourseDetail() {
+    const modal = document.getElementById('courseDetailModal');
+    if (modal) modal.classList.remove('show');
+}
