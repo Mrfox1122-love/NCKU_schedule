@@ -139,35 +139,55 @@
 </div>
 
 <div class="container">
-    <!-- 左側控制面板 -->
-    <div id="sidebarPanel" class="sidebar">
+    <!-- 📱/🖥️ 現代化課程編輯器 (Sidebar / Drawer) -->
+    <div id="sidebarPanel" class="sidebar modern-editor">
+        <!-- 頂部標題與關閉按鈕 -->
         <div class="sidebar-header">
-            <h2 id="sidebarTitle" style="margin:0; border:none; padding:0;">狐狸出品</h2>
+            <h2 id="sidebarTitle" class="editor-main-title">➕ 新增課程</h2>
             <button type="button" class="sidebar-close-btn" onclick="closeSidebarDrawer()" title="關閉抽屜">✕</button>
         </div>
+
         <form id="courseForm">
-            <!-- 📚 基本資料 -->
-            <div class="form-section">
-                <div class="form-section-title">📚 基本修業資料</div>
-                <div class="form-group">
-                    <label class="title-label">課程名稱 <span style="color:#ef4444;">*</span></label>
-                    <input type="text" id="courseName" placeholder="例如: 電子學 (一)" required>
+            <!-- 1. 基本資訊卡片 -->
+            <div class="editor-card">
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label class="field-label">課程名稱 <span class="required-star">*</span></label>
+                    <input type="text" id="courseName" class="modern-input" placeholder="例如：電子學 (一)" required>
                 </div>
 
-                <div class="form-group" style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label class="title-label">學分數</label>
-                        <input type="number" id="courseCredits" min="0" max="20" step="0.5" value="3" required>
+                <div class="form-row-2">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="field-label">授課教師</label>
+                        <input type="text" id="courseTeacher" class="modern-input" placeholder="例如：王大明">
                     </div>
-                    <div style="flex: 1;">
-                        <label class="title-label">課程類別</label>
-                        <select id="courseType">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="field-label">上課教室</label>
+                        <input type="text" id="courseRoom" class="modern-input" placeholder="例如：92177">
+                    </div>
+                </div>
+
+                <div class="form-row-2" style="margin-top: 10px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="field-label">學分數</label>
+                        <select id="courseCredits" class="modern-select">
+                            <option value="0">0 學分</option>
+                            <option value="1">1 學分</option>
+                            <option value="2">2 學分</option>
+                            <option value="3" selected>3 學分</option>
+                            <option value="4">4 學分</option>
+                            <option value="5">5 學分</option>
+                            <option value="6">6 學分</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="field-label">課程類別</label>
+                        <select id="courseType" class="modern-select">
                             <option value="系定必修">系定必修</option>
                             <option value="選修-本系">選修-本系</option>
                             <option value="選修-必選">選修-必選</option>
                             <option value="選修-外系">選修-外系</option>
-                            <option value="跨領域-必修" id="optCrossReq" style="color:#0284c7; font-weight:bold; display:none;">🎖️ 跨領域-必修 (雙主/輔/學程)</option>
-                            <option value="跨領域-選修" id="optCrossElec" style="color:#0284c7; font-weight:bold; display:none;">🎖️ 跨領域-選修 (雙主/輔/學程)</option>
+                            <option value="跨領域-必修" id="optCrossReq" style="display:none; color:#0284c7; font-weight:bold;">🎖️ 跨領域-必修</option>
+                            <option value="跨領域-選修" id="optCrossElec" style="display:none; color:#0284c7; font-weight:bold;">🎖️ 跨領域-選修</option>
                             <option value="通識-人文">通識-人文學</option>
                             <option value="通識-社科">通識-社會科學</option>
                             <option value="通識-生醫">通識-生命與健康</option>
@@ -181,142 +201,98 @@
                         </select>
                     </div>
                 </div>
+            </div>
 
-                <div class="form-group" style="background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid var(--border-color);">
-                    <label class="title-label" style="color: var(--accent); margin-bottom: 4px;">修讀與成績狀態</label>
-                    <select id="courseStatusMode" onchange="toggleScoreInput()">
-                        <option value="修讀中" selected>⏳ 修讀中 (學期未結束/預排)</option>
-                        <option value="已結算">💯 已結算 (輸入百分制分數)</option>
-                    </select>
-                    <div id="scoreInputGroup" style="display: none; margin-top: 8px;">
-                        <label class="title-label" style="font-size: 0.8rem; margin-bottom: 4px;">百分制分數 (0~100)</label>
-                        <input type="number" id="courseScore" min="0" max="100" value="85" oninput="previewGrade()">
-                        <div id="gradePreview" style="font-size: 0.75rem; color: #1e40af; margin-top: 4px; font-weight: bold; background: #e0f2fe; padding: 4px; border-radius:4px; text-align:center;"></div>
+            <!-- 2. 上課時段卡片清單 (支援多時段) -->
+            <div class="editor-section-header">
+                <span class="section-title-badge">🕐 上課時間</span>
+                <button type="button" class="btn-add-slot-pill" onclick="addNewSlotItem()">➕ 新增時段</button>
+            </div>
+            
+            <div id="slotItemsList" class="slot-cards-container">
+                <!-- 由 JS 動態生成上課時間卡片 -->
+            </div>
+
+            <!-- 3. 背景顏色選擇器 (質感色盤) -->
+            <div class="editor-card" style="margin-top: 12px;">
+                <label class="field-label" style="margin-bottom: 8px;">卡片顏色</label>
+                <div class="color-palette-grid" id="colorPaletteGrid">
+                    <!-- 由 JS 動態產生色票圓點 -->
+                </div>
+                <input type="hidden" id="courseColor" value="#2563eb">
+                <input type="hidden" id="courseTextColor" value="#ffffff">
+            </div>
+
+            <!-- 4. 更多課程設定 (折疊區) -->
+            <div class="editor-accordion-container">
+                <div class="editor-accordion-header" onclick="toggleEditorAdvanced()" title="點擊展開/收合進階設定">
+                    <span style="font-weight:bold; font-size:0.85rem; color:#475569;">⚙️ 更多課程設定 (成績/網址/備註)</span>
+                    <span id="accordionIcon" class="accordion-arrow">▼</span>
+                </div>
+
+                <div id="editorAdvancedBody" class="editor-accordion-body">
+                    <!-- 修讀與成績 -->
+                    <div class="form-group">
+                        <label class="field-label">修讀與成績狀態</label>
+                        <select id="courseStatusMode" class="modern-select" onchange="toggleScoreInput()">
+                            <option value="修讀中" selected>⏳ 修讀中 (學期未結束 / 預排)</option>
+                            <option value="已結算">💯 已結算 (輸入百分制成績)</option>
+                        </select>
+                    </div>
+
+                    <div id="scoreInputGroup" style="display:none; margin-bottom:10px; background:#f1f5f9; padding:8px; border-radius:6px;">
+                        <label class="field-label">百分制分數 (0~100)</label>
+                        <input type="number" id="courseScore" class="modern-input" min="0" max="100" value="85" oninput="previewGrade()">
+                        <div id="gradePreview" style="font-size:0.75rem; color:#1e40af; margin-top:4px; font-weight:bold; text-align:center;"></div>
+                    </div>
+
+                    <!-- 課程網址 -->
+                    <div class="form-group">
+                        <label class="field-label">課程大綱 / 網站連結</label>
+                        <input type="url" id="courseUrl" class="modern-input" placeholder="https://moodle.ncku.edu.tw/...">
+                    </div>
+
+                    <!-- 備註說明 -->
+                    <div class="form-group">
+                        <label class="field-label">備註說明</label>
+                        <textarea id="courseNotes" class="modern-textarea" rows="2" placeholder="配分比例、點名、期中日期等..."></textarea>
+                    </div>
+
+                    <!-- 暫定候補開關 -->
+                    <label class="checkbox-pill-label">
+                        <input type="checkbox" id="courseTentative">
+                        <span style="color:#b45309; font-weight:bold;">🏷️ 設為暫定時段 (多時段候補用，不計學分)</span>
+                    </label>
+
+                    <!-- 上課提醒設定 -->
+                    <div style="margin-top: 8px; border-top: 1px dashed #e2e8f0; padding-top: 8px;">
+                        <label class="checkbox-pill-label">
+                            <input type="checkbox" id="courseReminderEnabled" onchange="toggleReminderOffsetUI()">
+                            <span>🔔 啟用上課前提醒</span>
+                        </label>
+                        <div id="reminderOffsetWrapper" style="display:none; margin-top:6px;">
+                            <select id="courseReminderOffset" class="modern-select">
+                                <option value="10">上課前 10 分鐘</option>
+                                <option value="30" selected>上課前 30 分鐘</option>
+                                <option value="60">上課前 60 分鐘</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 🕐 上課安排 -->
-            <div class="form-section">
-                <div class="form-section-title">🕐 上課時間與時段</div>
-                <div class="time-selector-box">
-                    <label class="title-label" style="color: var(--accent);">選擇上課時段</label>
-                    <select id="courseDay" style="margin-bottom: 8px;">
-                        <option value="1">星期一</option>
-                        <option value="2">星期二</option>
-                        <option value="3">星期三</option>
-                        <option value="4">星期四</option>
-                        <option value="5">星期五</option>
-                        <option value="6" id="optDay6">星期六</option>
-                        <option value="7" id="optDay7">星期日</option>
-                    </select>
-                    
-                    <div class="period-grid">
-                        <input type="checkbox" id="p1" value="1" class="hidden-cb"><label for="p1" class="period-tag">1 (08:00)</label>
-                        <input type="checkbox" id="p2" value="2" class="hidden-cb"><label for="p2" class="period-tag">2 (09:00)</label>
-                        <input type="checkbox" id="p3" value="3" class="hidden-cb"><label for="p3" class="period-tag">3 (10:10)</label>
-                        <input type="checkbox" id="p4" value="4" class="hidden-cb"><label for="p4" class="period-tag">4 (11:10)</label>
-                        
-                        <span id="wrapper-pN" style="display:contents;">
-                            <input type="checkbox" id="pN" value="N" class="hidden-cb"><label for="pN" class="period-tag" style="color:#b45309; font-weight:bold;">N</label>
-                        </span>
-                        
-                        <input type="checkbox" id="p5" value="5" class="hidden-cb"><label for="p5" class="period-tag">5 (13:10)</label>
-                        <input type="checkbox" id="p6" value="6" class="hidden-cb"><label for="p6" class="period-tag">6 (14:10)</label>
-                        <input type="checkbox" id="p7" value="7" class="hidden-cb"><label for="p7" class="period-tag">7 (15:20)</label>
-                        <input type="checkbox" id="p8" value="8" class="hidden-cb"><label for="p8" class="period-tag">8 (16:20)</label>
-                        <input type="checkbox" id="p9" value="9" class="hidden-cb"><label for="p9" class="period-tag">9 (17:20)</label>
-                        
-                        <span id="wrapper-pNight" style="display:contents;">
-                            <input type="checkbox" id="pA" value="A" class="hidden-cb"><label for="pA" class="period-tag" style="color:#6366f1;">A (18:20)</label>
-                            <input type="checkbox" id="pB" value="B" class="hidden-cb"><label for="pB" class="period-tag" style="color:#6366f1;">B (19:15)</label>
-                            <input type="checkbox" id="pC" value="C" class="hidden-cb"><label for="pC" class="period-tag" style="color:#6366f1;">C (20:10)</label>
-                            <input type="checkbox" id="pD" value="D" class="hidden-cb"><label for="pD" class="period-tag" style="color:#6366f1;">D (21:05)</label>
-                        </span>
-                    </div>
-                    
-                    <button type="button" id="btnAddSlot" class="btn-secondary">➕ 鎖定時段 (可跨日連堂)</button>
-                    <div id="slotContainer" class="slot-tags-container"></div>
+            <!-- 5. 底部操作按鈕區 -->
+            <div class="editor-actions-footer">
+                <div style="display:flex; gap:8px; width:100%;">
+                    <button type="submit" id="btnSubmit" class="btn-primary-action">🚀 加入課表</button>
+                    <button type="button" id="btnSaveWishlist" class="btn-wishlist-action" onclick="saveToWishlistFromForm()" title="先存入候選庫比較">⭐ 存候選</button>
                 </div>
-
-                <div class="form-group checkbox-group" style="background: #fffbeb; padding: 10px; border-radius: 8px; border: 1px dashed #f59e0b; margin-top: 8px;">
-                    <input type="checkbox" id="courseTentative">
-                    <label for="courseTentative" style="margin:0; color: #b45309; font-weight: bold; cursor: pointer;">🏷️ 設為暫定時段 (多時段候補用，不計學分)</label>
-                </div>
-            </div>
-
-            <!-- 🏫 課程詳細資訊 -->
-            <div class="form-section">
-                <div class="form-section-title">🏫 課程詳細資訊</div>
-                <div class="form-group" style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label class="title-label">上課教室</label>
-                        <input type="text" id="courseRoom" placeholder="例如: 92215">
-                    </div>
-                    <div style="flex: 1;">
-                        <label class="title-label">授課教師</label>
-                        <input type="text" id="courseTeacher" placeholder="例如: 王大明">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label class="title-label">課程網址 / 大綱連結</label>
-                    <input type="url" id="courseUrl" placeholder="https://moodle.ncku.edu.tw/...">
-                </div>
-            </div>
-
-            <!-- 📝 備註說明 -->
-            <div class="form-section">
-                <div class="form-section-title">📝 備註說明</div>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <textarea id="courseNotes" rows="2" placeholder="備註配分、點名規則、期中日期等..." style="width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.88rem; resize: vertical;"></textarea>
-                </div>
-            </div>
-
-            <!-- 🔔 上課提醒 -->
-            <div class="form-section">
-                <div class="form-section-title">🔔 上課提醒 (設定)</div>
-                <div class="form-group checkbox-group" style="margin-bottom: 8px;">
-                    <input type="checkbox" id="courseReminderEnabled" onchange="toggleReminderOffsetUI()">
-                    <label for="courseReminderEnabled" style="cursor: pointer; font-weight: 600;">啟用上課前提醒</label>
-                </div>
-                <div id="reminderOffsetWrapper" style="display: none;">
-                    <label class="title-label" style="font-size: 0.8rem;">提醒時機</label>
-                    <select id="courseReminderOffset" style="padding: 6px;">
-                        <option value="10">上課前 10 分鐘</option>
-                        <option value="30" selected>上課前 30 分鐘</option>
-                        <option value="60">上課前 60 分鐘</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- 🎨 卡片外觀與提交 -->
-            <div class="form-section" style="border-bottom: none;">
-                <div class="form-group" style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label class="title-label">卡片底色</label>
-                        <input type="color" id="courseColor" value="#2563eb">
-                    </div>
-                    <div style="flex: 1;">
-                        <label class="title-label">字體顏色</label>
-                        <input type="color" id="courseTextColor" value="#ffffff">
-                    </div>
-                </div>
-
-                <div class="form-group checkbox-group" style="margin-bottom: 12px;">
-                    <input type="checkbox" id="courseRecurring" checked>
-                    <label for="courseRecurring" style="margin:0; cursor: pointer;">每週重複</label>
-                </div>
-                
-                <div style="display:flex; gap:8px;">
-                    <button type="submit" id="btnSubmit" class="btn-add" style="flex:2; margin:0;">🚀 加入課表</button>
-                    <button type="button" id="btnSaveWishlist" class="btn-wishlist" style="flex:1; margin:0;" onclick="saveToWishlistFromForm()" title="不排入課表，先存入候選庫比較">⭐ 存候選</button>
-                </div>
-                <button type="button" id="btnCancelEdit" class="btn-cancel" onclick="cancelEdit()" style="margin-top:8px;">❌ 取消修改</button>
+                <button type="button" id="btnCancelEdit" class="btn-cancel-action" onclick="cancelEdit()">❌ 取消修改</button>
             </div>
         </form>
 
         <!-- ⭐ 課程候選庫 -->
-        <div class="wishlist-section">
+        <div class="wishlist-section" style="margin-top: 16px;">
             <div class="wishlist-header">
                 <h3>⭐ 課程候選庫 <span id="wishlistCount" class="wishlist-count">0</span></h3>
                 <div class="wishlist-filter-group">
@@ -331,11 +307,11 @@
 
         <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
         
-        <h2>存檔與管理</h2>
-        <button class="btn-export" onclick="exportData()">💾 匯出課表 (JSON)</button>
+        <h3 style="font-size:0.95rem; color:#475569; margin: 0 0 10px 0;">💾 存檔與管理</h3>
+        <button type="button" class="btn-export" onclick="exportData()">💾 匯出課表 (JSON)</button>
         <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
-        <button class="btn-import" onclick="document.getElementById('importFile').click()">📂 匯入課表 (JSON)</button>
-        <button class="btn-clear" onclick="clearAll()">🗑 清空當前學期</button>
+        <button type="button" class="btn-import" onclick="document.getElementById('importFile').click()">📂 匯入課表 (JSON)</button>
+        <button type="button" class="btn-clear" onclick="clearAll()">🗑 清空當前學期</button>
     </div>
 
     <!-- 右側主面板 -->

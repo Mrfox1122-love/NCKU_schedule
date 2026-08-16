@@ -168,6 +168,288 @@ body:not(.sidebar-open) .sidebar {
     border-color: #fca5a5;
 }
 
+/* ============================================================
+   現代化課程編輯器專屬樣式 (Modern Editor UI)
+   ============================================================ */
+.sidebar.modern-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: #f8fafc;
+}
+
+.editor-main-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+/* 現代化卡片容器 */
+.editor-card {
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    padding: 12px 14px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.field-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 5px;
+}
+.required-star { color: #ef4444; font-weight: bold; }
+
+.modern-input, .modern-select, .modern-textarea {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: #0f172a;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+.modern-input:focus, .modern-select:focus, .modern-textarea:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.form-row-2 {
+    display: flex;
+    gap: 8px;
+}
+.form-row-2 > div { flex: 1; min-width: 0; }
+
+/* 🌟 時段區塊標題與新增按鈕 */
+.editor-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 6px;
+}
+.section-title-badge {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: var(--accent);
+}
+.btn-add-slot-pill {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 0.76rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-add-slot-pill:hover { background: #dbeafe; }
+
+/* 🌟 單個時段卡片 */
+.slot-cards-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.slot-item-card {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+/* 星期按鈕膠囊列 (一~日) */
+.weekday-pills-row {
+    display: flex;
+    gap: 4px;
+    justify-content: space-between;
+}
+.weekday-pill-btn {
+    flex: 1;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
+    border-radius: 6px;
+    padding: 5px 0;
+    font-size: 0.78rem;
+    font-weight: bold;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s ease;
+    user-select: none;
+}
+.weekday-pill-btn:hover { background: #f1f5f9; }
+.weekday-pill-btn.active {
+    background: #2563eb;
+    color: #ffffff;
+    border-color: #2563eb;
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25);
+}
+.weekday-pill-btn.weekend-btn.active { background: #dc2626; border-color: #dc2626; }
+
+/* 節次區間選擇器 (起 ~ 訖) */
+.slot-time-range-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.slot-time-range-row select {
+    flex: 1;
+    font-size: 0.8rem;
+    padding: 6px 4px;
+    font-weight: 600;
+}
+.range-separator { font-weight: bold; color: #94a3b8; font-size: 0.85rem; }
+
+.btn-del-slot-card {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: #fee2e2;
+    color: #dc2626;
+    border: none;
+    border-radius: 4px;
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+/* 🎨 圓形調色盤 */
+.color-palette-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+.color-swatch-dot {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.color-swatch-dot:hover { transform: scale(1.15); }
+.color-swatch-dot.active {
+    border-color: #0f172a;
+    box-shadow: 0 0 0 2px #ffffff inset, 0 2px 6px rgba(0,0,0,0.25);
+    transform: scale(1.1);
+}
+
+/* ⚙️ 折疊進階設定 Accordion */
+.editor-accordion-container {
+    background: #ffffff;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    margin-top: 6px;
+}
+.editor-accordion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #ffffff;
+    cursor: pointer;
+    user-select: none;
+}
+.accordion-arrow {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    transition: transform 0.2s ease;
+}
+.editor-accordion-body {
+    padding: 0 14px;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease, padding 0.28s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.editor-accordion-container.open .editor-accordion-body {
+    max-height: 500px;
+    opacity: 1;
+    padding: 10px 14px 14px 14px;
+    border-top: 1px dashed #e2e8f0;
+}
+.editor-accordion-container.open .accordion-arrow {
+    transform: rotate(180deg);
+}
+
+.checkbox-pill-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+/* 操作按鈕 */
+.editor-actions-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+}
+.btn-primary-action {
+    flex: 2;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 0.92rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: 0.15s;
+}
+.btn-primary-action:hover { background: #1e40af; }
+
+.btn-wishlist-action {
+    flex: 1;
+    background: #fef3c7;
+    color: #b45309;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+}
+.btn-cancel-action {
+    width: 100%;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 8px;
+    font-weight: bold;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: none;
+}
+
 .sidebar-toggle { 
     position: fixed; 
     left: 12px; 
