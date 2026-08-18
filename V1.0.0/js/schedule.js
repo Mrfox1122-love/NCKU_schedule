@@ -475,28 +475,73 @@ function renderSchedule() {
     if (typeof renderWishlist === 'function') renderWishlist();
 }
 
-// 🖼️ 高質感純淨桌布版 PNG 匯出
+// 🖼️ 升級版課表圖片匯出 (自動適配 Desktop Table / Mobile Grid / List View)
 function exportSchedulePNG() {
-    const target = document.getElementById('scheduleCaptureArea');
-    if (!target) return;
+    // 🌟 1. 智慧判定當前畫面上正在顯示的課表區域
+    let target = document.getElementById('scheduleCaptureArea');
+    
+    if (currentScheduleViewType === 'list') {
+        target = document.getElementById('scheduleListViewArea');
+    } else if (window.innerWidth <= 768 || (target && window.getComputedStyle(target).display === 'none')) {
+        target = document.getElementById('mobileScheduleArea');
+    }
 
-    // 加入純淨濾鏡 class
+    if (!target) {
+        alert('找不到可匯出的課表區塊！');
+        return;
+    }
+
+    // 🌟 2. 加上純淨截圖樣式濾鏡 (暫時隱藏警告標籤與多餘按鈕)
     target.classList.add('clean-png-capture');
 
+    // 🌟 3. html2canvas 加入手機防位移 (scrollX/scrollY: 0) 設定
     html2canvas(target, {
         scale: 2.5,
         backgroundColor: '#ffffff',
-        useCORS: true
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0,
+        logging: false
     }).then(canvas => {
         target.classList.remove('clean-png-capture');
-        const link = document.createElement('a');
-        link.download = `${appData.deptName}_${appData.currentSemester}_桌布課表.png`;
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+
+        const fileName = `${appData.deptName || '課表'}_${appData.currentSemester}_${currentScheduleViewMode === 'semester' ? '學期規劃' : `第${currentScheduleViewWeek}週`}_課表.png`;
+
+        // 🌟 4. 手機與電腦通用的安全下載機制 (Blob + ObjectURL)
+        if (canvas.toBlob) {
+            canvas.toBlob(blob => {
+                if (!blob) {
+                    fallbackDownload(canvas.toDataURL('image/png'), fileName);
+                    return;
+                }
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.download = fileName;
+                link.href = url;
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(() => {
+                    link.remove();
+                    URL.revokeObjectURL(url);
+                }, 1000);
+            }, 'image/png');
+        } else {
+            fallbackDownload(canvas.toDataURL('image/png'), fileName);
+        }
     }).catch(err => {
         target.classList.remove('clean-png-capture');
+        console.error('[Export PNG Error]', err);
         alert('匯出圖片失敗，請重試！');
     });
+}
+
+function fallbackDownload(dataUrl, fileName) {
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = dataUrl;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
 }
 
 // 📅 自動推算結業日 (開學日 + 週數 * 7 - 1 天)

@@ -1107,12 +1107,20 @@ td { position: relative; }
     .page-break { page-break-before: always; }
 }
 
-/* 純淨 PNG 截圖濾鏡 */
-.clean-png-capture { background: #ffffff !important; padding: 24px !important; border: none !important; box-shadow: none !important; }
-.clean-png-capture .view-options-bar,
+/* 純淨 PNG 截圖濾鏡 (支援 Desktop / Mobile / List) */
+.clean-png-capture {
+    background: #ffffff !important;
+    padding: 12px !important;
+    border: none !important;
+    box-shadow: none !important;
+}
 .clean-png-capture #conflictBannerArea,
+.clean-png-capture #mobileConflictBanner,
 .clean-png-capture .course-card-link,
-.clean-png-capture .tentative-badge { display: none !important; }
+.clean-png-capture .mobile-fab,
+.clean-png-capture .tentative-badge {
+    display: none !important;
+}
 
 /* ==========================================================================
    9. RWD 響應式佈局 (Mobile & Tablet Responsive)
