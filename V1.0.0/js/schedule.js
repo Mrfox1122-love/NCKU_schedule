@@ -475,12 +475,13 @@ function renderSchedule() {
     if (typeof renderWishlist === 'function') renderWishlist();
 }
 
-// 🖼️ 升級版課表圖片匯出 (自動適配 Desktop Table / Mobile Grid / List View)
-function exportSchedulePNG() {
+// 🖼️ 升級版課表圖片匯出 (完美支援手機原生相簿儲存 + 電腦下載，防跳頁)
+async function exportSchedulePNG() {
     // 🌟 1. 智慧判定當前畫面上正在顯示的課表區域
     let target = document.getElementById('scheduleCaptureArea');
     
-    if (currentScheduleViewType === 'list') {
+    const isListView = (typeof currentScheduleViewType !== 'undefined' && currentScheduleViewType === 'list');
+    if (isListView) {
         target = document.getElementById('scheduleListViewArea');
     } else if (window.innerWidth <= 768 || (target && window.getComputedStyle(target).display === 'none')) {
         target = document.getElementById('mobileScheduleArea');
@@ -494,45 +495,68 @@ function exportSchedulePNG() {
     // 🌟 2. 加上純淨截圖樣式濾鏡 (暫時隱藏警告標籤與多餘按鈕)
     target.classList.add('clean-png-capture');
 
-    // 🌟 3. html2canvas 加入手機防位移 (scrollX/scrollY: 0) 設定
-    html2canvas(target, {
-        scale: 2.5,
-        backgroundColor: '#ffffff',
-        useCORS: true,
-        scrollX: 0,
-        scrollY: 0,
-        logging: false
-    }).then(canvas => {
+    try {
+        const canvas = await html2canvas(target, {
+            scale: window.devicePixelRatio && window.devicePixelRatio > 2 ? window.devicePixelRatio : 2.5,
+            backgroundColor: '#ffffff',
+            useCORS: true,
+            scrollX: 0,
+            scrollY: 0,
+            logging: false
+        });
+
         target.classList.remove('clean-png-capture');
 
-        const fileName = `${appData.deptName || '課表'}_${appData.currentSemester}_${currentScheduleViewMode === 'semester' ? '學期規劃' : `第${currentScheduleViewWeek}週`}_課表.png`;
+        // 安全取得學期與檔案名稱資訊
+        const semName = appData.currentSemester || '課表';
+        const dept = appData.deptName || '課表';
+        const modeText = (typeof currentScheduleViewMode !== 'undefined' && currentScheduleViewMode === 'week')
+            ? `第${typeof currentScheduleViewWeek !== 'undefined' ? currentScheduleViewWeek : 1}週`
+            : '學期規劃';
+        const fileName = `${dept}_${semName}_${modeText}_課表.png`;
 
-        // 🌟 4. 手機與電腦通用的安全下載機制 (Blob + ObjectURL)
-        if (canvas.toBlob) {
-            canvas.toBlob(blob => {
-                if (!blob) {
-                    fallbackDownload(canvas.toDataURL('image/png'), fileName);
+        // 🌟 3. 轉為 Blob 並處理手機與電腦儲存
+        canvas.toBlob(async blob => {
+            if (!blob) {
+                fallbackDownload(canvas.toDataURL('image/png'), fileName);
+                return;
+            }
+
+            const file = new File([blob], fileName, { type: 'image/png' });
+
+            // 🌟 手機端優先呼叫原生分享 / 儲存至相簿（iOS Safari 與 Android Chrome 完全不跳頁）
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        files: [file],
+                        title: fileName,
+                        text: '我的專屬課表'
+                    });
                     return;
+                } catch (shareErr) {
+                    if (shareErr.name === 'AbortError') return; // 使用者主動關閉分享面板
                 }
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.download = fileName;
-                link.href = url;
-                document.body.appendChild(link);
-                link.click();
-                setTimeout(() => {
-                    link.remove();
-                    URL.revokeObjectURL(url);
-                }, 1000);
-            }, 'image/png');
-        } else {
-            fallbackDownload(canvas.toDataURL('image/png'), fileName);
-        }
-    }).catch(err => {
+            }
+
+            // 電腦端或未支援 Web Share API 的瀏覽器使用標準下載機制
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = url;
+            link.rel = 'noopener noreferrer';
+            document.body.appendChild(link);
+            link.click();
+            setTimeout(() => {
+                link.remove();
+                URL.revokeObjectURL(url);
+            }, 1500);
+        }, 'image/png');
+
+    } catch (err) {
         target.classList.remove('clean-png-capture');
         console.error('[Export PNG Error]', err);
         alert('匯出圖片失敗，請重試！');
-    });
+    }
 }
 
 function fallbackDownload(dataUrl, fileName) {
@@ -574,25 +598,6 @@ function onSemesterDatesChange() {
     updateAppUI();
 }
 
-// 🌟 同步學期時程輸入框數值
-function syncSemesterDatesUI() {
-    const startInput = document.getElementById('semStartDateInput');
-    const weeksInput = document.getElementById('semWeeksInput');
-    const endBadge = document.getElementById('semEndDateText');
-    if (!startInput || !weeksInput || !endBadge) return;
-
-    const currentDates = (appData.semesterDates && appData.semesterDates[appData.currentSemester]) || {};
-    startInput.value = currentDates.startDate || '';
-    weeksInput.value = currentDates.totalWeeks || 18;
-
-    if (currentDates.startDate) {
-        const endDate = currentDates.endDate || computeEndDate(currentDates.startDate, currentDates.totalWeeks || 18);
-        endBadge.innerText = `🏁 結業日：${endDate}`;
-    } else {
-        endBadge.innerText = `🏁 結業日：未設定`;
-    }
-}
-
 // 🌟 手機版學期時程收合切換
 function toggleSemDatesCollapse() {
     const container = document.getElementById('semDatesContainer');
@@ -601,7 +606,7 @@ function toggleSemDatesCollapse() {
     }
 }
 
-// 🌟 同步學期時程輸入框數值與摘要標籤
+// 🌟 同步學期時程輸入框數值與摘要標籤 (保留唯一完整版本)
 function syncSemesterDatesUI() {
     const startInput = document.getElementById('semStartDateInput');
     const weeksInput = document.getElementById('semWeeksInput');

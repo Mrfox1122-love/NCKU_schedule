@@ -147,7 +147,8 @@
             <button type="button" class="sidebar-close-btn" onclick="closeSidebarDrawer()" title="關閉抽屜">✕</button>
         </div>
 
-        <form id="courseForm">
+        <!-- 🌟 加入 onsubmit="event.preventDefault();" 防止手機鍵盤觸發表單重整跳頁 -->
+        <form id="courseForm" onsubmit="event.preventDefault();">
             <!-- 1. 基本資訊卡片 -->
             <div class="editor-card">
                 <div class="form-group" style="margin-bottom: 10px;">
