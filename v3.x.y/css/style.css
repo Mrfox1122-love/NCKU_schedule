@@ -1323,25 +1323,40 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
         border-right: 1px dashed var(--tf-border-subtle); 
         border-bottom: 1px dashed var(--tf-border-subtle); 
     }
-    .mobile-course-card { 
-        border-radius: var(--tf-radius-sm); 
-        padding: 3px 2px !important; 
-        display: flex; 
-        flex-direction: column; 
-        gap: 1px; 
-        font-size: 0.65rem; 
-        background: var(--tf-surface-overlay); 
-        border-left: 3px solid var(--tf-color-primary); 
-    }
-    .mobile-course-name { 
-        font-weight: var(--tf-weight-semibold); 
-        font-size: 0.62rem !important; 
-        color: var(--tf-text-primary); 
-        line-height: 1.2;
-        word-break: break-all;
-    }
-    .mobile-course-room { font-size: 0.58rem; color: var(--tf-text-secondary); }
-    .mobile-course-teacher { font-size: 0.55rem; color: var(--tf-text-muted); }
+.mobile-course-card { 
+    border-radius: var(--tf-radius-sm); 
+    padding: 4px 4px !important; 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: flex-start !important; /* 頂部對齊 */
+    align-items: flex-start !important;    /* 靠左對齊 */
+    text-align: left !important;           /* 文字靠左 */
+    gap: 2px; 
+    font-size: 0.68rem; 
+    background: var(--tf-surface-overlay) !important; 
+    border: 1px solid var(--tf-border-subtle);
+    border-left: 3px solid var(--tf-color-primary) !important; 
+    box-shadow: var(--tf-shadow-sm);
+    overflow: hidden;
+}
+
+.mobile-course-name { 
+    font-weight: var(--tf-weight-semibold); 
+    font-size: 0.65rem !important; 
+    color: var(--tf-text-primary); 
+    line-height: 1.25;
+    text-align: left !important;
+    word-break: break-all;
+    width: 100%;
+}
+
+.mobile-course-room,
+.mobile-course-teacher {
+    text-align: left !important;
+    font-size: 0.58rem;
+    color: var(--tf-text-secondary);
+    width: 100%;
+}
 
     /* 🌟 4. 畢業檢核卡片：專業 2x2、門檻 2 欄並排 */
     .checker-grid-core { 

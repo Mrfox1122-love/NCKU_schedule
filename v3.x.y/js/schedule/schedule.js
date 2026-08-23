@@ -361,7 +361,7 @@ function renderMobileSchedule(currentCourses, activeDays, activeSlots) {
     const rowCount = activeSlots.length;
 
     board.style.gridTemplateColumns = `28px repeat(${colCount}, minmax(0, 1fr))`;
-    board.style.gridTemplateRows = `36px repeat(${rowCount}, minmax(0, 1fr))`;
+    board.style.gridTemplateRows = `32px repeat(${rowCount}, minmax(46px, 1fr))`;
     board.innerHTML = '';
 
     const corner = document.createElement('div');
