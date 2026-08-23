@@ -199,7 +199,7 @@ body {
 }
 
 /* ==========================================================================
-   學期切換導航群組 (獨立方塊按鈕)
+   學期切換導航群組
    ========================================================================== */
 .tf-sem-nav-group {
     display: inline-flex;
@@ -670,206 +670,6 @@ body {
 .list-card-arrow { color: var(--tf-text-disabled) !important; font-size: 0.85rem !important; display: flex; align-items: center; }
 
 /* ==========================================================================
-   5. 找課視圖 (Discover View)
-   ========================================================================== */
-.tf-dark-discover {
-    background: var(--tf-surface-sunken);
-    border-radius: var(--tf-radius-xl);
-    padding: 16px 20px;
-    color: var(--tf-text-primary);
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    box-shadow: var(--tf-shadow-sm);
-    border: 1px solid var(--tf-border-default);
-}
-
-.tf-discover-header { display: flex; flex-direction: column; gap: 10px; }
-.tf-discover-title { font-size: var(--tf-text-xl); font-weight: var(--tf-weight-semibold); color: var(--tf-text-primary); margin: 0; }
-.tf-discover-sub { font-size: var(--tf-text-xs); color: var(--tf-text-muted); margin: 0; }
-
-.tf-search-bar-wrap { position: relative; width: 100%; }
-.tf-search-input {
-    width: 100%;
-    background: var(--tf-surface-base);
-    border: 1px solid var(--tf-border-default);
-    border-radius: var(--tf-radius-md);
-    padding: 8px 36px 8px 12px;
-    font-size: var(--tf-text-sm);
-    color: var(--tf-text-primary);
-    outline: none;
-    box-sizing: border-box;
-}
-.tf-search-input:focus { border-color: var(--tf-color-focus); }
-.tf-btn-search-clear {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: transparent;
-    border: none;
-    color: var(--tf-text-muted);
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-.tf-filter-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.tf-filter-group { display: flex; align-items: center; gap: 4px; }
-.filter-label { font-size: var(--tf-text-xs); font-weight: var(--tf-weight-medium); color: var(--tf-text-secondary); }
-
-.tf-discover-count-badge { 
-    font-size: var(--tf-text-xs) !important; 
-    color: var(--tf-color-primary-light) !important; 
-    background: var(--tf-color-primary-subtle) !important; 
-    padding: 0 8px !important; 
-    height: 22px !important;
-    border-radius: var(--tf-radius-sm) !important; 
-    border: 1px solid var(--tf-color-primary-border) !important; 
-    font-weight: var(--tf-weight-medium) !important; 
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-    white-space: nowrap !important;
-    line-height: 1 !important;
-}
-
-.tf-discover-wish-badge {
-    font-size: var(--tf-text-xs) !important;
-    color: var(--tf-status-warning-light) !important;
-    background: var(--tf-status-warning-bg) !important;
-    border: 1px solid var(--tf-status-warning-border) !important;
-    font-weight: var(--tf-weight-medium) !important;
-    padding: 0 8px !important;
-    height: 22px !important;
-    border-radius: var(--tf-radius-sm) !important;
-    display: inline-flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 4px !important;
-    white-space: nowrap !important;
-    cursor: pointer !important;
-    box-sizing: border-box !important;
-    line-height: 1 !important;
-    transition: background var(--tf-transition-fast), border-color var(--tf-transition-fast);
-}
-.tf-discover-wish-badge:hover {
-    background: var(--tf-status-warning-border) !important;
-}
-
-.tf-table-responsive-wrapper {
-    width: 100%;
-    overflow-x: auto;
-    background: var(--tf-surface-base);
-    border: 1px solid var(--tf-border-default);
-    border-radius: var(--tf-radius-lg);
-}
-
-.tf-data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: var(--tf-text-sm);
-    text-align: left;
-}
-
-.tf-data-table th {
-    background: var(--tf-surface-sunken);
-    color: var(--tf-text-muted);
-    font-size: 0.74rem;
-    font-weight: var(--tf-weight-semibold);
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--tf-border-default);
-    white-space: nowrap;
-    user-select: none;
-}
-
-.tf-data-table td {
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--tf-border-subtle);
-    color: var(--tf-text-secondary);
-    vertical-align: middle;
-}
-
-.tf-table-row {
-    cursor: pointer;
-    transition: background var(--tf-transition-fast);
-}
-.tf-table-row:hover { background: var(--tf-surface-overlay); }
-
-.col-name { min-width: 200px; }
-.table-course-name-wrap { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.table-course-name { font-weight: var(--tf-weight-semibold); color: var(--tf-text-primary); }
-.table-course-code { font-size: 0.7rem; color: var(--tf-text-disabled); font-family: var(--tf-font-mono); }
-.table-dept-wrap { display: flex; flex-direction: column; gap: 1px; }
-.table-history-sub { font-size: 0.68rem; color: var(--tf-text-disabled); }
-
-.col-dept { min-width: 130px; font-size: var(--tf-text-xs); color: var(--tf-text-muted); }
-.col-credit { text-align: center; width: 50px; color: var(--tf-text-primary); }
-.col-teacher { min-width: 90px; color: var(--tf-text-primary); }
-.col-time { min-width: 140px; font-size: 0.78rem; }
-.table-time-wrap { display: flex; flex-direction: column; gap: 1px; }
-.table-room-sub { font-size: 0.68rem; color: var(--tf-text-muted); }
-.col-assess { max-width: 180px; font-size: 0.72rem; color: var(--tf-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-.col-actions { text-align: right; min-width: 130px; }
-.table-action-btns { display: inline-flex; align-items: center; gap: 4px; }
-.btn-act-wish { 
-    color: var(--tf-text-muted) !important; 
-    border: 1px solid transparent !important; 
-    padding: 0 8px !important; 
-    font-weight: var(--tf-weight-medium);
-    white-space: nowrap !important;
-}
-.btn-act-wish.is-active { 
-    color: var(--tf-status-warning-light) !important; 
-    background: var(--tf-status-warning-bg) !important; 
-    border: 1px solid var(--tf-status-warning-border) !important; 
-    font-weight: var(--tf-weight-semibold) !important; 
-}
-.btn-act-wish.is-active:hover { background: var(--tf-status-warning-border) !important; }
-.btn-act-wish:hover { color: var(--tf-status-warning-light) !important; background: var(--tf-status-warning-bg) !important; }
-
-.btn-act-plan {
-    background: var(--tf-color-primary) !important;
-    color: var(--tf-text-inverse, #ffffff) !important;
-    border: 1px solid var(--tf-color-primary-border) !important;
-    border-radius: var(--tf-radius-md);
-    height: 28px !important;
-    padding: 0 10px !important;
-    font-size: var(--tf-text-xs) !important;
-    font-weight: var(--tf-weight-semibold) !important;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    white-space: nowrap !important;
-    transition: background var(--tf-transition-fast);
-}
-.btn-act-plan:hover { background: var(--tf-color-primary-hover) !important; }
-
-.tf-discover-mobile-list { display: none; flex-direction: column; gap: 8px; width: 100%; }
-.tf-discover-mobile-row {
-    background: var(--tf-surface-base);
-    border: 1px solid var(--tf-border-default);
-    border-radius: var(--tf-radius-md);
-    padding: 10px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    cursor: pointer;
-    transition: background var(--tf-transition-fast);
-}
-.tf-discover-mobile-row:active { background: var(--tf-surface-overlay); }
-.m-row-top { display: flex; justify-content: space-between; align-items: center; }
-.m-row-title-wrap { display: flex; align-items: center; gap: 6px; }
-.m-row-title { font-weight: var(--tf-weight-semibold); font-size: var(--tf-text-base); color: var(--tf-text-primary); }
-
-.m-row-meta { font-size: var(--tf-text-xs); color: var(--tf-text-muted); }
-.m-row-time { font-size: var(--tf-text-xs); color: var(--tf-text-secondary); display: flex; align-items: center; gap: 4px; margin-top: 2px; }
-.m-row-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 6px; border-top: 1px solid var(--tf-border-subtle); padding-top: 6px; }
-
-/* ==========================================================================
    6. 畢業檢核視圖 (Graduation View)
    ========================================================================== */
 .grad-top-actions-bar {
@@ -936,10 +736,50 @@ body {
     padding: 16px;
     border-radius: var(--tf-radius-xl);
 }
-.progress-info-row { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
-.progress-badge { background: var(--tf-color-primary-subtle); color: var(--tf-color-primary-light); border: 1px solid var(--tf-color-primary-border); font-size: var(--tf-text-xs); font-weight: var(--tf-weight-medium); padding: 2px 8px; border-radius: var(--tf-radius-sm); }
-.progress-details-text { font-size: var(--tf-text-sm); font-weight: var(--tf-weight-regular); color: var(--tf-text-secondary); margin-left: 6px; }
-.progress-percent-badge { font-size: var(--tf-text-sm); font-weight: var(--tf-weight-semibold); color: var(--tf-status-success-light); background: var(--tf-status-success-bg); padding: 2px 8px; border-radius: var(--tf-radius-sm); border: 1px solid var(--tf-status-success-border); }
+
+/* 🌟 畢業進度文字乾淨換行與多行結構 */
+.progress-info-row { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start; 
+    flex-wrap: wrap;
+    gap: 8px; 
+    margin-bottom: 8px; 
+}
+.progress-info-left { 
+    display: flex; 
+    flex-direction: column; 
+    align-items: flex-start; 
+    gap: 6px; 
+    flex: 1; 
+    min-width: 0;
+}
+.progress-badge { 
+    background: var(--tf-color-primary-subtle); 
+    color: var(--tf-color-primary-light); 
+    border: 1px solid var(--tf-color-primary-border); 
+    font-size: var(--tf-text-xs); 
+    font-weight: var(--tf-weight-medium); 
+    padding: 2px 8px; 
+    border-radius: var(--tf-radius-sm); 
+}
+.progress-details-text { 
+    font-size: var(--tf-text-xs); 
+    font-weight: var(--tf-weight-regular); 
+    color: var(--tf-text-secondary); 
+    margin-left: 0; 
+    line-height: 1.45;
+    word-break: break-word;
+}
+.progress-percent-badge { 
+    font-size: var(--tf-text-sm); 
+    font-weight: var(--tf-weight-semibold); 
+    color: var(--tf-status-success-light); 
+    background: var(--tf-status-success-bg); 
+    padding: 2px 8px; 
+    border-radius: var(--tf-radius-sm); 
+    border: 1px solid var(--tf-status-success-border); 
+}
 .progress-track {
     width: 100%;
     background: var(--tf-border-default);
@@ -1026,7 +866,6 @@ body {
     text-align: center;
 }
 
-/* 🌟 其他 6 張門檻卡片：標準 1x1，自動依序排列在右方 3x2 格子內 */
 .checker-gen-threshold-grid > .checker-card:not(#card-gen-combined) {
     grid-column: span 1;
     grid-row: span 1;
@@ -1041,6 +880,7 @@ body {
     color: var(--tf-text-primary);
 }
 .checker-card.passed-status { border-color: var(--tf-status-success-border); background: var(--tf-status-success-bg); }
+.checker-card.planned-status { border-color: var(--tf-color-primary-border); background: var(--tf-color-primary-subtle); }
 .checker-card.failed-status { border-color: var(--tf-status-danger-border); background: var(--tf-status-danger-bg); }
 
 .checker-card .title {
@@ -1382,9 +1222,7 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
     body { padding-bottom: calc(65px + env(safe-area-inset-bottom, 0px)); }
     .tf-schedule-main-layout { grid-template-columns: 1fr; }
     .tf-schedule-right-panel { width: 100%; }
-    .col-assess { display: none; }
 
-    /* 平板上門檻網格改為 3 欄 */
     .checker-gen-threshold-grid {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -1397,10 +1235,33 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
 /* ==========================================================================
    9. 行動版深度適配 (Max-width: 768px)
    ========================================================================== */
-
 @media (max-width: 768px) {
     body { 
         padding: 6px 6px calc(70px + env(safe-area-inset-bottom, 0px)) 6px !important; 
+    }
+
+    /* 🌟 徹底修復手機版抽屜遮擋白屏問題 */
+    .sidebar { 
+        position: fixed !important; 
+        inset: 0 !important; 
+        width: 100vw !important; 
+        height: 100vh !important; 
+        border-radius: 0 !important; 
+        z-index: 5000 !important; 
+        max-height: 100vh;
+        transition: transform 0.25s ease, opacity 0.2s ease !important;
+    }
+    body:not(.sidebar-open) .sidebar { 
+        display: none !important; 
+        transform: translateX(100%) !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+    }
+    body.sidebar-open .sidebar { 
+        display: block !important; 
+        transform: translateX(0) !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
     }
 
     /* 1. 頂部控制列緊湊化 */
@@ -1455,15 +1316,15 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
     /* 4. 解決門檻卡片無限拉長問題：通識佔 2 欄，其餘 2 欄並排 */
     .checker-gen-threshold-grid {
         grid-template-columns: repeat(2, 1fr) !important;
-        grid-auto-rows: auto !important; /* 🌟 關鍵：解除 1fr 等高拉伸 */
+        grid-auto-rows: auto !important;
         gap: 6px !important;
     }
     #card-gen-combined {
-        grid-column: span 2 !important; /* 通識跨滿 2 欄 */
+        grid-column: span 2 !important;
         grid-row: auto !important;
     }
     .checker-gen-threshold-grid > .checker-card:not(#card-gen-combined) {
-        grid-column: span 1 !important; /* 國文、英文、體育等各佔半寬 */
+        grid-column: span 1 !important;
         grid-row: auto !important;
     }
 
@@ -1477,7 +1338,7 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
         display: flex;
         justify-content: space-between;
         gap: 4px;
-        padding-right: 48px; /* 🌟 預留空間給右下角 FAB 按鈕 */
+        padding-right: 48px;
         box-sizing: border-box;
     }
 
@@ -1488,18 +1349,30 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
         right: 12px !important;
         bottom: calc(65px + env(safe-area-inset-bottom, 0px) + 8px) !important;
     }
+
+    /* 7. 手機版畢業進度文字乾淨換行 */
+    .progress-info-row {
+        align-items: flex-start !important;
+    }
+    .progress-info-left {
+        width: 100%;
+    }
+    .progress-details-text {
+        font-size: 0.75rem !important;
+        line-height: 1.4 !important;
+        margin-top: 4px !important;
+        margin-left: 0 !important;
+    }
 }
 
 /* ==========================================================================
    10. 極小螢幕適配 (Max-width: 480px)
    ========================================================================== */
 @media (max-width: 480px) {
-    .checker-grid-core { grid-template-columns: 1fr; }
     .theme-switcher-grid { grid-template-columns: 1fr; }
     .report-header-ui { flex-direction: column; align-items: stretch; }
     .report-header-ui .btn-print { width: 100%; }
 }
-
 
 /* 頂部結算按鈕 */
 .tf-btn-grade {
