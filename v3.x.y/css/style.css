@@ -1233,14 +1233,14 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
 }
 
 /* ==========================================================================
-   9. 行動版深度適配 (Max-width: 768px)
+   9. 行動版深度適配 (Max-width: 768px) - 完整修復版
    ========================================================================== */
 @media (max-width: 768px) {
     body { 
         padding: 6px 6px calc(70px + env(safe-area-inset-bottom, 0px)) 6px !important; 
     }
 
-    /* 🌟 徹底修復手機版抽屜遮擋白屏問題 */
+    /* 🌟 1. 抽屜關閉時隱藏，避免覆蓋造成白屏 */
     .sidebar { 
         position: fixed !important; 
         inset: 0 !important; 
@@ -1264,7 +1264,7 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
         pointer-events: auto !important;
     }
 
-    /* 1. 頂部控制列緊湊化 */
+    /* 🌟 2. 頂部控制列緊湊化 */
     .tf-sched-topbar, .grad-top-actions-bar {
         flex-direction: column;
         align-items: stretch;
@@ -1283,23 +1283,67 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
         padding: 0 8px !important;
     }
 
-    /* 2. 課表卡片字體與行距微調 */
+    /* 🌟 3. 完整恢復手機版 Grid 課表格線（解決垂直一長串問題） */
     .desktop-schedule-view, .tf-desktop-table-wrapper { display: none !important; }
     .mobile-schedule-wrapper { display: flex; flex-direction: column; width: 100%; flex: 1; }
-    .mobile-grid-container {
-        padding: 1px;
+    
+    .mobile-grid-container { 
+        display: grid !important; 
+        width: 100%; 
+        background: var(--tf-surface-sunken); 
+        border-radius: var(--tf-radius-md); 
+        border: 1px solid var(--tf-border-default); 
+        padding: 1px; 
     }
-    .mobile-course-card {
-        padding: 3px 2px !important;
-        line-height: 1.15;
+    .mobile-grid-header { 
+        text-align: center; 
+        font-size: 0.7rem; 
+        font-weight: var(--tf-weight-semibold); 
+        color: var(--tf-text-secondary); 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        border-bottom: 1px solid var(--tf-border-default); 
+        background: var(--tf-surface-sunken); 
+        min-height: 28px;
     }
-    .mobile-course-name {
-        font-size: 0.62rem !important;
+    .mobile-grid-time { 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        font-size: 0.65rem; 
+        font-weight: var(--tf-weight-medium); 
+        color: var(--tf-text-muted); 
+        border-right: 1px solid var(--tf-border-default); 
+        border-bottom: 1px solid var(--tf-border-subtle); 
+        background: var(--tf-surface-sunken); 
+    }
+    .mobile-grid-cell { 
+        background: var(--tf-surface-base);
+        border-right: 1px dashed var(--tf-border-subtle); 
+        border-bottom: 1px dashed var(--tf-border-subtle); 
+    }
+    .mobile-course-card { 
+        border-radius: var(--tf-radius-sm); 
+        padding: 3px 2px !important; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 1px; 
+        font-size: 0.65rem; 
+        background: var(--tf-surface-overlay); 
+        border-left: 3px solid var(--tf-color-primary); 
+    }
+    .mobile-course-name { 
+        font-weight: var(--tf-weight-semibold); 
+        font-size: 0.62rem !important; 
+        color: var(--tf-text-primary); 
         line-height: 1.2;
         word-break: break-all;
     }
+    .mobile-course-room { font-size: 0.58rem; color: var(--tf-text-secondary); }
+    .mobile-course-teacher { font-size: 0.55rem; color: var(--tf-text-muted); }
 
-    /* 3. 解決巨大空隙卡片：專業學分改為精緻 2x2 */
+    /* 🌟 4. 畢業檢核卡片：專業 2x2、門檻 2 欄並排 */
     .checker-grid-core { 
         grid-template-columns: repeat(2, 1fr) !important; 
         grid-auto-rows: auto !important;
@@ -1312,8 +1356,6 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
     .checker-card .score-group .actual {
         font-size: 0.95rem !important;
     }
-
-    /* 4. 解決門檻卡片無限拉長問題：通識佔 2 欄，其餘 2 欄並排 */
     .checker-gen-threshold-grid {
         grid-template-columns: repeat(2, 1fr) !important;
         grid-auto-rows: auto !important;
@@ -1328,9 +1370,23 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
         grid-row: auto !important;
     }
 
-    /* 5. 底部統計條避免被 FAB 遮擋 */
+    /* 🌟 5. 畢業進度多行自然斷行 */
+    .progress-info-row {
+        align-items: flex-start !important;
+    }
+    .progress-info-left {
+        width: 100%;
+    }
+    .progress-details-text {
+        font-size: 0.74rem !important;
+        line-height: 1.4 !important;
+        margin-top: 4px !important;
+        margin-left: 0 !important;
+    }
+
+    /* 🌟 6. 底部統計條避免與 FAB 衝突 */
     .tf-weekly-stats-strip {
-        padding: 8px 10px 8px 10px !important;
+        padding: 8px 10px !important;
         margin-bottom: 8px;
     }
     .stats-metrics-group {
@@ -1341,27 +1397,11 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
         padding-right: 48px;
         box-sizing: border-box;
     }
-
-    /* 6. FAB 懸浮按鈕微調 */
     .mobile-fab {
         width: 40px !important;
         height: 40px !important;
         right: 12px !important;
         bottom: calc(65px + env(safe-area-inset-bottom, 0px) + 8px) !important;
-    }
-
-    /* 7. 手機版畢業進度文字乾淨換行 */
-    .progress-info-row {
-        align-items: flex-start !important;
-    }
-    .progress-info-left {
-        width: 100%;
-    }
-    .progress-details-text {
-        font-size: 0.75rem !important;
-        line-height: 1.4 !important;
-        margin-top: 4px !important;
-        margin-left: 0 !important;
     }
 }
 
