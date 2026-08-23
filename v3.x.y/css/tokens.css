@@ -1,0 +1,578 @@
+/* ==========================================================================
+   TimeFlow Design Tokens & Semantic Theme System (v3.1 Eye-Friendly)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. 全域共用基礎規格 (Typography, Radii, Shadows, Transitions)
+   -------------------------------------------------------------------------- */
+:root {
+    /* 預設狀態語意色 */
+    --tf-status-success: #10b981;
+    --tf-status-success-light: #34d399;
+    --tf-status-success-bg: rgba(16, 185, 129, 0.14);
+    --tf-status-success-border: rgba(16, 185, 129, 0.3);
+
+    --tf-status-warning: #f59e0b;
+    --tf-status-warning-light: #fbbf24;
+    --tf-status-warning-bg: rgba(245, 158, 11, 0.14);
+    --tf-status-warning-border: rgba(245, 158, 11, 0.35);
+
+    --tf-status-danger: #ef4444;
+    --tf-status-danger-light: #f87171;
+    --tf-status-danger-bg: rgba(239, 68, 68, 0.14);
+    --tf-status-danger-border: rgba(239, 68, 68, 0.3);
+
+    --tf-status-info: #3b82f6;
+    --tf-status-info-light: #60a5fa;
+    --tf-status-info-bg: rgba(59, 130, 246, 0.14);
+    --tf-status-info-border: rgba(59, 130, 246, 0.3);
+
+    /* 字型與排版 */
+    --tf-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    --tf-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    --tf-text-xs: 0.72rem;     
+    --tf-text-sm: 0.82rem;     
+    --tf-text-base: 0.9rem;   
+    --tf-text-lg: 1rem;     
+    --tf-text-xl: 1.15rem;     
+    --tf-text-2xl: 1.4rem;    
+
+    --tf-weight-regular: 400;
+    --tf-weight-medium: 500;
+    --tf-weight-semibold: 600;
+    --tf-weight-bold: 700;
+
+    /* 圓角規格 */
+    --tf-radius-sm: 4px;
+    --tf-radius-md: 6px;
+    --tf-radius-lg: 8px;
+    --tf-radius-xl: 10px;
+    --tf-radius-full: 9999px;
+
+    /* 陰影規格 */
+    --tf-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.25);
+    --tf-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35);
+    --tf-shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.45);
+    --tf-shadow-modal: 0 16px 36px rgba(0, 0, 0, 0.55);
+
+    --tf-transition-fast: 120ms ease;
+    --tf-transition-base: 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* --------------------------------------------------------------------------
+   2. 🌌 預設夜幕紫 (Purple Theme - 護眼暗夜紫調)
+   -------------------------------------------------------------------------- */
+:root,
+[data-theme="purple"] {
+    --tf-bg-app: #13141f;
+    --tf-bg-subtle: #171826;
+    --tf-surface-sunken: #181928;
+    --tf-surface-base: #1e2032;
+    --tf-surface-elevated: #24263b;
+    --tf-surface-overlay: #2a2d45;
+
+    --tf-border-subtle: rgba(255, 255, 255, 0.05);
+    --tf-border-default: rgba(255, 255, 255, 0.09);
+    --tf-border-strong: rgba(255, 255, 255, 0.18);
+
+    --tf-text-primary: #e2e8f0;
+    --tf-text-secondary: #cbd5e1;
+    --tf-text-muted: #94a3b8;
+    --tf-text-disabled: #64748b;
+    --tf-text-inverse: #0f172a;
+
+    --tf-color-primary: #6366f1;
+    --tf-color-primary-hover: #4f46e5;
+    --tf-color-primary-light: #a5b4fc;
+    --tf-color-primary-subtle: rgba(99, 102, 241, 0.15);
+    --tf-color-primary-border: rgba(99, 102, 241, 0.35);
+    --tf-color-focus: #818cf8;
+    --tf-color-link: #a5b4fc;
+}
+
+/* --------------------------------------------------------------------------
+   3. 🌊 深海暗藍主題 (Blue Theme - 北歐柔霧護眼)
+   -------------------------------------------------------------------------- */
+[data-theme="blue"] {
+    --tf-bg-app: #111822;
+    --tf-bg-subtle: #151e2b;
+    --tf-surface-sunken: #16202d;
+    --tf-surface-base: #1c2838;
+    --tf-surface-elevated: #223043;
+    --tf-surface-overlay: #28394e;
+
+    --tf-border-subtle: rgba(255, 255, 255, 0.05);
+    --tf-border-default: rgba(255, 255, 255, 0.09);
+    --tf-border-strong: rgba(255, 255, 255, 0.18);
+
+    --tf-text-primary: #e2e8f0;
+    --tf-text-secondary: #cbd5e1;
+    --tf-text-muted: #94a3b8;
+    --tf-text-disabled: #64748b;
+    --tf-text-inverse: #0f172a;
+
+    --tf-color-primary: #3b82f6;
+    --tf-color-primary-hover: #2563eb;
+    --tf-color-primary-light: #93c5fd;
+    --tf-color-primary-subtle: rgba(59, 130, 246, 0.15);
+    --tf-color-primary-border: rgba(59, 130, 246, 0.35);
+    --tf-color-focus: #60a5fa;
+    --tf-color-link: #93c5fd;
+}
+
+/* --------------------------------------------------------------------------
+   4. 🪵 暖岩深灰主題 (Neutral Theme - 溫潤低藍光炭灰)
+   -------------------------------------------------------------------------- */
+[data-theme="neutral"] {
+    --tf-bg-app: #18181b;
+    --tf-bg-subtle: #1c1c20;
+    --tf-surface-sunken: #202024;
+    --tf-surface-base: #27272a;
+    --tf-surface-elevated: #2f2f34;
+    --tf-surface-overlay: #38383e;
+
+    --tf-border-subtle: rgba(255, 255, 255, 0.06);
+    --tf-border-default: rgba(255, 255, 255, 0.11);
+    --tf-border-strong: rgba(255, 255, 255, 0.2);
+
+    --tf-text-primary: #e4e4e7;
+    --tf-text-secondary: #cbd5e1;
+    --tf-text-muted: #a1a1aa;
+    --tf-text-disabled: #71717a;
+    --tf-text-inverse: #0f172a;
+
+    --tf-color-primary: #71717a;
+    --tf-color-primary-hover: #52525b;
+    --tf-color-primary-light: #d4d4d8;
+    --tf-color-primary-subtle: rgba(255, 255, 255, 0.08);
+    --tf-color-primary-border: rgba(255, 255, 255, 0.2);
+    --tf-color-focus: #a1a1aa;
+    --tf-color-link: #d4d4d8;
+
+    --tf-status-info: #64748b;
+    --tf-status-info-light: #94a3b8;
+    --tf-status-info-bg: rgba(255, 255, 255, 0.06);
+    --tf-status-info-border: rgba(255, 255, 255, 0.16);
+}
+
+/* --------------------------------------------------------------------------
+   5. 🍃 深林墨綠主題 (Forest Dark - 黑曜冷杉低明度護眼)
+   -------------------------------------------------------------------------- */
+[data-theme="forest"] {
+    --tf-bg-app: #0b120e;              /* 全站底色：黑曜深杉黑 */
+    --tf-bg-subtle: #0e1712;
+    --tf-surface-sunken: #0f1a14;      /* 面板底色 */
+    --tf-surface-base: #14221b;        /* 課表網格與卡片基底 */
+    --tf-surface-elevated: #192b22;
+    --tf-surface-overlay: #1f352a;     /* 課程卡片懸浮色 */
+
+    --tf-border-subtle: rgba(255, 255, 255, 0.04);
+    --tf-border-default: rgba(255, 255, 255, 0.08);
+    --tf-border-strong: rgba(255, 255, 255, 0.15);
+
+    --tf-text-primary: #dbe6e0;        /* 柔霧月白綠，去除刺眼眩光 */
+    --tf-text-secondary: #a9c2b4;
+    --tf-text-muted: #739080;
+    --tf-text-disabled: #4a6355;
+    --tf-text-inverse: #0b120e;
+
+    --tf-color-primary: #15803d;       /* 主色：沉穩冷杉深綠（去除高亮螢光感） */
+    --tf-color-primary-hover: #166534;
+    --tf-color-primary-light: #34d399; /* 次要強調色：溫和海沫綠 */
+    --tf-color-primary-subtle: rgba(21, 128, 61, 0.18);
+    --tf-color-primary-border: rgba(52, 211, 153, 0.25);
+    --tf-color-focus: #15803d;
+    --tf-color-link: #34d399;
+
+    --tf-status-success: #10b981;
+    --tf-status-success-light: #34d399;
+    --tf-status-success-bg: rgba(16, 185, 129, 0.12);
+    --tf-status-success-border: rgba(16, 185, 129, 0.25);
+
+    --tf-status-warning: #f59e0b;
+    --tf-status-warning-light: #fbbf24;
+    --tf-status-warning-bg: rgba(245, 158, 11, 0.12);
+    --tf-status-warning-border: rgba(245, 158, 11, 0.28);
+
+    --tf-status-danger: #ef4444;
+    --tf-status-danger-light: #f87171;
+    --tf-status-danger-bg: rgba(239, 68, 68, 0.12);
+    --tf-status-danger-border: rgba(239, 68, 68, 0.25);
+
+    --tf-status-info: #38bdf8;
+    --tf-status-info-light: #7dd3fc;
+    --tf-status-info-bg: rgba(56, 189, 248, 0.12);
+    --tf-status-info-border: rgba(56, 189, 248, 0.25);
+}
+
+/* --------------------------------------------------------------------------
+   6. 🌸 馬卡龍紫主題 (Macaron Theme - 柔霧低反光護眼淺色)
+   -------------------------------------------------------------------------- */
+[data-theme="macaron"],
+[data-theme="light"] {
+    --tf-bg-app: #d8e0eb;              
+    --tf-bg-subtle: #cbd5e2;           
+    --tf-surface-sunken: #e2eaf4;      
+    --tf-surface-base: #ebf1f8;        
+    --tf-surface-elevated: #f1f6fc;    
+    --tf-surface-overlay: #edf3fa;     
+
+    --tf-border-subtle: rgba(51, 65, 85, 0.12);
+    --tf-border-default: rgba(51, 65, 85, 0.22);
+    --tf-border-strong: rgba(51, 65, 85, 0.38);
+
+    --tf-text-primary: #0f172a;
+    --tf-text-secondary: #1e293b;
+    --tf-text-muted: #334155;
+    --tf-text-disabled: #64748b;
+    --tf-text-inverse: #ffffff;
+
+    --tf-color-primary: #63589f;
+    --tf-color-primary-hover: #52478a;
+    --tf-color-primary-light: #3f366e;
+    --tf-color-primary-subtle: rgba(99, 88, 159, 0.14);
+    --tf-color-primary-border: rgba(99, 88, 159, 0.35);
+    --tf-color-focus: #63589f;
+    --tf-color-link: #3f366e;
+
+    --tf-status-success: #064e3b;
+    --tf-status-success-light: #064e3b;
+    --tf-status-success-bg: #d1fae5;
+    --tf-status-success-border: #6ee7b7;
+
+    --tf-status-warning: #713f12;
+    --tf-status-warning-light: #713f12;
+    --tf-status-warning-bg: #fef3c7;
+    --tf-status-warning-border: #fcd34d;
+
+    --tf-status-danger: #881337;
+    --tf-status-danger-light: #881337;
+    --tf-status-danger-bg: #ffe4e6;
+    --tf-status-danger-border: #fda4af;
+
+    --tf-status-info: #1e3a8a;
+    --tf-status-info-light: #1e3a8a;
+    --tf-status-info-bg: #dbeafe;
+    --tf-status-info-border: #93c5fd;
+
+    --tf-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+    --tf-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.1);
+    --tf-shadow-lg: 0 10px 24px rgba(15, 23, 42, 0.14);
+    --tf-shadow-modal: 0 16px 36px rgba(15, 23, 42, 0.22);
+}
+
+/* --------------------------------------------------------------------------
+   7. ⚪ 全亮白主題 (Pure White Theme - 經典純白簡約 SaaS)
+   -------------------------------------------------------------------------- */
+[data-theme="white"] {
+    --tf-bg-app: #ffffff;
+    --tf-bg-subtle: #f8fafc;
+    --tf-surface-sunken: #f8fafc;
+    --tf-surface-base: #ffffff;
+    --tf-surface-elevated: #ffffff;
+    --tf-surface-overlay: #ffffff;
+
+    --tf-border-subtle: #f1f5f9;
+    --tf-border-default: #e2e8f0;
+    --tf-border-strong: #cbd5e1;
+
+    --tf-text-primary: #0f172a;
+    --tf-text-secondary: #334155;
+    --tf-text-muted: #64748b;
+    --tf-text-disabled: #94a3b8;
+    --tf-text-inverse: #ffffff;
+
+    --tf-color-primary: #4f46e5;
+    --tf-color-primary-hover: #4338ca;
+    --tf-color-primary-light: #4338ca;
+    --tf-color-primary-subtle: rgba(79, 70, 229, 0.08);
+    --tf-color-primary-border: rgba(79, 70, 229, 0.25);
+    --tf-color-focus: #4f46e5;
+    --tf-color-link: #4f46e5;
+
+    --tf-status-success: #059669;
+    --tf-status-success-light: #047857;
+    --tf-status-success-bg: #ecfdf5;
+    --tf-status-success-border: #a7f3d0;
+
+    --tf-status-warning: #d97706;
+    --tf-status-warning-light: #b45309;
+    --tf-status-warning-bg: #fffbeb;
+    --tf-status-warning-border: #fde68a;
+
+    --tf-status-danger: #e11d48;
+    --tf-status-danger-light: #be123c;
+    --tf-status-danger-bg: #fff1f2;
+    --tf-status-danger-border: #fecdd3;
+
+    --tf-status-info: #0284c7;
+    --tf-status-info-light: #0369a1;
+    --tf-status-info-bg: #f0f9ff;
+    --tf-status-info-border: #bae6fd;
+
+    --tf-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --tf-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+    --tf-shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.08);
+    --tf-shadow-modal: 0 16px 36px rgba(0, 0, 0, 0.12);
+}
+
+/* --------------------------------------------------------------------------
+   8. ☕ 燕麥拿鐵主題 (Oat Latte Theme - 暖米紙感淺色)
+   -------------------------------------------------------------------------- */
+[data-theme="latte"] {
+    --tf-bg-app: #e5ded4;
+    --tf-bg-subtle: #dbd3c7;
+    --tf-surface-sunken: #e2dacd;
+    --tf-surface-base: #f0e9df;
+    --tf-surface-elevated: #f8f3eb;
+    --tf-surface-overlay: #eae2d6;
+
+    --tf-border-subtle: rgba(100, 65, 40, 0.1);
+    --tf-border-default: rgba(100, 65, 40, 0.18);
+    --tf-border-strong: rgba(100, 65, 40, 0.32);
+
+    --tf-text-primary: #2d1e14;
+    --tf-text-secondary: #4a3424;
+    --tf-text-muted: #73553f;
+    --tf-text-disabled: #9e7e68;
+    --tf-text-inverse: #ffffff;
+
+    --tf-color-primary: #7c5335;
+    --tf-color-primary-hover: #634027;
+    --tf-color-primary-light: #52341e;
+    --tf-color-primary-subtle: rgba(124, 83, 53, 0.14);
+    --tf-color-primary-border: rgba(124, 83, 53, 0.35);
+    --tf-color-focus: #7c5335;
+    --tf-color-link: #52341e;
+
+    --tf-status-success: #2e5a36;
+    --tf-status-success-light: #2e5a36;
+    --tf-status-success-bg: #dceada;
+    --tf-status-success-border: #9dc49a;
+
+    --tf-status-warning: #7c4a1e;
+    --tf-status-warning-light: #7c4a1e;
+    --tf-status-warning-bg: #fbeddc;
+    --tf-status-warning-border: #f0c59e;
+
+    --tf-status-danger: #8a2e2b;
+    --tf-status-danger-light: #8a2e2b;
+    --tf-status-danger-bg: #f9dedd;
+    --tf-status-danger-border: #e69d9b;
+
+    --tf-status-info: #2a4b7c;
+    --tf-status-info-light: #2a4b7c;
+    --tf-status-info-bg: #dbe4f4;
+    --tf-status-info-border: #9cb5de;
+}
+
+/* --------------------------------------------------------------------------
+   9. 🌅 暮光琥珀主題 (Sunset Amber Theme - 暖夜深色)
+   -------------------------------------------------------------------------- */
+[data-theme="sunset"] {
+    --tf-bg-app: #191513;
+    --tf-bg-subtle: #1e1a17;
+    --tf-surface-sunken: #211c19;
+    --tf-surface-base: #28231f;
+    --tf-surface-elevated: #312b26;
+    --tf-surface-overlay: #3a332d;
+
+    --tf-border-subtle: rgba(255, 255, 255, 0.05);
+    --tf-border-default: rgba(255, 255, 255, 0.1);
+    --tf-border-strong: rgba(255, 255, 255, 0.2);
+
+    --tf-text-primary: #f2ebe4;
+    --tf-text-secondary: #d6cac0;
+    --tf-text-muted: #a39589;
+    --tf-text-disabled: #73675e;
+    --tf-text-inverse: #191513;
+
+    --tf-color-primary: #d97706;
+    --tf-color-primary-hover: #b45309;
+    --tf-color-primary-light: #fbbf24;
+    --tf-color-primary-subtle: rgba(217, 119, 6, 0.15);
+    --tf-color-primary-border: rgba(245, 158, 11, 0.35);
+    --tf-color-focus: #f59e0b;
+    --tf-color-link: #fbbf24;
+}
+
+/* --------------------------------------------------------------------------
+   10. 🌌 極光幽夜主題 (Nordic Aurora Theme - 墨綠青夜深色)
+   -------------------------------------------------------------------------- */
+[data-theme="aurora"] {
+    --tf-bg-app: #0e1515;
+    --tf-bg-subtle: #121b1b;
+    --tf-surface-sunken: #141e1e;
+    --tf-surface-base: #1a2727;
+    --tf-surface-elevated: #213131;
+    --tf-surface-overlay: #293d3d;
+
+    --tf-border-subtle: rgba(255, 255, 255, 0.05);
+    --tf-border-default: rgba(255, 255, 255, 0.1);
+    --tf-border-strong: rgba(255, 255, 255, 0.2);
+
+    --tf-text-primary: #e2f0ed;
+    --tf-text-secondary: #c2ded7;
+    --tf-text-muted: #8caea6;
+    --tf-text-disabled: #5e7d76;
+    --tf-text-inverse: #0e1515;
+
+    --tf-color-primary: #14b8a6;
+    --tf-color-primary-hover: #0d9488;
+    --tf-color-primary-light: #5eead4;
+    --tf-color-primary-subtle: rgba(20, 184, 166, 0.15);
+    --tf-color-primary-border: rgba(45, 212, 191, 0.35);
+    --tf-color-focus: #2dd4bf;
+    --tf-color-link: #5eead4;
+}
+
+/* --------------------------------------------------------------------------
+   11. 🌸 和風櫻茶主題 (Sakura Sand Theme - 柔霧粉灰淺色)
+   -------------------------------------------------------------------------- */
+[data-theme="sakura"] {
+    --tf-bg-app: #e4d8d8;
+    --tf-bg-subtle: #d9cccc;
+    --tf-surface-sunken: #ded3d3;
+    --tf-surface-base: #eee3e3;
+    --tf-surface-elevated: #f7efef;
+    --tf-surface-overlay: #e7dbdb;
+
+    --tf-border-subtle: rgba(110, 50, 60, 0.1);
+    --tf-border-default: rgba(110, 50, 60, 0.18);
+    --tf-border-strong: rgba(110, 50, 60, 0.32);
+
+    --tf-text-primary: #2d1619;
+    --tf-text-secondary: #4a282d;
+    --tf-text-muted: #75484f;
+    --tf-text-disabled: #9c7178;
+    --tf-text-inverse: #ffffff;
+
+    --tf-color-primary: #8b4f58;
+    --tf-color-primary-hover: #703c44;
+    --tf-color-primary-light: #5e2f37;
+    --tf-color-primary-subtle: rgba(139, 79, 88, 0.14);
+    --tf-color-primary-border: rgba(139, 79, 88, 0.35);
+    --tf-color-focus: #8b4f58;
+    --tf-color-link: #5e2f37;
+
+    --tf-status-success: #265538;
+    --tf-status-success-light: #265538;
+    --tf-status-success-bg: #dbebe0;
+    --tf-status-success-border: #9ec9aa;
+
+    --tf-status-warning: #78471c;
+    --tf-status-warning-light: #78471c;
+    --tf-status-warning-bg: #fbeef0;
+    --tf-status-warning-border: #f0c8a5;
+
+    --tf-status-danger: #8a2632;
+    --tf-status-danger-light: #8a2632;
+    --tf-status-danger-bg: #f9dade;
+    --tf-status-danger-border: #e697a2;
+
+    --tf-status-info: #314272;
+    --tf-status-info-light: #314272;
+    --tf-status-info-bg: #dde2f4;
+    --tf-status-info-border: #9eabe0;
+}
+
+/* --------------------------------------------------------------------------
+   12. 🩵 冰川晴空主題 (Glacier Sky Theme - 清爽微霧淺藍)
+   -------------------------------------------------------------------------- */
+[data-theme="glacier"] {
+    --tf-bg-app: #d9e5ec;
+    --tf-bg-subtle: #cee0eb;
+    --tf-surface-sunken: #e1edf4;
+    --tf-surface-base: #ebf4fa;
+    --tf-surface-elevated: #f3f8fc;
+    --tf-surface-overlay: #e5f0f7;
+
+    --tf-border-subtle: rgba(29, 99, 184, 0.1);
+    --tf-border-default: rgba(29, 99, 184, 0.18);
+    --tf-border-strong: rgba(29, 99, 184, 0.32);
+
+    --tf-text-primary: #0e2030;
+    --tf-text-secondary: #1e3548;
+    --tf-text-muted: #385268;
+    --tf-text-disabled: #637f97;
+    --tf-text-inverse: #ffffff;
+
+    --tf-color-primary: #1d63b8;
+    --tf-color-primary-hover: #164e91;
+    --tf-color-primary-light: #154e94;
+    --tf-color-primary-subtle: rgba(29, 99, 184, 0.14);
+    --tf-color-primary-border: rgba(29, 99, 184, 0.35);
+    --tf-color-focus: #1d63b8;
+    --tf-color-link: #154e94;
+
+    --tf-status-success: #156238;
+    --tf-status-success-light: #156238;
+    --tf-status-success-bg: #d7ede1;
+    --tf-status-success-border: #92cca7;
+
+    --tf-status-warning: #7a4b18;
+    --tf-status-warning-light: #7a4b18;
+    --tf-status-warning-bg: #faeedc;
+    --tf-status-warning-border: #ecc495;
+
+    --tf-status-danger: #8a242c;
+    --tf-status-danger-light: #8a242c;
+    --tf-status-danger-bg: #f9dedf;
+    --tf-status-danger-border: #e69aa0;
+
+    --tf-status-info: #1b539c;
+    --tf-status-info-light: #1b539c;
+    --tf-status-info-bg: #dbe7f7;
+    --tf-status-info-border: #9cbfe8;
+}
+
+/* --------------------------------------------------------------------------
+   13. 🌫️ 晨霧灰藍主題 (Morning Mist Theme - 冷水洗牛仔灰青淺色)
+   -------------------------------------------------------------------------- */
+[data-theme="mist"] {
+    --tf-bg-app: #d6dce3;
+    --tf-bg-subtle: #c9d2dc;
+    --tf-surface-sunken: #dee4ea;
+    --tf-surface-base: #e8edf2;
+    --tf-surface-elevated: #f1f5f8;
+    --tf-surface-overlay: #e2e8ee;
+
+    --tf-border-subtle: rgba(53, 83, 112, 0.1);
+    --tf-border-default: rgba(53, 83, 112, 0.18);
+    --tf-border-strong: rgba(53, 83, 112, 0.32);
+
+    --tf-text-primary: #141e28;
+    --tf-text-secondary: #243342;
+    --tf-text-muted: #47596a;
+    --tf-text-disabled: #708294;
+    --tf-text-inverse: #ffffff;
+
+    --tf-color-primary: #355370;
+    --tf-color-primary-hover: #29425a;
+    --tf-color-primary-light: #263f57;
+    --tf-color-primary-subtle: rgba(53, 83, 112, 0.14);
+    --tf-color-primary-border: rgba(53, 83, 112, 0.35);
+    --tf-color-focus: #355370;
+    --tf-color-link: #263f57;
+
+    --tf-status-success: #1f5a3c;
+    --tf-status-success-light: #1f5a3c;
+    --tf-status-success-bg: #dbeef3;
+    --tf-status-success-border: #99cbb2;
+
+    --tf-status-warning: #764920;
+    --tf-status-warning-light: #764920;
+    --tf-status-warning-bg: #f8edd7;
+    --tf-status-warning-border: #e6c58e;
+
+    --tf-status-danger: #822b35;
+    --tf-status-danger-light: #822b35;
+    --tf-status-danger-bg: #f7e0e3;
+    --tf-status-danger-border: #de9ea6;
+
+    --tf-status-info: #2c4d75;
+    --tf-status-info-light: #2c4d75;
+    --tf-status-info-bg: #dee7f4;
+    --tf-status-info-border: #9fb8db;
+}
