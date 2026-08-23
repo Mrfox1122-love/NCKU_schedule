@@ -1397,138 +1397,97 @@ body:not(.sidebar-open) .sidebar { width: 0; padding: 0; margin-right: -16px; op
 /* ==========================================================================
    9. 行動版深度適配 (Max-width: 768px)
    ========================================================================== */
+
 @media (max-width: 768px) {
     body { 
-        padding: 6px 6px calc(65px + env(safe-area-inset-bottom, 0px)) 6px !important; 
-    }
-    
-    .desktop-schedule-view, .tf-desktop-table-wrapper { display: none !important; }
-    .mobile-schedule-wrapper { display: flex; flex-direction: column; width: 100%; flex: 1; }
-    .mobile-grid-container { 
-        display: grid; 
-        width: 100%; 
-        background: var(--tf-surface-sunken); 
-        border-radius: var(--tf-radius-md); 
-        border: 1px solid var(--tf-border-default); 
-        padding: 1px; 
-    }
-    .mobile-grid-header { 
-        text-align: center; 
-        font-size: 0.7rem; 
-        font-weight: var(--tf-weight-semibold); 
-        color: var(--tf-text-secondary); 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        border-bottom: 1px solid var(--tf-border-default); 
-        background: var(--tf-surface-sunken); 
-        min-height: 28px;
-    }
-    .mobile-grid-time { 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        font-size: 0.65rem; 
-        font-weight: var(--tf-weight-medium); 
-        color: var(--tf-text-muted); 
-        border-right: 1px solid var(--tf-border-default); 
-        border-bottom: 1px solid var(--tf-border-subtle); 
-        background: var(--tf-surface-sunken); 
-    }
-    .mobile-grid-cell { 
-        background: var(--tf-surface-base);
-        border-right: 1px dashed var(--tf-border-subtle); 
-        border-bottom: 1px dashed var(--tf-border-subtle); 
-    }
-    .mobile-course-card { 
-        border-radius: var(--tf-radius-sm); 
-        padding: 4px; 
-        display: flex; 
-        flex-direction: column; 
-        gap: 1px; 
-        font-size: 0.65rem; 
-        background: var(--tf-surface-overlay); 
-        border-left: 3px solid var(--tf-color-primary); 
-    }
-    .mobile-course-name { font-weight: var(--tf-weight-semibold); font-size: 0.68rem; color: var(--tf-text-primary); }
-    .mobile-course-room { font-size: 0.58rem; color: var(--tf-text-secondary); }
-    .mobile-course-teacher { font-size: 0.55rem; color: var(--tf-text-muted); }
-
-    .mobile-fab { 
-        display: flex; 
-        position: fixed; 
-        right: 14px; 
-        bottom: calc(65px + env(safe-area-inset-bottom, 0px) + 10px); 
-        width: 44px; 
-        height: 44px; 
-        border-radius: 50%; 
-        background: var(--tf-color-primary); 
-        color: var(--tf-text-inverse, #ffffff); 
-        font-size: 1.2rem; 
-        border: none; 
-        justify-content: center; 
-        align-items: center; 
-        z-index: 3500; 
-        box-shadow: var(--tf-shadow-md);
-    }
-    .sidebar { 
-        position: fixed !important; 
-        inset: 0 !important; 
-        width: 100vw !important; 
-        height: 100vh !important; 
-        border-radius: 0 !important; 
-        z-index: 5000 !important; 
-        max-height: 100vh;
+        padding: 6px 6px calc(70px + env(safe-area-inset-bottom, 0px)) 6px !important; 
     }
 
+    /* 1. 頂部控制列緊湊化 */
     .tf-sched-topbar, .grad-top-actions-bar {
         flex-direction: column;
         align-items: stretch;
-        gap: 8px;
+        gap: 6px;
     }
     .tf-sched-topbar-left, .tf-sched-topbar-right, .grad-action-btns {
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 4px;
     }
+    .tf-sem-dropdown { font-size: 0.8rem; }
+    .tf-pill-btn, .toggle-pill, .tf-btn-action {
+        height: 28px !important;
+        font-size: 0.68rem !important;
+        padding: 0 8px !important;
+    }
+
+    /* 2. 課表卡片字體與行距微調 */
+    .desktop-schedule-view, .tf-desktop-table-wrapper { display: none !important; }
+    .mobile-schedule-wrapper { display: flex; flex-direction: column; width: 100%; flex: 1; }
+    .mobile-grid-container {
+        padding: 1px;
+    }
+    .mobile-course-card {
+        padding: 3px 2px !important;
+        line-height: 1.15;
+    }
+    .mobile-course-name {
+        font-size: 0.62rem !important;
+        line-height: 1.2;
+        word-break: break-all;
+    }
+
+    /* 3. 解決巨大空隙卡片：專業學分改為精緻 2x2 */
+    .checker-grid-core { 
+        grid-template-columns: repeat(2, 1fr) !important; 
+        grid-auto-rows: auto !important;
+        gap: 6px !important; 
+    }
+    .checker-card {
+        padding: 8px 6px !important;
+        min-height: auto !important;
+    }
+    .checker-card .score-group .actual {
+        font-size: 0.95rem !important;
+    }
+
+    /* 4. 解決門檻卡片無限拉長問題：通識佔 2 欄，其餘 2 欄並排 */
+    .checker-gen-threshold-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        grid-auto-rows: auto !important; /* 🌟 關鍵：解除 1fr 等高拉伸 */
+        gap: 6px !important;
+    }
+    #card-gen-combined {
+        grid-column: span 2 !important; /* 通識跨滿 2 欄 */
+        grid-row: auto !important;
+    }
+    .checker-gen-threshold-grid > .checker-card:not(#card-gen-combined) {
+        grid-column: span 1 !important; /* 國文、英文、體育等各佔半寬 */
+        grid-row: auto !important;
+    }
+
+    /* 5. 底部統計條避免被 FAB 遮擋 */
     .tf-weekly-stats-strip {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 10px 12px;
+        padding: 8px 10px 8px 10px !important;
+        margin-bottom: 8px;
     }
     .stats-metrics-group {
         width: 100%;
+        display: flex;
         justify-content: space-between;
-        gap: 8px;
+        gap: 4px;
+        padding-right: 48px; /* 🌟 預留空間給右下角 FAB 按鈕 */
+        box-sizing: border-box;
     }
 
-    .tf-table-responsive-wrapper { display: none; }
-    .tf-discover-mobile-list { display: flex; }
-    .tf-filter-bar { gap: 6px; }
-
-    /* 📱 手機版門檻網格改為單欄 */
-    .checker-grid-core { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .checker-gen-threshold-grid {
-        grid-template-columns: 1fr;
-        gap: 8px;
+    /* 6. FAB 懸浮按鈕微調 */
+    .mobile-fab {
+        width: 40px !important;
+        height: 40px !important;
+        right: 12px !important;
+        bottom: calc(65px + env(safe-area-inset-bottom, 0px) + 8px) !important;
     }
-    #card-gen-combined {
-        grid-column: span 1;
-        grid-row: span 1;
-    }
-
-    .config-pills-wrap { gap: 4px; }
-    .cfg-pill { padding: 2px 4px; }
-
-    .chart-drawer {
-        width: 100vw;
-        right: -100vw;
-        padding: 16px;
-    }
-
-    .list-course-row-card { padding: 8px 10px !important; gap: 8px !important; }
-    .list-card-time-box { min-width: 75px !important; padding-right: 6px !important; }
-    .list-card-time-box .l-time { font-size: 0.78rem !important; }
-    .list-card-main-box .l-name { font-size: var(--tf-text-sm) !important; }
 }
 
 /* ==========================================================================

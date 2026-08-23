@@ -65,7 +65,11 @@ function renderGraduationUI(res, data) {
     // 1. 科系名稱與入學級別標題
     const titleEl = document.getElementById('deptNameTitle');
     if (titleEl) {
-        titleEl.innerText = `(${res.deptName} ${res.entryYear || 118} 級)`;
+        const rawName = res.deptName || '成大電機';
+        const yearStr = `${res.entryYear || 118} 級`;
+    // 若名稱內已包含該級別，則不重複串接
+        const displayDept = rawName.includes(yearStr) ? rawName : `${rawName} ${yearStr}`;
+        titleEl.innerText = `（ ${displayDept} ）`;
     }
 
     // 2. 進度條與百分比
