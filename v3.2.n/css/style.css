@@ -2089,3 +2089,54 @@ input[type="number"] {
 .footer-dot {
     color: var(--tf-text-disabled);
 }
+
+/* ==========================================================================
+   圖片匯出格式選擇卡片樣式
+   ========================================================================== */
+.export-options-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.export-opt-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--tf-surface-sunken);
+    border: 1px solid var(--tf-border-default);
+    border-radius: var(--tf-radius-lg);
+    padding: 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: background var(--tf-transition-fast), border-color var(--tf-transition-fast), transform 0.1s ease;
+}
+
+.export-opt-card:hover {
+    background: var(--tf-surface-overlay);
+    border-color: var(--tf-color-primary);
+    transform: translateY(-1px);
+}
+
+.export-opt-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+}
+
+.export-opt-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.export-opt-title {
+    font-size: var(--tf-text-sm);
+    font-weight: var(--tf-weight-semibold);
+    color: var(--tf-text-primary);
+}
+
+.export-opt-desc {
+    font-size: 0.72rem;
+    color: var(--tf-text-muted);
+    line-height: 1.45;
+}

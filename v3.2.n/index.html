@@ -91,6 +91,42 @@
     </div>
 </div>
 
+<!-- 課表圖片匯出尺寸選擇彈窗 Modal -->
+<div id="exportFormatModal" class="course-detail-overlay" onclick="closeExportFormatModal(event)">
+    <div class="course-detail-card" style="max-width: 440px;" onclick="event.stopPropagation()">
+        <div class="course-detail-header">
+            <h3 class="modal-title">匯出課表圖片</h3>
+            <button type="button" class="modal-close-btn" onclick="closeExportFormatModal()">✕</button>
+        </div>
+        <div style="padding: 16px; display: flex; flex-direction: column; gap: 12px;">
+            <p style="margin: 0; font-size: 0.8rem; color: var(--tf-text-secondary); line-height: 1.5;">
+                請選擇適合的圖片用途與比例：
+            </p>
+
+            <div class="export-options-grid">
+                <button type="button" class="export-opt-card" onclick="processExportSchedule('wallpaper')">
+                    <div class="export-opt-icon">📱</div>
+                    <div class="export-opt-info">
+                        <span class="export-opt-title">手機鎖定畫面桌布 (9:19.5 直式)</span>
+                        <span class="export-opt-desc">設為 iPhone / Android 桌布。</span>
+                    </div>
+                </button>
+
+                <button type="button" class="export-opt-card" onclick="processExportSchedule('desktop')">
+                    <div class="export-opt-icon">💻</div>
+                    <div class="export-opt-info">
+                        <span class="export-opt-title">電腦寬版 / 列印分享 (16:9 橫式)</span>
+                        <span class="export-opt-desc">標準 1200px 寬版高清圖，適合存於電腦、平板或傳送給同學比對課表。</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+        <div class="course-detail-footer">
+            <button type="button" class="tf-btn tf-btn-sm tf-btn-ghost" onclick="closeExportFormatModal()">取消</button>
+        </div>
+    </div>
+</div>
+
 <!-- What-If 目標 GPA 倒推模擬器 Modal -->
 <div id="whatIfModal" class="course-detail-overlay" onclick="ModalManager.close('whatIfModal')">
     <div class="course-detail-card" style="max-width: 440px;" onclick="event.stopPropagation()">
