@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeFlow - 成大生修課與畢業規劃系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <link rel="stylesheet" href="css/tokens.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- PWA 與 iOS 支援標籤 -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#13141f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TimeFlow">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+
+<!-- 側邊欄開關按鈕與遮罩 -->
+<button type="button" id="sidebarToggle" class="sidebar-toggle" onclick="toggleSidebar()" title="開啟 / 收合課程編輯器">☰</button>
+<div class="sidebar-mobile-overlay" onclick="toggleSidebar(false)"></div>
+<div id="drawerOverlay" class="drawer-overlay" onclick="toggleChartDrawer(false)"></div>
+
+<!-- 課程詳細資訊彈窗 Modal -->
+<div id="courseDetailModal" class="course-detail-overlay" onclick="closeCourseDetail(event)">
+    <div class="course-detail-card" onclick="event.stopPropagation()">
+        <div class="course-detail-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span id="modalCourseColorBar" class="modal-color-bar"></span>
+                <h3 id="modalCourseName" class="modal-title">課程名稱</h3>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeCourseDetail()">×</button>
+        </div>
+        
+        <div class="course-detail-body" id="modalCourseContent"></div>
+
+        <!-- 跨學期快速移動區 -->
+        <div class="modal-move-semester-box">
+            <label class="field-label" style="margin-bottom:4px;">移動至其他學期：</label>
+            <div style="display:flex; gap:8px;">
+                <select id="modalMoveSemSelect" class="modern-select" style="flex:1;"></select>
+                <button type="button" class="tf-btn tf-btn-sm tf-btn-warning" onclick="handleMoveCourseSemester()">移動</button>
+            </div>
+        </div>
+
+        <div class="course-detail-footer">
+            <button type="button" class="tf-btn tf-btn-sm tf-btn-secondary" id="btnModalEdit">編輯課程</button>
+            <button type="button" class="tf-btn tf-btn-sm tf-btn-danger" id="btnModalDelete">刪除</button>
+            <button type="button" class="tf-btn tf-btn-sm tf-btn-ghost" onclick="closeCourseDetail()">關閉</button>
+        </div>
+    </div>
+</div>
+
+<!-- 學期成績批次結算專屬 Modal -->
+<div id="batchGradeModal" class="course-detail-overlay" onclick="closeBatchGradeModal(event)">
+    <div class="course-detail-card" style="max-width: 580px;" onclick="event.stopPropagation()">
+        <div class="course-detail-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="tf-svg-icon" style="color: var(--tf-color-primary-light); display: inline-flex;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                </span>
+                <h3 id="batchGradeModalTitle" class="modal-title">學期成績快速結算</h3>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="closeBatchGradeModal()">✕</button>
+        </div>
+
+        <div class="batch-grade-top-bar">
+            <span class="batch-grade-sem-tag" id="batchGradeSubTitle">結算學期：【一上】（共 10 門課程）</span>
+            <div style="display: flex; gap: 6px;">
+                <button type="button" class="batch-quick-btn" onclick="quickFillAllGrades(80)">全部填 80</button>
+                <button type="button" class="batch-quick-btn" onclick="quickResetAllGrades()">全部重設為修讀中</button>
+            </div>
+        </div>
+
+        <div class="course-detail-body" style="max-height: 54vh; padding: 12px 18px;">
+            <div id="batchGradeListContainer" style="display: flex; flex-direction: column; gap: 8px;"></div>
+        </div>
+
+        <div class="course-detail-footer" style="display: flex; justify-content: space-between; align-items: center;">
+            <div id="batchGradeLiveStats" class="batch-footer-stats-strip">
+                已算學分: <b>0</b> / <b>0</b> ｜ 學期 GPA: <b>--</b> ｜ 加權平均: <b>--</b>
+            </div>
+            <div style="display: flex; gap: 8px;">
+                <button type="button" class="tf-btn tf-btn-sm tf-btn-ghost" onclick="closeBatchGradeModal()">取消</button>
+                <button type="button" class="tf-btn tf-btn-sm tf-btn-primary" onclick="saveBatchGrades()">儲存結算成績</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- What-If 目標 GPA 倒推模擬器 Modal -->
+<div id="whatIfModal" class="course-detail-overlay" onclick="ModalManager.close('whatIfModal')">
+    <div class="course-detail-card" style="max-width: 440px;" onclick="event.stopPropagation()">
+        <div class="course-detail-header">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="tf-svg-icon" style="color: var(--tf-color-primary-light); display: inline-flex;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                </span>
+                <h3 class="modal-title">目標 GPA 倒推模擬器</h3>
+            </div>
+            <button type="button" class="modal-close-btn" onclick="ModalManager.close('whatIfModal')">✕</button>
+        </div>
+        <div style="padding: 16px; display:flex; flex-direction:column; gap:12px;">
+            <div style="display:flex; justify-content:space-between; background:var(--tf-surface-sunken); padding:10px 12px; border-radius:var(--tf-radius-md); font-size:0.82rem; border:1px solid var(--tf-border-subtle);">
+                <span>已結算學分: <b id="whatIfCurCredits">0 學分</b></span>
+                <span>目前累計 GPA: <b id="whatIfCurGpa" style="color:var(--tf-color-primary-light);">0.00</b></span>
+            </div>
+            <div>
+                <label class="field-label">期望畢業總累積 GPA (最高 4.3)：</label>
+                <input type="number" id="whatIfTargetGpaInput" class="modern-input" min="0" max="4.3" step="0.05" value="3.80" oninput="calculateWhatIfTarget()">
+            </div>
+            <div>
+                <label class="field-label">未來預計修讀總學分：</label>
+                <input type="number" id="whatIfRemainCredits" class="modern-input" min="1" max="150" value="40" oninput="calculateWhatIfTarget()">
+            </div>
+            <div id="whatIfResultBox" style="background:var(--tf-surface-overlay); padding:12px; border-radius:8px; border:1px solid var(--tf-border-default); text-align:center;"></div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:4px;">
+                <button type="button" class="tf-btn tf-btn-sm tf-btn-ghost" onclick="ModalManager.close('whatIfModal')">關閉</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 成績與修業報表專屬 Modal -->
+<div id="reportOverlay" class="report-overlay" onclick="closeReport()">
+    <div class="report-container" onclick="event.stopPropagation()">
+        <div class="report-header-ui">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <h3>成績暨修業檢核報表預覽</h3>
+                <select id="reportFormatSelect" onchange="generateReportContent()">
+                    <option value="all">版面：完整輸出 (歷年成績＋修業檢核)</option>
+                    <option value="semester">版面：僅印歷年成績單 (學期制)</option>
+                    <option value="category">版面：僅印修業檢核表 (類別制)</option>
+                </select>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button type="button" class="btn-print" onclick="window.print()">列印 / 存為 PDF</button>
+                <button type="button" style="background: var(--tf-status-danger); color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer;" onclick="closeReport()">關閉</button>
+            </div>
+        </div>
+        <div id="reportPrintArea" class="report-content"></div>
+    </div>
+</div>
+
+<div class="app-layout">
+    <!-- TimeFlow 核心導航列 (規劃 / 畢業 / 設定) -->
+    <aside class="tf-global-sidebar">
+        <div class="tf-brand">
+            <div class="tf-logo-icon"></div>
+            <span class="tf-brand-name">TimeFlow</span>
+        </div>
+
+        <nav class="tf-nav-menu">
+            <div class="nav-item active" id="nav-plan" onclick="switchView('plan')">
+                <span class="nav-icon"><span class="tf-svg-icon" style="width:18px;height:18px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg></span></span>
+                <span class="nav-text">規劃</span>
+            </div>
+            <div class="nav-item" id="nav-graduation" onclick="switchView('graduation')">
+                <span class="nav-icon"><span class="tf-svg-icon" style="width:18px;height:18px;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"></path><path d="M6 12v5c3 3 9 3 12 0v-5"></path></svg></span></span>
+                <span class="nav-text">畢業</span>
+            </div>
+            <div class="nav-item" id="nav-settings" onclick="openSettingsModal()">
+                <span class="nav-icon" id="icon-nav-settings"></span>
+                <span>設定</span>
+            </div>
+        </nav>
+
+        <div class="tf-sidebar-footer">
+            <button type="button" class="tf-btn-quick-add" onclick="openMobileEditor()">
+                自訂新增課程
+            </button>
+        </div>
+    </aside>
+
+    <!-- 課程編輯抽屜 -->
+    <div id="sidebarPanel" class="sidebar modern-editor">
+        <div class="sidebar-header">
+            <h2 id="sidebarTitle" class="editor-main-title">新增課程</h2>
+            <button type="button" class="sidebar-close-btn" onclick="closeSidebarDrawer()" title="關閉抽屜">✕</button>
+        </div>
+
+        <form id="courseForm">
+            <div class="editor-card">
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label class="field-label">課程名稱 <span class="required-star">*</span></label>
+                    <input type="text" id="courseName" class="modern-input" placeholder="例如：電子學 (一)" required>
+                </div>
+
+                <div class="form-row-2">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="field-label">授課教師</label>
+                        <input type="text" id="courseTeacher" class="modern-input" placeholder="例如：王大明">
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="field-label">上課教室</label>
+                        <input type="text" id="courseRoom" class="modern-input" placeholder="例如：92177">
+                    </div>
+                </div>
+
+                <div class="form-row-2" style="margin-top: 10px;">
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="field-label">學分數</label>
+                        <select id="courseCredits" class="modern-select">
+                            <option value="0">0 學分</option>
+                            <option value="1">1 學分</option>
+                            <option value="2">2 學分</option>
+                            <option value="3" selected>3 學分</option>
+                            <option value="4">4 學分</option>
+                            <option value="5">5 學分</option>
+                            <option value="6">6 學分</option>
+                        </select>
+                    </div>
+                    <div class="form-group" style="margin-bottom:0;">
+                        <label class="field-label">課程類別</label>
+                        <select id="courseType" class="modern-select" onchange="handleCourseTypeChange(this.value)">
+                            <optgroup label="本系專業課程">
+                                <option value="系定必修">系定必修</option>
+                                <option value="選修-本系">選修-本系</option>
+                                <option value="選修-必選">選修-必選</option>
+                                <option value="選修-外系">選修-外系</option>
+                                <option value="跨領域-必修" id="optCrossReq" style="display:none;">跨領域-必修</option>
+                                <option value="跨領域-選修" id="optCrossElec" style="display:none;">跨領域-選修</option>
+                            </optgroup>
+                            <optgroup label="領域通識 (五大領域)">
+                                <option value="通識-人文">通識-人文學</option>
+                                <option value="通識-社科">通識-社會科學</option>
+                                <option value="通識-生醫">通識-生命與健康</option>
+                                <option value="通識-科際">通識-科際整合</option>
+                                <option value="通識-自然">通識-自然與工程科學</option>
+                                <option value="第二外語-通識">第二外語 (採計領域通識)</option>
+                            </optgroup>
+                            <optgroup label="融合通識">
+                                <option value="融通">融合通識 (講座/實踐/總整)</option>
+                            </optgroup>
+                            <optgroup label="校定共同必修">
+                                <option value="國文">大學國文</option>
+                                <option value="英文">外國語言 (英文)</option>
+                                <option value="踏溯台南">踏溯台南</option>
+                                <option value="體育">體育必修</option>
+                                <option value="服務學習">服務學習</option>
+                            </optgroup>
+                            <optgroup label="兵役與其他選修">
+                                <option value="第二外語-選修">第二外語 (採計一般外系選修)</option>
+                                <option value="軍訓">全民國防 (軍訓役期折抵)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-section-header">
+                <span class="section-title-badge">上課時間</span>
+                <button type="button" class="btn-add-slot-pill" onclick="addNewSlotItem()">新增時段</button>
+            </div>
+            
+            <div id="slotItemsList" class="slot-cards-container"></div>
+
+            <div class="editor-card" style="margin-top: 12px;">
+                <label class="field-label" style="margin-bottom: 8px;">卡片代表色</label>
+                <div class="color-palette-grid" id="colorPaletteGrid"></div>
+                <input type="hidden" id="courseColor" value="#2563eb">
+                <input type="hidden" id="courseTextColor" value="#ffffff">
+            </div>
+
+            <div class="editor-accordion-container">
+                <div class="editor-accordion-header" onclick="toggleEditorAdvanced()" title="點擊展開/收合進階設定">
+                    <span style="font-weight:bold; font-size:0.85rem; color:var(--tf-text-secondary);">更多課程設定</span>
+                    <span id="accordionIcon" class="accordion-arrow">▼</span>
+                </div>
+
+                <div id="editorAdvancedBody" class="editor-accordion-body">
+                    <div class="form-group" style="margin-bottom: 4px;">
+                        <label class="field-label">上課週期</label>
+                        <div class="freq-pill-group" id="courseFreqGroup">
+                            <button type="button" class="freq-pill-btn active" data-freq="weekly" onclick="setCourseFrequency('weekly')">每週固定</button>
+                            <button type="button" class="freq-pill-btn" data-freq="odd" onclick="setCourseFrequency('odd')">單週</button>
+                            <button type="button" class="freq-pill-btn" data-freq="even" onclick="setCourseFrequency('even')">雙週</button>
+                        </div>
+                        <input type="hidden" id="courseFrequency" value="weekly">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="field-label">修讀與成績狀態</label>
+                        <select id="courseStatusMode" class="modern-select" onchange="toggleScoreInput()">
+                            <option value="修讀中" selected>修讀中 (學期未結束 / 預排)</option>
+                            <option value="已結算">已結算 (輸入百分制成績)</option>
+                        </select>
+                    </div>
+
+                    <div id="scoreInputGroup" style="display:none; margin-bottom:10px; background:var(--tf-surface-sunken); padding:8px; border-radius:6px;">
+                        <label class="field-label">百分制分數 (0~100)</label>
+                        <input type="number" id="courseScore" class="modern-input" min="0" max="100" value="85" oninput="previewGrade()">
+                        <div id="gradePreview" style="font-size:0.75rem; color:var(--tf-color-primary-light); margin-top:4px; font-weight:bold; text-align:center;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="field-label">課程大綱 / 網站連結</label>
+                        <input type="url" id="courseUrl" class="modern-input" placeholder="https://moodle.ncku.edu.tw/...">
+                    </div>
+
+                    <div class="form-group">
+                        <label class="field-label">備註說明</label>
+                        <textarea id="courseNotes" class="modern-textarea" rows="2" placeholder="配分比例、備註等..."></textarea>
+                    </div>
+
+                    <label class="checkbox-pill-label">
+                        <input type="checkbox" id="courseTentative">
+                        <span style="color:var(--tf-status-warning-light); font-weight:bold;">設為暫定時段 (多時段候補用，不計學分)</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="editor-actions-footer">
+                <div style="display:flex; gap:8px; width:100%;">
+                    <button type="submit" id="btnSubmit" class="btn-primary-action">加入課表</button>
+                    <button type="button" id="btnSaveWishlist" class="btn-wishlist-action" onclick="saveToWishlistFromForm()" title="先存入候選庫比較">存候選</button>
+                </div>
+                <button type="button" id="btnCancelEdit" class="btn-cancel-action" onclick="cancelEdit()">取消修改</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- 右側主要呈現區域 -->
+    <main class="main-content">
+        
+        <!-- 1. View: 規劃 (Plan) -->
+        <div id="view-plan" class="app-view active tf-dark-schedule">
+            <div class="tf-sched-topbar">
+                <div class="tf-sched-topbar-left">
+                    <div class="tf-sem-nav-group">
+                        <button type="button" class="tf-sem-step-btn" id="btnPrevSem" onclick="navigateSemester(-1)" title="上一學期">◀</button>
+                        <div class="tf-sem-pill-select">
+                            <select id="semSelect" class="tf-sem-dropdown" onchange="switchSemester()"></select>
+                        </div>
+                        <button type="button" class="tf-sem-step-btn" id="btnNextSem" onclick="navigateSemester(1)" title="下一學期">▶</button>
+                    </div>
+
+                    <div class="tf-view-pills" id="scheduleViewTypeGroup">
+                        <button type="button" id="btnViewGrid" class="tf-pill-btn active" onclick="setScheduleViewType('grid')">網格課表</button>
+                        <button type="button" id="btnViewList" class="tf-pill-btn" onclick="setScheduleViewType('list')">清單時間軸</button>
+                    </div>
+
+                    <div class="options-pills">
+                        <label class="toggle-pill">
+                            <input type="checkbox" id="toggleNoonCB" onchange="toggleViewOption('showNoon')">
+                            <span>中午 N</span>
+                        </label>
+                        <label class="toggle-pill">
+                            <input type="checkbox" id="toggleNightCB" onchange="toggleViewOption('showNight')">
+                            <span>夜間 A~D</span>
+                        </label>
+                        <label class="toggle-pill">
+                            <input type="checkbox" id="toggleWeekendCB" onchange="toggleViewOption('showWeekend')">
+                            <span>週末 六日</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="tf-sched-topbar-right">
+                    <div class="tf-btn-group">
+                        <button type="button" id="privacyToggleBtn" class="tf-btn-action tf-btn-tool" onclick="togglePrivacyMode()" title="切換成績隱私模式">隱私模式</button>
+                        <button type="button" class="tf-btn-action tf-btn-tool" onclick="openWhatIfModal()" title="未來目標 GPA 倒推試算">GPA 模擬</button>
+                        <button type="button" class="tf-btn-action tf-btn-tool" onclick="exportSchedulePNG()" title="匯出高畫質課表圖片">存為圖片</button>
+                    </div>
+
+                    <div class="tf-btn-group">
+                        <button type="button" class="tf-btn-action tf-btn-grade" onclick="openBatchGradeModal()">結算成績</button>
+                        <button type="button" class="tf-btn-action tf-btn-add" onclick="addNewSemester()">＋ 學期</button>
+                        <button type="button" class="tf-btn-action tf-btn-del" onclick="deleteCurrentSemester()" title="刪除當前學期">刪除學期</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tf-schedule-main-layout">
+                <div class="tf-schedule-left-area">
+                    <div id="conflictBannerArea" style="display:none; margin-bottom:12px;"></div>
+
+                    <div class="tf-desktop-table-wrapper" id="scheduleCaptureArea">
+                        <div class="tf-desktop-grid-container" id="desktopGridBoard"></div>
+                    </div>
+
+                    <div class="mobile-schedule-wrapper" id="mobileScheduleArea">
+                        <div class="mobile-grid-container" id="mobileGridBoard"></div>
+                    </div>
+
+                    <div id="scheduleListViewArea" class="schedule-list-view-wrapper" style="display: none;">
+                        <div id="listViewContainer" class="list-view-timeline"></div>
+                    </div>
+                </div>
+
+                <div class="tf-schedule-right-panel" id="scheduleRightPanel">
+                    <div class="tf-wishlist-panel">
+                        <div class="tf-wishlist-panel-header">
+                            <div class="header-title">
+                                <span>候選課程庫</span>
+                                <span class="count-tag" id="wishlistCount">0</span>
+                            </div>
+                            <div class="header-filters">
+                                <button type="button" class="btn-filter-icon active" id="btnFilterCurrent" onclick="setWishlistFilter('current')" title="僅看本學期">本學期</button>
+                                <button type="button" class="btn-filter-icon" id="btnFilterAll" onclick="setWishlistFilter('all')" title="看全部">全部</button>
+                            </div>
+                        </div>
+                        <div id="wishlistContainer" class="tf-wishlist-cards-list"></div>
+                    </div>
+
+                    <div class="tf-storage-panel">
+                        <div class="tf-storage-header">
+                            <span>規劃資料管理</span>
+                        </div>
+                        <div class="tf-storage-actions">
+                            <button type="button" class="tf-btn-storage tf-btn-export" onclick="exportData()">匯出完整規劃 (JSON)</button>
+                            <input type="file" id="importFile" style="display: none;" accept=".json" onchange="importData(event)">
+                            <button type="button" class="tf-btn-storage tf-btn-import" onclick="document.getElementById('importFile').click()">匯入規劃檔案 (JSON)</button>
+                            <button type="button" class="tf-btn-storage tf-btn-clear" onclick="clearAll()">清空當前學期課表</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 規劃頁底部統計條 -->
+            <div class="tf-weekly-stats-strip">
+                <div class="stats-title-group">
+                    <span class="stats-title">學期修課與成績統計</span>
+                </div>
+                <div class="stats-metrics-group">
+                    <div class="stat-pill">
+                        <span class="pill-label">修讀門數</span>
+                        <span class="pill-val" id="statCourseCount">0 門</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="pill-label">總學分</span>
+                        <span class="pill-val" id="statTotalCredits">0 學分</span>
+                    </div>
+                    <div class="stat-pill">
+                        <span class="pill-label">每週節數</span>
+                        <span class="pill-val" id="statTotalPeriods">0 節</span>
+                    </div>
+                    <div class="stat-pill stat-pill-highlight">
+                        <span class="pill-label">預估 GPA</span>
+                        <span class="pill-val" id="statSemGpa">0.00</span>
+                    </div>
+                    <div class="stat-pill stat-pill-highlight">
+                        <span class="pill-label">加權平均</span>
+                        <span class="pill-val" id="statSemWeighted">0.0 分</span>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" class="mobile-fab" onclick="openMobileEditor()" title="新增課程">＋</button>
+        </div>
+
+        <!-- 2. View: 畢業 (Graduation) -->
+        <div id="view-graduation" class="app-view">
+            <div class="grad-top-actions-bar">
+                <div class="grad-title-tag">畢業檢核與修業達成度</div>
+                <div class="grad-action-btns">
+                    <button type="button" class="tf-btn-report-action tf-btn-pdf" onclick="openReport()">匯出 / 列印檢核報表</button>
+                    <button type="button" class="tf-btn-report-action tf-btn-trend" onclick="toggleChartDrawer(true)">歷年成績趨勢圖</button>
+                </div>
+            </div>
+
+            <!-- 畢業進度條 -->
+            <div class="progress-board">
+                <div class="progress-info-row">
+                    <div class="progress-info-left">
+                        <span class="progress-badge">畢業學分總達成進度</span>
+                        <div id="gradProgressText" class="progress-details-text">有效畢業學分計算中...</div>
+                    </div>
+                    <div class="progress-info-right-group">
+                        <div id="gradCumGpaBadge" class="cum-gpa-badge">歷年 GPA: <b>0.00</b> ｜ 加權 <b>0.0</b> 分</div>
+                        <div id="gradProgressPercent" class="progress-percent-badge">0%</div>
+                    </div>
+                </div>
+                <div class="progress-track"><div id="gradProgressBar" class="progress-fill"></div></div>
+            </div>
+
+            <div class="grad-checker-board">
+                <div class="config-toggle-header" onclick="toggleGradConfig()" title="點擊收合/展開設定">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <span style="font-weight:bold; color:var(--tf-color-primary-light); font-size:0.92rem;">修業門檻與加修設定</span>
+                        <span id="deptNameTitle" style="font-size:0.82rem; color:var(--tf-text-secondary); font-weight:600;">（ 成大電機 118 級 ）</span>
+                    </div>
+                    <span id="configCollapseIcon" class="config-collapse-icon">▼</span>
+                </div>
+
+                <div id="gradConfigArea" class="config-bar-modern">
+                    <div class="config-row-group">
+                        <div class="config-group-tag tag-primary">主修門檻</div>
+                        <div class="config-pills-wrap">
+                            <div class="cfg-pill tf-combobox-wrap" id="deptComboboxWrap">
+                                <span class="cfg-label">科系</span>
+                                <input type="text" id="deptComboboxInput" class="tf-combobox-input" value="電機工程學系" placeholder="搜尋或選擇科系...">
+                                <span class="tf-combobox-arrow" onclick="DeptCombobox.toggle()">▼</span>
+                                <div id="deptComboboxDropdown" class="tf-combobox-dropdown"></div>
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label" style="color:var(--tf-color-primary-light);">入學年份</span>
+                                <select id="entryYearSelect" class="cfg-select" onchange="updateConfig()">
+                                    <option value="119">115學年</option>
+                                    <option value="118" selected>114學年</option>
+                                    <option value="117">113學年</option>
+                                    <option value="116">112學年</option>
+                                    <option value="115">111學年</option>
+                                    <option value="114">110學年</option>
+                                </select>
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-target">總目標</span>
+                                <input type="number" id="gradTargetInput" class="cfg-input-num" onchange="updateConfig()" title="官方規則自動帶入">
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-req">必修</span>
+                                <input type="number" id="reqTargetInput" class="cfg-input-num" onchange="updateConfig()" title="官方規則自動帶入">
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-req-elec">必選</span>
+                                <input type="number" id="reqElecTargetInput" class="cfg-input-num" onchange="updateConfig()" title="官方規則自動帶入">
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-elec">選修</span>
+                                <input type="number" id="elecTargetInput" class="cfg-input-num" onchange="updateConfig()" title="官方規則自動帶入">
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-out">外系上限</span>
+                                <input type="number" id="outMaxInput" class="cfg-input-num" onchange="updateConfig()" title="官方規則自動帶入">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 不分系專用：專長養成學院與目標輔系設定列 -->
+                    <div class="config-row-group" id="ccepSpecializationWrap" style="display:none;">
+                        <div class="config-group-tag tag-ccep">專長設定</div>
+                        <div class="config-pills-wrap">
+                            <div class="cfg-pill">
+                                <span class="cfg-label" style="color:var(--tf-color-primary-light);">專長養成學院</span>
+                                <select id="ccepCollegeSelect" class="cfg-select" onchange="onCCEPCollegeChange()">
+                                    <option value="工學院">工學院</option>
+                                    <option value="電機資訊學院">電機資訊學院</option>
+                                    <option value="管理學院">管理學院</option>
+                                    <option value="理學院">理學院</option>
+                                    <option value="社會科學院">社會科學院</option>
+                                    <option value="文學院">文學院</option>
+                                    <option value="生物科學與科技學院">生物科學與科技學院</option>
+                                    <option value="規劃與設計學院">規劃與設計學院</option>
+                                </select>
+                            </div>
+                            <div class="cfg-pill">
+                                <span class="cfg-label" style="color:var(--tf-status-info-light);">輔系目標學系</span>
+                                <select id="ccepTargetDeptSelect" class="cfg-select" onchange="onCCEPTargetDeptChange()"></select>
+                            </div>
+                            <span id="ccepExcludedDegreeAlert" class="ccep-excluded-tag" style="display:none;">此學系排除授予不分系學位</span>
+                        </div>
+                    </div>
+
+                    <div class="config-row-group">
+                        <div class="config-group-tag tag-secondary">語文與加修</div>
+                        <div class="config-pills-wrap">
+                            <div class="cfg-pill">
+                                <span class="cfg-label text-lang">英文免修</span>
+                                <select id="englishWaivedSelect" class="cfg-select" onchange="updateConfig()">
+                                    <option value="0">未申請</option>
+                                    <option value="2">免修 2 學分</option>
+                                    <option value="4">免修 4 學分</option>
+                                </select>
+                            </div>
+                            <label class="cfg-pill-check">
+                                <input type="checkbox" id="englishPassedCB" onchange="toggleEnglishThreshold()">
+                                <span>英檢已達標</span>
+                            </label>
+
+                            <div class="cfg-sub-divider"></div>
+
+                            <div class="cfg-pill pill-cross">
+                                <span class="cfg-label text-cross">跨領域</span>
+                                <select id="crossTypeSelect" class="cfg-select" onchange="updateCrossConfig()">
+                                    <option value="none">無</option>
+                                    <option value="雙主修">雙主修</option>
+                                    <option value="輔系">輔系</option>
+                                    <option value="學分學程">學分學程</option>
+                                </select>
+                                <input type="text" id="crossNameInput" placeholder="科系名稱" class="cfg-input-text" style="width: 110px; display: none;" onchange="updateCrossConfig()">
+                                <input type="number" id="crossTargetInput" placeholder="目標" class="cfg-input-num" style="display: none;" onchange="updateCrossConfig()">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="general-disclaimer-bar">
+                        <span>所有學分門檻與不承認課程均整理自成大各系公開規章，正式畢業資格仍以各系辦公室人工審核為準。</span>
+                    </div>
+                </div>
+
+                <div class="grad-sections-wrapper">
+                    <!-- 上半部：專業學分卡 -->
+                    <div class="grad-sub-section">
+                        <div class="grad-section-label" id="sectionCoreTitle">專業學分與修業門檻</div>
+                        <div class="checker-grid-core" id="checkerCoreGrid">
+                            <div class="checker-card" id="card-req">
+                                <div class="title" id="t-req-title">系定必修學分</div>
+                                <div class="score-group">
+                                    <div class="expected">預計: <span id="e-req">0</span></div>
+                                    <div class="actual">目前: <span id="v-req">0</span></div>
+                                </div>
+                                <div class="target" id="t-req">目標: --</div>
+                            </div>
+
+                            <div class="checker-card" id="card-elec">
+                                <div class="title" id="t-elec-title">系定選修學分</div>
+                                <div class="score-group">
+                                    <div class="expected">預計: <span id="e-elec">0</span></div>
+                                    <div class="actual">目前: <span id="v-elec">0</span></div>
+                                </div>
+                                <div class="target" id="t-elec">目標: --</div>
+                                <div id="elec-sub-info" style="font-size:0.65rem; color:var(--tf-text-secondary); margin-top:4px; line-height:1.4;"></div>
+                            </div>
+
+                            <div class="checker-card" id="card-ccep-free" style="display:none;">
+                                <div class="title">自由選修學分</div>
+                                <div class="score-group">
+                                    <div class="expected">預計: <span id="e-ccep-free">0</span></div>
+                                    <div class="actual">目前: <span id="v-ccep-free">0</span></div>
+                                </div>
+                                <div class="target">目標: 32 學分</div>
+                                <div id="ccep-free-sub-info" style="font-size:0.68rem; color:var(--tf-text-secondary); margin-top:4px; line-height:1.4;">
+                                    可自主修讀他院課程<br><span style="color:var(--tf-color-primary-light);">Coursera 線上至多採計 8 學分</span>
+                                </div>
+                            </div>
+
+                            <div class="checker-card" id="card-cross" style="display:none;">
+                                <div class="title" id="t-cross-title">跨領域</div>
+                                <div class="score-group">
+                                    <div class="expected">預計: <span id="e-cross">0</span></div>
+                                    <div class="actual">目前: <span id="v-cross">0</span></div>
+                                </div>
+                                <div class="target" id="t-cross-target">目標: --</div>
+                                <div id="cross-sub-info"></div>
+                            </div>
+
+                            <div class="checker-card notice-card" id="card-notice">
+                                <div class="title" style="color:var(--tf-color-primary-light) !important;">系所修業備註</div>
+                                <div id="deptWarningNoteBody" class="notice-body-scroll">
+                                    依系所章程正常修習專業必修與選修課程。
+                                </div>
+                                <div class="notice-footer-disclaimer">
+                                    審查者擁有最終學分抵免認定權
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 下半部：通識教育與校定門檻 (經典 5 欄網格) -->
+                    <div class="grad-sub-section">
+                        <div class="grad-section-label">通識教育與校定門檻</div>
+                        <div class="checker-gen-threshold-grid">
+                            <!-- 1. 通識教育 (2x2) -->
+                            <div class="checker-card" id="card-gen-combined">
+                                <div>
+                                    <div class="title" style="font-weight: bold; font-size:0.95rem;">通識教育 (領域＋融合)</div>
+                                    <div class="score-group">
+                                        <div class="expected">預計: <span id="e-gen-total">0</span> / <span id="max-gen-expected">19</span></div>
+                                        <div class="actual">實得: <span id="v-gen-total">0</span> / <span id="max-gen-earned">19</span></div>
+                                    </div>
+                                    <div class="target" id="t-gen-summary">門檻：領域 ≥ 4 (跨3領域) ｜ 融合 ≥ 1 ｜ 總目標 19 學分</div>
+                                </div>
+                                <div id="gen-combined-details"></div>
+                            </div>
+
+                            <!-- 2. 國文門檻 (1x1) -->
+                            <div class="checker-card" id="card-chinese">
+                                <div class="title">國文門檻</div>
+                                <div class="score-group"><div class="expected">預計: <span id="e-chinese">0</span></div><div class="actual">目前: <span id="v-chinese">0</span></div></div>
+                                <div class="target">目標: 4</div>
+                            </div>
+
+                            <!-- 3. 英文門檻 (1x1) -->
+                            <div class="checker-card" id="card-english">
+                                <div class="title">英文門檻</div>
+                                <div class="score-group"><div class="expected">預計: <span id="e-english">0</span></div><div class="actual">目前: <span id="v-english">0</span></div></div>
+                                <div class="target" id="t-english">目標: 4</div>
+                            </div>
+
+                            <!-- 4. 踏溯台南 (1x1) -->
+                            <div class="checker-card" id="card-tainan">
+                                <div class="title">踏溯台南</div>
+                                <div class="score-group"><div class="expected">預計: <span id="e-tainan">0</span></div><div class="actual">目前: <span id="v-tainan">0</span></div></div>
+                                <div class="target">目標: 1</div>
+                            </div>
+
+                            <!-- 5. 體育必修 (1x1) -->
+                            <div class="checker-card" id="card-pe">
+                                <div class="title">體育必修</div>
+                                <div class="score-group"><div class="expected">預計: <span id="e-pe">0</span> / 4</div><div class="actual">目前: <span id="v-pe">0</span> / 4</div></div>
+                                <div class="target">目標: 4 學期</div>
+                            </div>
+
+                            <!-- 6. 服務學習 (1x1) -->
+                            <div class="checker-card" id="card-service">
+                                <div class="title">服務學習</div>
+                                <div class="score-group"><div class="expected">預計: <span id="e-service">0</span> / <span id="t-service-exp">3</span></div><div class="actual">目前: <span id="v-service">0</span> / <span id="t-service-act">3</span></div></div>
+                                <div class="target" id="t-service-note">目標: 3 門 (一~三)</div>
+                            </div>
+
+                            <!-- 7. 全民國防 (1x1) -->
+                            <div class="checker-card" id="card-military">
+                                <div class="title">全民國防 (軍訓)</div>
+                                <div class="score-group">
+                                    <div class="expected">預計: <span id="e-military">0</span> 門</div>
+                                    <div class="actual">目前: <span id="v-military">0</span> 門</div>
+                                </div>
+                                <div class="target" id="t-military-days">可抵兵役 0 天 (上限 22 天)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 趨勢圖 Drawer -->
+    <div id="chartDrawer" class="chart-drawer">
+        <div class="drawer-header">
+            <h3>歷年成績變化趨勢 (加權/GPA)</h3>
+            <button type="button" class="close-drawer-btn" onclick="toggleChartDrawer(false)">✕</button>
+        </div>
+        <div class="drawer-body">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+
+    <!-- 1. 設定彈窗 -->
+    <div id="settingsModal" class="settings-overlay" onclick="closeSettingsModal(event)">
+        <div class="settings-modal-card" onclick="event.stopPropagation()">
+            <div class="settings-modal-header">
+                <h3 class="settings-modal-title">系統設定</h3>
+                <button type="button" class="modal-close-btn" onclick="closeSettingsModal()">✕</button>
+            </div>
+            <div class="settings-modal-body">
+                <!-- 1. 介面外觀色彩 -->
+                <div class="settings-section">
+                    <label class="settings-label">介面色彩主題</label>
+                    <div class="theme-switcher-grid">
+                        <button type="button" class="theme-opt-btn" data-theme-val="purple" onclick="setAppTheme('purple')">
+                            <span class="theme-color-preview" style="background: #6366f1;"></span>
+                            <span class="theme-opt-text">夜幕紫 (Dark)</span>
+                        </button>
+                        <button type="button" class="theme-opt-btn" data-theme-val="blue" onclick="setAppTheme('blue')">
+                            <span class="theme-color-preview" style="background: #3b82f6;"></span>
+                            <span class="theme-opt-text">深海藍 (Dark)</span>
+                        </button>
+                        <button type="button" class="theme-opt-btn" data-theme-val="forest" onclick="setAppTheme('forest')">
+                            <span class="theme-color-preview" style="background: #15803d;"></span>
+                            <span class="theme-opt-text">深林墨綠 (Dark)</span>
+                        </button>
+                        <button type="button" class="theme-opt-btn" data-theme-val="neutral" onclick="setAppTheme('neutral')">
+                            <span class="theme-color-preview" style="background: #71717a;"></span>
+                            <span class="theme-opt-text">暖岩灰 (Dark)</span>
+                        </button>
+                        <button type="button" class="theme-opt-btn" data-theme-val="sunset" onclick="setAppTheme('sunset')">
+                            <span class="theme-color-preview" style="background: #d97706;"></span>
+                            <span class="theme-opt-text">暮光琥珀 (Dark)</span>
+                        </button>
+                        <button type="button" class="theme-opt-btn" data-theme-val="aurora" onclick="setAppTheme('aurora')">
+                            <span class="theme-color-preview" style="background: #14b8a6;"></span>
+                            <span class="theme-opt-text">極光幽夜 (Dark)</span>
+                        </button>
+
+                        <button type="button" class="theme-opt-btn" data-theme-val="glacier" onclick="setAppTheme('glacier')">
+                            <span class="theme-color-preview" style="background: #d9e5ec; border: 1px solid #1d63b8;"></span>
+                            <span class="theme-opt-text">冰川晴空 (Light)</span>
+                        </button>
+                        <button type="button" class="theme-opt-btn" data-theme-val="mist" onclick="setAppTheme('mist')">
+                            <span class="theme-color-preview" style="background: #d6dce3; border: 1px solid #355370;"></span>
+                            <span class="theme-opt-text">晨霧灰藍 (Light)</span>
+                        </button>
+                        <button type="button" class="theme-opt-btn" data-theme-val="latte" onclick="setAppTheme('latte')">
+                            <span class="theme-color-preview" style="background: #e5ded4; border: 1px solid #7c5335;"></span>
+                            <span class="theme-opt-text">燕麥拿鐵 (Light)</span>
+                        </button>
+                        <button type="button" class="theme-opt-btn" data-theme-val="macaron" onclick="setAppTheme('macaron')">
+                            <span class="theme-color-preview" style="background: #d8e0eb; border: 1px solid #63589f;"></span>
+                            <span class="theme-opt-text">馬卡龍紫 (Light)</span>
+                        </button>
+                        <button type="button" class="theme-opt-btn" data-theme-val="sakura" onclick="setAppTheme('sakura')">
+                            <span class="theme-color-preview" style="background: #e4d8d8; border: 1px solid #8b4f58;"></span>
+                            <span class="theme-opt-text">和風櫻茶 (Light)</span>
+                        </button>
+                        <button type="button" class="theme-opt-btn" data-theme-val="white" onclick="setAppTheme('white')">
+                            <span class="theme-color-preview" style="background: #ffffff; border: 1px solid #cbd5e1;"></span>
+                            <span class="theme-opt-text">全亮白 (Light)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. 說明、支援與條款 -->
+                <div class="settings-section">
+                    <label class="settings-label">說明與條款</label>
+                    <div class="settings-menu-list">
+                        <button type="button" class="settings-menu-btn" onclick="openFaqModal()">
+                            <span>常見問題 (FAQ)</span>
+                            <span class="menu-arrow">›</span>
+                        </button>
+                        <button type="button" class="settings-menu-btn" onclick="openDataSourceModal()">
+                            <span>資料來源與法規依據</span>
+                            <span class="menu-arrow">›</span>
+                        </button>
+                        <button type="button" class="settings-menu-btn" onclick="openTermsModal()">
+                            <span>使用者條款與隱私權政策</span>
+                            <span class="menu-arrow">›</span>
+                        </button>
+                        <a href="https://forms.gle/1u9YpGAog58QNRUh9" target="_blank" rel="noopener noreferrer" class="settings-menu-btn link-btn">
+                            <span>意見回饋與問題回報</span>
+                            <span class="menu-arrow">↗</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. 版本號與 GitHub 連結 -->
+                <div class="settings-version-footer">
+                    <span>TimeFlow 修課與畢業審查系統</span>
+                    <div class="settings-footer-right">
+                        <a href="https://github.com/Mrfox1122-love/NCKU_schedule" target="_blank" rel="noopener noreferrer" class="settings-github-link" title="前往 GitHub 專案倉庫">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                            <span>GitHub</span>
+                        </a>
+                        <span class="footer-dot">·</span>
+                        <span>v3.2.1 (2026.08.31)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 常見問題 (FAQ) 彈窗 -->
+    <div id="faqModal" class="course-detail-overlay" onclick="closeFaqModal(event)">
+        <div class="course-detail-card faq-modal-card" onclick="event.stopPropagation()">
+            <div class="course-detail-header">
+                <h3 class="modal-title">常見問題</h3>
+                <button type="button" class="modal-close-btn" onclick="closeFaqModal()">✕</button>
+            </div>
+            
+            <div class="course-detail-body faq-scroll-body">
+                <div class="tf-accordion-group">
+                    <!-- Q1 -->
+                    <div class="tf-accordion-item" onclick="toggleFaqAccordion(this)">
+                        <div class="tf-accordion-header">
+                            <span class="faq-question-title">1. 我的課表與成績資料會被上傳到伺服器嗎？</span>
+                            <span class="tf-accordion-arrow">▼</span>
+                        </div>
+                        <div class="tf-accordion-body">
+                            <div class="faq-answer-content">
+                                不會。TimeFlow 採用純前端架構，所有排課資料、成績紀錄與個人設定皆完全儲存在您目前使用的瀏覽器本機儲存空間（LocalStorage）中，不會上傳至任何雲端伺服器，請安心使用。
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Q2 -->
+                    <div class="tf-accordion-item" onclick="toggleFaqAccordion(this)">
+                        <div class="tf-accordion-header">
+                            <span class="faq-question-title">2. 畢業學分的審查依據與計算標準是什麼？</span>
+                            <span class="tf-accordion-arrow">▼</span>
+                        </div>
+                        <div class="tf-accordion-body">
+                            <div class="faq-answer-content">
+                                系統內建成功大學 9 大學院各學系 110 至 115 學年度之最新修業規章。計算時會自動套用該系之必修、選修上限、外系承認上限，並嚴格過濾各系不採計之特定通識科目與單一領域上限。
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Q3 -->
+                    <div class="tf-accordion-item" onclick="toggleFaqAccordion(this)">
+                        <div class="tf-accordion-header">
+                            <span class="faq-question-title">3. 如何更換裝置或備份我安排好的課表？</span>
+                            <span class="tf-accordion-arrow">▼</span>
+                        </div>
+                        <div class="tf-accordion-body">
+                            <div class="faq-answer-content">
+                                請至「規劃」頁面右側面板中的「規劃資料管理」，點擊「匯出完整規劃 (JSON)」即可下載備份檔。在其他裝置開啟 TimeFlow 後點擊「匯入規劃檔案 (JSON)」，即可無縫還原所有學期的課表與成績。
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Q4 -->
+                    <div class="tf-accordion-item" onclick="toggleFaqAccordion(this)">
+                        <div class="tf-accordion-header">
+                            <span class="faq-question-title">4. 英文免修與英檢門檻該如何設定？</span>
+                            <span class="tf-accordion-arrow">▼</span>
+                        </div>
+                        <div class="tf-accordion-body">
+                            <div class="faq-answer-content">
+                                請於「畢業」檢核頁點開「修業門檻與加修設定」：
+                                <ul>
+                                    <li><b>英文免修</b>：可選擇免修 2 或 4 學分（118 級起免修學分依校規自動轉為通識修讀目標）。</li>
+                                    <li><b>英檢達標</b>：勾選後卡片即會標註已通過外語畢業門檻。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Q5 -->
+                    <div class="tf-accordion-item" onclick="toggleFaqAccordion(this)">
+                        <div class="tf-accordion-header">
+                            <span class="faq-question-title">5. 發現特定科系的學分規則有誤或想提供建議？</span>
+                            <span class="tf-accordion-arrow">▼</span>
+                        </div>
+                        <div class="tf-accordion-body">
+                            <div class="faq-answer-content">
+                                各系法規每年可能有所微調，若發現門檻數值、不採計科目有誤，或有希望新增的功能，非常歡迎透過下方的意見回饋表單回報，我們將儘速更新規則資料庫！
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="course-detail-footer faq-footer-wrap">
+                <a href="https://forms.gle/1u9YpGAog58QNRUh9" target="_blank" rel="noopener noreferrer" class="tf-btn tf-btn-sm tf-btn-secondary">
+                    填寫問題與建議回饋表單 ↗
+                </a>
+                <button type="button" class="tf-btn tf-btn-sm tf-btn-ghost" onclick="closeFaqModal()">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 資料來源與免責聲明 彈窗 -->
+    <div id="dataSourceModal" class="course-detail-overlay" onclick="closeDataSourceModal(event)">
+        <div class="course-detail-card" style="max-width: 520px;" onclick="event.stopPropagation()">
+            <div class="course-detail-header">
+                <h3 class="modal-title">資料來源與法規依據</h3>
+                <button type="button" class="modal-close-btn" onclick="closeDataSourceModal()">✕</button>
+            </div>
+            <div class="course-detail-body" style="font-size:0.8rem; line-height:1.6;">
+                <p><b>一、資料來源說明</b><br>
+                本系統之修業規則、學分門檻、通識教育採計規範及英文免修辦法，均整理自以下成大官方公開規章：</p>
+                <ul>
+                    <li>國立成功大學通識教育中心 — 核心通識、領域通識與融合通識選課規章</li>
+                    <li>國立成功大學各學院、各學系辦公室公開之必選修科目一覽表與修業規定</li>
+                </ul>
+
+                <p><b>二、免責聲明</b><br>
+                本系統旨在協助成大學生進行多學期修課模擬與自我進度追蹤。正式畢業審查資格與抵免認定，仍應以<b>各學系系辦公室人工審核</b>及<b>學校正式成績單</b>為最終標準。</p>
+            </div>
+            <div class="course-detail-footer">
+                <button type="button" class="tf-btn tf-btn-sm tf-btn-ghost" onclick="closeDataSourceModal()">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. 使用者條款與隱私權政策 彈窗 -->
+    <div id="termsModal" class="course-detail-overlay" onclick="closeTermsModal(event)">
+        <div class="course-detail-card" style="max-width: 520px;" onclick="event.stopPropagation()">
+            <div class="course-detail-header">
+                <h3 class="modal-title">使用者條款與隱私權政策</h3>
+                <button type="button" class="modal-close-btn" onclick="closeTermsModal()">✕</button>
+            </div>
+            <div class="course-detail-body" style="font-size:0.8rem; line-height:1.6;">
+                <p><b>一、隱私權政策</b></p>
+                <ul>
+                    <li><b>純本機端儲存</b>：TimeFlow 不建置伺服器端資料庫，不會傳輸、記錄或側錄您輸入的任何課名、分數、GPA、教師與備註。</li>
+                    <li><b>資料主控權</b>：所有資料均保存在您的瀏覽器 Cookie / LocalStorage 中。您可隨時透過本機清除快取或在系統內點選「清空課表」完全抹除資料。</li>
+                </ul>
+
+                <p><b>二、服務條款</b></p>
+                <ul>
+                    <li>本系統為開源輔助規劃工具，免費提供成大學生使用。</li>
+                    <li>使用者應自行妥善保管匯出之 JSON 備份檔案，避免於公用電腦遺留未登出之瀏覽器紀錄。</li>
+                </ul>
+            </div>
+            <div class="course-detail-footer">
+                <button type="button" class="tf-btn tf-btn-sm tf-btn-ghost" onclick="closeTermsModal()">我已了解</button>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- 模組載入順序 -->
+<script src="js/core/store.js"></script>
+<script src="js/core/modal.js"></script>
+<script src="js/core/icons.js"></script>
+<script src="js/core/config.js"></script>
+<script src="js/core/data.js"></script>
+
+<script src="js/analytics/grade.js"></script>
+<script src="js/analytics/chart.js"></script>
+<script src="js/analytics/report.js"></script>
+
+<!-- 1. 規則引擎主體 -->
+<script src="js/graduation/graduation-rules.js"></script> 
+
+<!-- 2. 各學院規則資料檔 -->
+<script src="js/graduation/rules-data/eecs.js"></script>
+<script src="js/graduation/rules-data/engineering.js"></script>
+<script src="js/graduation/rules-data/sciences.js"></script>
+<script src="js/graduation/rules-data/medicine.js"></script>
+<script src="js/graduation/rules-data/management.js"></script>
+<script src="js/graduation/rules-data/social-sciences.js"></script>
+<script src="js/graduation/rules-data/planning-design.js"></script>
+<script src="js/graduation/rules-data/liberal-arts.js"></script>
+<script src="js/graduation/rules-data/bioscience.js"></script>
+<script src="js/graduation/rules-data/interdisciplinary.js"></script>
+
+<!-- 3. 計算核心與 UI -->
+<script src="js/graduation/graduation.js"></script>       
+<script src="js/graduation/graduation-ui.js"></script>    
+
+<script src="js/schedule/conflict.js"></script>
+<script src="js/schedule/schedule.js"></script>
+<script src="js/schedule/schedule-export.js"></script>
+
+<script src="js/course/course.js"></script>
+<script src="js/course/wishlist.js"></script>
+
+<script src="js/app.js"></script>
+
+<!-- PWA Service Worker 註冊腳本 -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('TimeFlow PWA Ready:', reg.scope))
+                .catch(err => console.warn('PWA registration failed:', err));
+        });
+    }
+</script>
+
+</body>
+</html>
