@@ -285,6 +285,14 @@
                         </select>
                     </div>
                 </div>
+
+                <!-- 🌟 無固定時間 / 遠距 / 抵免 開關 -->
+                <div class="form-group" style="margin-top: 10px; margin-bottom: 2px;">
+                    <label class="checkbox-pill-label" style="font-size: var(--tf-text-xs); color: var(--tf-text-secondary); cursor: pointer; display: flex; align-items: center; gap: 6px;">
+                        <input type="checkbox" id="courseNoSchedule" onchange="toggleNoScheduleInput(this.checked)">
+                        <span style="font-weight: var(--tf-weight-semibold); color: var(--tf-color-primary-light);">無固定上課時間<br> (非同步遠距 / 抵免 / 實習)</span>
+                    </label>
+                </div>
             </div>
 
             <div class="editor-section-header">
@@ -318,11 +326,13 @@
                         <input type="hidden" id="courseFrequency" value="weekly">
                     </div>
 
+                    <!-- 🌟 擴充支援「已抵免」狀態 -->
                     <div class="form-group">
                         <label class="field-label">修讀與成績狀態</label>
                         <select id="courseStatusMode" class="modern-select" onchange="toggleScoreInput()">
                             <option value="修讀中" selected>修讀中 (學期未結束 / 預排)</option>
                             <option value="已結算">已結算 (輸入百分制成績)</option>
+                            <option value="已抵免">已抵免 (僅計入畢業學分，不計 GPA)</option>
                         </select>
                     </div>
 
@@ -421,6 +431,9 @@
                     <div class="mobile-schedule-wrapper" id="mobileScheduleArea">
                         <div class="mobile-grid-container" id="mobileGridBoard"></div>
                     </div>
+
+                    <!-- 🌟 非同步遠距 / 無固定時間 / 抵免課程展示區 -->
+                    <div id="asyncCourseContainer" style="display: none; margin-top: 10px;"></div>
 
                     <div id="scheduleListViewArea" class="schedule-list-view-wrapper" style="display: none;">
                         <div id="listViewContainer" class="list-view-timeline"></div>
@@ -920,16 +933,12 @@
                     <!-- Q4 -->
                     <div class="tf-accordion-item" onclick="toggleFaqAccordion(this)">
                         <div class="tf-accordion-header">
-                            <span class="faq-question-title">4. 英文免修與英檢門檻該如何設定？</span>
+                            <span class="faq-question-title">4. 轉學生／重考抵免課程與遠距 Coursera 該如何輸入？</span>
                             <span class="tf-accordion-arrow">▼</span>
                         </div>
                         <div class="tf-accordion-body">
                             <div class="faq-answer-content">
-                                請於「畢業」檢核頁點開「修業門檻與加修設定」：
-                                <ul>
-                                    <li><b>英文免修</b>：可選擇免修 2 或 4 學分（118 級起免修學分依校規自動轉為通識修讀目標）。</li>
-                                    <li><b>英檢達標</b>：勾選後卡片即會標註已通過外語畢業門檻。</li>
-                                </ul>
+                                新增課程時，勾選<b>「無固定上課時間」</b>即可不佔用每週課表格子（會收納在課表正下方的遠距/抵免專區）。若為外校轉學抵免課程，修讀狀態請選擇<b>「已抵免」</b>，系統會正常計算畢業學分且不影響 GPA 分母。
                             </div>
                         </div>
                     </div>

@@ -1,5 +1,5 @@
 // ============================================================
-// 🎓 TimeFlow v3.2 — 畢業學分純計算核心 Engine (Data-Driven - Fixed)
+// 🎓 TimeFlow v3.2 — 畢業學分純計算核心 Engine (Data-Driven - Waived & Async Support)
 // ============================================================
 
 function calculateMilitaryDeductionDays(courseCount) {
@@ -92,7 +92,9 @@ function calculateGraduation(data) {
             const rawCourseName = (course.name || course.title || course.courseName || course.cname || '').trim();
             const cleanTitle = cleanGeneralCourseTitle(rawCourseName);
 
-            const isPassed = (course.status === '已取得' || (course.status === undefined && course.passed !== false));
+            // 🌟 核心：納入「已抵免」狀態為通過，且排除修讀中
+            const isWaived = (course.status === '已抵免');
+            const isPassed = (course.status === '已取得' || isWaived || (course.status === undefined && course.passed !== false));
             const isInProgress = (course.status === '修讀中');
 
             if (isCurrentSem && !isTentative) {
@@ -100,8 +102,9 @@ function calculateGraduation(data) {
                 if (isPassed) currentSemEarnedCredits += credits;
             }
 
+            // 🌟 核心：GPA 計算排除「已抵免」與「修讀中」
             const score = (course.score !== undefined && course.score !== null) ? parseFloat(course.score) : null;
-            if (!isInProgress && !isTentative && score !== null && credits > 0) {
+            if (!isInProgress && !isTentative && !isWaived && score !== null && credits > 0) {
                 const gp = typeof getGradePoint === 'function' ? getGradePoint(score) : 0;
                 cumGpaCredits += credits;
                 cumGpaSum += (gp * credits);
@@ -114,7 +117,7 @@ function calculateGraduation(data) {
                 }
             }
 
-            // 🌟 修正：精準比對排除過度模糊匹配誤殺
+            // 通識不承認過濾
             const isDisallowedGeneral = disallowedCourses.length > 0 && 
                 (course.type && (course.type.startsWith('通識') || course.type === '融通' || course.type.startsWith('第二外語'))) &&
                 disallowedCourses.some(dc => {
@@ -128,6 +131,7 @@ function calculateGraduation(data) {
                 }
             }
 
+            // 學分累加
             if ((isPassed || isInProgress) && !isTentative) {
                 if (isInterdisciplinary) {
                     if (course.type === '不分系-自我與職涯探索' || rawCourseName.includes('自我與職涯探索')) {

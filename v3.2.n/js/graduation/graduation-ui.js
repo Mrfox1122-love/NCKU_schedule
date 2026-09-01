@@ -1,5 +1,5 @@
 // ============================================================
-// 🎓 Graduation UI 畢業檢核與門檻視覺化模組 (TimeFlow v3.2 - Clean)
+// 🎓 Graduation UI 畢業檢核與門檻視覺化模組 (TimeFlow v3.2 - Clean & Summer Fix)
 // ============================================================
 
 const NCKU_DEPARTMENTS_CATALOG = [
@@ -55,15 +55,9 @@ function ensureSemestersForYears(data, targetYears = 4) {
         }
     });
 
-    const semOrderIndex = s => {
-        const m = s.match(/^([一二三四五六七八九十\d]+)(上|下)$/);
-        if (!m) return 999;
-        const yIdx = numMap.indexOf(m[1]);
-        const termIdx = m[2] === '上' ? 0 : 1;
-        return (yIdx >= 0 ? yIdx : 10) * 2 + termIdx;
-    };
-
-    data.semesterOrder.sort((a, b) => semOrderIndex(a) - semOrderIndex(b));
+    if (typeof sortSemesterOrder === 'function') {
+        sortSemesterOrder(data.semesterOrder);
+    }
 }
 
 function updateCourseTypeOptions(isCCEP = false) {
@@ -291,6 +285,7 @@ function updateCheckerCard(cardId, earnedVal, expectedVal, targetVal, isPassedCo
     }
 }
 
+// 🌟 規劃頁底部即時學期成績統計（排除已抵免）
 function updatePlanSemesterGradeStats(data) {
     if (!data) return;
     const currentSem = data.currentSemester || '一上';
@@ -301,8 +296,9 @@ function updatePlanSemesterGradeStats(data) {
         const cred = parseFloat(c.credits) || 0;
         const isTentative = !!c.isTentative;
         const isInProgress = (c.status === '修讀中');
+        const isWaived = (c.status === '已抵免');
 
-        if (!isTentative && !isInProgress && c.score !== null && c.score !== undefined && cred > 0) {
+        if (!isTentative && !isInProgress && !isWaived && c.score !== null && c.score !== undefined && cred > 0) {
             const courseScore = parseFloat(c.score) || 0;
             const gp = (typeof getGradePoint === 'function') ? getGradePoint(courseScore) : 0;
             semGpaCredits += cred;
@@ -342,7 +338,6 @@ function renderGraduationUI(res, data) {
         }
     }
 
-    // 依據修業年限（4/5/6 年）動態計算並展示精準級數
     const titleEl = document.getElementById('deptNameTitle');
     if (titleEl) {
         const rawName = res.deptName || '自訂科系';
@@ -364,7 +359,6 @@ function renderGraduationUI(res, data) {
         cumGpaBadge.innerHTML = `歷年 GPA: <b>${res.grades.cumGpa}</b> ｜ 加權 <b>${res.grades.cumWeighted}</b> 分`;
     }
 
-    // 🌟 修正進度文字：結構化 span 保護，不被擠壓換行
     const pText = document.getElementById('gradProgressText');
     if (pText) {
         pText.innerHTML = `
@@ -611,7 +605,6 @@ function renderGraduationUI(res, data) {
             ${warningsDisplay}
         `;
 
-        // 🌟 自動繪製通識五角平衡雷達圖
         if (typeof renderGenRadarChart === 'function' && res.generalEducation?.domain?.details) {
             renderGenRadarChart(res.generalEducation.domain.details, res.generalEducation.domain.details);
         }

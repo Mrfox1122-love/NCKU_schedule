@@ -35,7 +35,7 @@ function getLetterGrade(score) {
 }
 
 /**
- * 課程編輯器內「修讀中 / 已結算」狀態切換
+ * 課程編輯器內「修讀中 / 已結算 / 已抵免」狀態切換
  */
 function toggleScoreInput() {
     const mode = document.getElementById('courseStatusMode')?.value;
@@ -78,7 +78,11 @@ let currentBatchGradeCache = [];
 /**
  * 等第績點動態 Badge 生成輔助函式
  */
-function formatBatchGradeBadge(scoreVal) {
+function formatBatchGradeBadge(scoreVal, status) {
+    if (status === '已抵免') {
+        return `<span class="batch-gp-badge gp-muted" style="color:var(--tf-color-primary-light); font-weight:600;">已抵免 (不計GPA)</span>`;
+    }
+
     if (scoreVal === '' || scoreVal === null || isNaN(parseFloat(scoreVal))) {
         return `<span class="batch-gp-badge gp-muted">修讀中</span>`;
     }
@@ -122,7 +126,7 @@ function openBatchGradeModal() {
         type: c.type || '系定必修',
         color: c.color || 'var(--tf-color-primary)',
         status: c.status,
-        score: (c.score !== null && c.score !== undefined && c.status !== '修讀中') ? String(c.score) : ''
+        score: (c.status === '已抵免') ? '' : ((c.score !== null && c.score !== undefined && c.status !== '修讀中') ? String(c.score) : '')
     }));
 
     renderBatchGradeRows();
@@ -156,7 +160,7 @@ function closeBatchGradeModal(e) {
 }
 
 /**
- * 渲染結算清單（橫向對齊卡片結構）
+ * 渲染結算清單
  */
 function renderBatchGradeRows() {
     const container = document.getElementById('batchGradeListContainer');
@@ -169,8 +173,15 @@ function renderBatchGradeRows() {
 
     container.innerHTML = currentBatchGradeCache.map((item, idx) => {
         const credNum = parseFloat(item.credits) || 0;
-        const credText = credNum === 0 ? '0 學分 (不計績點)' : `${credNum} 學分`;
-        const badgeHtml = formatBatchGradeBadge(item.score);
+        const isWaived = (item.status === '已抵免');
+        const credText = isWaived ? `${credNum} 學分 (已抵免)` : (credNum === 0 ? '0 學分 (不計績點)' : `${credNum} 學分`);
+        const badgeHtml = formatBatchGradeBadge(item.score, item.status);
+
+        const inputHtml = isWaived
+            ? `<input type="text" class="batch-score-input" value="抵免" disabled style="opacity:0.6; cursor:not-allowed;">`
+            : `<input type="number" class="batch-score-input" min="0" max="100" placeholder="未結算" 
+                      value="${item.score}" 
+                      oninput="handleBatchScoreInput(${idx}, this.value)">`;
 
         return `
             <div class="batch-grade-row-card" style="border-left-color: ${item.color} !important;">
@@ -182,9 +193,7 @@ function renderBatchGradeRows() {
                     </div>
                 </div>
                 <div class="batch-grade-controls">
-                    <input type="number" class="batch-score-input" min="0" max="100" placeholder="未結算" 
-                           value="${item.score}" 
-                           oninput="handleBatchScoreInput(${idx}, this.value)">
+                    ${inputHtml}
                     <div id="batchPreviewTag_${idx}">
                         ${badgeHtml}
                     </div>
@@ -205,7 +214,7 @@ function handleBatchScoreInput(index, val) {
 
     const tagEl = document.getElementById(`batchPreviewTag_${index}`);
     if (tagEl) {
-        tagEl.innerHTML = formatBatchGradeBadge(trimmedVal);
+        tagEl.innerHTML = formatBatchGradeBadge(trimmedVal, currentBatchGradeCache[index].status);
     }
 
     updateBatchGradeLiveStats();
@@ -216,7 +225,9 @@ function handleBatchScoreInput(index, val) {
  */
 function quickFillAllGrades(defaultScore = 80) {
     currentBatchGradeCache.forEach(item => {
-        item.score = String(defaultScore);
+        if (item.status !== '已抵免') {
+            item.score = String(defaultScore);
+        }
     });
     renderBatchGradeRows();
     updateBatchGradeLiveStats();
@@ -227,14 +238,16 @@ function quickFillAllGrades(defaultScore = 80) {
  */
 function quickResetAllGrades() {
     currentBatchGradeCache.forEach(item => {
-        item.score = '';
+        if (item.status !== '已抵免') {
+            item.score = '';
+        }
     });
     renderBatchGradeRows();
     updateBatchGradeLiveStats();
 }
 
 /**
- * 即時計算彈窗底部學期 GPA 與加權統計
+ * 即時計算彈窗底部學期 GPA 與加權統計（排除已抵免）
  */
 function updateBatchGradeLiveStats() {
     const statsEl = document.getElementById('batchGradeLiveStats');
@@ -248,6 +261,11 @@ function updateBatchGradeLiveStats() {
     currentBatchGradeCache.forEach(item => {
         const cr = parseFloat(item.credits) || 0;
         totalCredits += cr;
+
+        // 🌟 已抵免課程不納入 GPA 點數與分母計算
+        if (item.status === '已抵免') {
+            return;
+        }
 
         if (item.score !== '' && !isNaN(parseFloat(item.score)) && cr > 0) {
             const scoreNum = Math.min(100, Math.max(0, parseFloat(item.score)));
@@ -277,6 +295,12 @@ function saveBatchGrades() {
     currentBatchGradeCache.forEach(cacheItem => {
         const target = courses.find(c => String(c.id) === String(cacheItem.id));
         if (target) {
+            if (target.status === '已抵免') {
+                target.score = null;
+                target.passed = true;
+                return;
+            }
+
             if (cacheItem.score !== '' && !isNaN(parseFloat(cacheItem.score))) {
                 const finalScore = Math.min(100, Math.max(0, parseFloat(cacheItem.score)));
                 const isPass = finalScore >= 60;
@@ -329,7 +353,6 @@ function updatePrivacyIcon(isPrivate) {
     }
 }
 
-// 初始化載入
 window.addEventListener('DOMContentLoaded', () => {
     const savedPrivate = localStorage.getItem('timeflow_privacy_mode') === '1';
     if (savedPrivate) {
@@ -339,33 +362,32 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ============================================================
-// 🎯 What-If 目標 GPA 倒推模擬演算法
+// 🎯 What-If 目標 GPA 倒推模擬演算法 (排除抵免)
 // ============================================================
 
 function openWhatIfModal() {
     const modal = document.getElementById('whatIfModal');
     if (!modal) return;
 
-    // 自動計算當前已取得學分與 GPA 積點
-    let currentGradCredits = 0;
+    let currentGpaCredits = 0;
     let currentGpaSum = 0;
 
     (appData.semesterOrder || []).forEach(sem => {
         (appData.semesters[sem] || []).forEach(c => {
             const cred = parseFloat(c.credits) || 0;
-            if (!c.isTentative && (c.status === '已取得' || c.status === '未取得') && c.score !== null && cred > 0) {
+            if (!c.isTentative && c.status !== '已抵免' && (c.status === '已取得' || c.status === '未取得') && c.score !== null && cred > 0) {
                 const gp = getGradePoint(c.score);
-                currentGradCredits += cred;
+                currentGpaCredits += cred;
                 currentGpaSum += (gp * cred);
             }
         });
     });
 
-    const curGpa = currentGradCredits > 0 ? (currentGpaSum / currentGradCredits).toFixed(2) : '0.00';
-    document.getElementById('whatIfCurCredits').innerText = `${currentGradCredits} 學分`;
+    const curGpa = currentGpaCredits > 0 ? (currentGpaSum / currentGpaCredits).toFixed(2) : '0.00';
+    document.getElementById('whatIfCurCredits').innerText = `${currentGpaCredits} 學分`;
     document.getElementById('whatIfCurGpa').innerText = curGpa;
 
-    const remainingCredits = Math.max(0, (appData.targetCredits || 128) - currentGradCredits);
+    const remainingCredits = Math.max(0, (appData.targetCredits || 128) - currentGpaCredits);
     document.getElementById('whatIfRemainCredits').value = remainingCredits;
 
     calculateWhatIfTarget();
@@ -383,7 +405,7 @@ function calculateWhatIfTarget() {
     (appData.semesterOrder || []).forEach(sem => {
         (appData.semesters[sem] || []).forEach(c => {
             const cred = parseFloat(c.credits) || 0;
-            if (!c.isTentative && (c.status === '已取得' || c.status === '未取得') && c.score !== null && cred > 0) {
+            if (!c.isTentative && c.status !== '已抵免' && (c.status === '已取得' || c.status === '未取得') && c.score !== null && cred > 0) {
                 const gp = getGradePoint(c.score);
                 currentCredits += cred;
                 currentGpaSum += (gp * cred);

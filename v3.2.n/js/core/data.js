@@ -19,13 +19,52 @@ const TimeEngine = {
 };
 
 // ============================================================
-// 🌟 課程資料正規化與相容防呆
+// 🌟 學期排序與命名輔助工具 (支援暑修：一上 < 一下 < 一暑 < 二上)
+// ============================================================
+const SEMESTER_NUM_MAP = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+
+function sortSemesterOrder(orderList = []) {
+    const getIndex = s => {
+        const m = s.match(/^([一二三四五六七八九十\d]+)(上|下|暑)$/);
+        if (!m) return 999;
+        const yIdx = SEMESTER_NUM_MAP.indexOf(m[1]);
+        const termIdx = m[2] === '上' ? 0 : (m[2] === '下' ? 1 : 2);
+        return (yIdx >= 0 ? yIdx : 10) * 3 + termIdx;
+    };
+    orderList.sort((a, b) => getIndex(a) - getIndex(b));
+    return orderList;
+}
+
+function getNextSemesterName(orderList = []) {
+    const regularList = orderList.filter(s => s.endsWith('上') || s.endsWith('下'));
+    if (regularList.length === 0) return '一上';
+    
+    const last = regularList[regularList.length - 1];
+    const match = last.match(/^([一二三四五六七八九十\d]+)(上|下)$/);
+    if (!match) return '五上';
+
+    const y = match[1];
+    const t = match[2];
+    const yIdx = SEMESTER_NUM_MAP.indexOf(y);
+
+    if (t === '上') {
+        return `${y}下`;
+    } else {
+        const nextY = (yIdx !== -1 && yIdx + 1 < SEMESTER_NUM_MAP.length) ? SEMESTER_NUM_MAP[yIdx + 1] : '五';
+        return `${nextY}上`;
+    }
+}
+
+// ============================================================
+// 🌟 課程資料正規化與相容防呆 (支援已抵免與無固定時間)
 // ============================================================
 function normalizeCourseData(c) {
     if (!c) return c;
     const color = c.color || '#2563eb';
-    const score = (c.score !== undefined && c.score !== null) ? parseFloat(c.score) : null;
-    const isPassed = (c.status === '已取得' || (c.status === undefined && c.passed !== false));
+    const isWaived = (c.status === '已抵免');
+    const score = (!isWaived && c.score !== undefined && c.score !== null) ? parseFloat(c.score) : null;
+    const isPassed = isWaived ? true : (c.status === '已取得' || (c.status === undefined && c.passed !== false));
+    const status = isWaived ? '已抵免' : (c.status || (isPassed ? '已取得' : '未取得'));
 
     return {
         id: c.id || Date.now(),
@@ -33,10 +72,11 @@ function normalizeCourseData(c) {
         name: c.name || "未命名課程",
         credits: parseFloat(c.credits) || 0,
         type: c.type || "系定必修",
-        status: c.status || (isPassed ? '已取得' : '未取得'),
+        status: status,
         score: score,
         passed: isPassed,
         isTentative: !!c.isTentative,
+        isNoSchedule: !!c.isNoSchedule,
         slots: Array.isArray(c.slots) ? c.slots : [],
         color: color,
         textColor: c.textColor || (typeof getContrastTextColor === 'function' ? getContrastTextColor(color) : '#ffffff'),
@@ -50,7 +90,7 @@ function normalizeCourseData(c) {
     };
 }
 
-// 🌟 全域核心資料結構 (TimeFlow v3.0)
+// 🌟 全域核心資料結構 (TimeFlow v3.2)
 let appData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
     deptName: "電機系",
     entryYear: 118,
@@ -103,6 +143,8 @@ appData.semesterOrder.forEach(sem => {
         appData.semesters[sem] = [];
     }
 });
+
+sortSemesterOrder(appData.semesterOrder);
 
 function saveData() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
@@ -162,6 +204,8 @@ function importData(event) {
                         importedData.semesterOrder.push(sem);
                     }
                 });
+
+                sortSemesterOrder(importedData.semesterOrder);
 
                 if (!importedData.currentSemester || !importedData.semesterOrder.includes(importedData.currentSemester)) {
                     importedData.currentSemester = importedData.semesterOrder[0];

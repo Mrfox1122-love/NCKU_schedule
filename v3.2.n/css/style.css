@@ -2140,3 +2140,27 @@ input[type="number"] {
     color: var(--tf-text-muted);
     line-height: 1.45;
 }
+
+/* 樣式：乾淨橫向膠囊列 */
+.async-course-strip {
+    margin-top: 10px;
+    background: var(--tf-surface-sunken);
+    border: 1px solid var(--tf-border-default);
+    border-radius: var(--tf-radius-md);
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.async-course-pill {
+    background: var(--tf-surface-base);
+    border: 1px solid var(--tf-border-subtle);
+    padding: 4px 10px;
+    border-radius: var(--tf-radius-sm);
+    font-size: 0.75rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}

@@ -1,5 +1,5 @@
 // ============================================================
-// 📚 Course 現代化課程編輯與彈窗模組 (TimeFlow v3.2 - Clean)
+// 📚 Course 現代化課程編輯與彈窗模組 (TimeFlow v3.2 - Clean & Waived/Async)
 // ============================================================
 
 let currentEditingId = null;
@@ -66,6 +66,13 @@ function setCourseFrequency(freq) {
     document.querySelectorAll('#courseFreqGroup .freq-pill-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.freq === freq);
     });
+}
+
+function toggleNoScheduleInput(checked) {
+    const slotList = document.getElementById('slotItemsList');
+    const slotHeader = document.querySelector('.editor-section-header');
+    if (slotList) slotList.style.display = checked ? 'none' : 'flex';
+    if (slotHeader) slotHeader.style.display = checked ? 'none' : 'flex';
 }
 
 function initColorPalette(selectedHex = '#2563eb') {
@@ -229,17 +236,21 @@ if (courseFormEl) {
         const color = document.getElementById('courseColor').value || '#2563eb';
         const textColor = getContrastTextColor(color);
         const isTentative = document.getElementById('courseTentative').checked;
+        const isNoSchedule = document.getElementById('courseNoSchedule') ? document.getElementById('courseNoSchedule').checked : false;
         const url = document.getElementById('courseUrl').value.trim();
         const notes = document.getElementById('courseNotes').value.trim();
         const statusMode = document.getElementById('courseStatusMode').value;
         const rawScore = document.getElementById('courseScore').value;
-        const score = statusMode === '已結算' ? parseFloat(rawScore) : null;
         const frequency = document.getElementById('courseFrequency') ? document.getElementById('courseFrequency').value : 'weekly';
 
-        const isPassed = statusMode === '已結算' ? (score !== null && score >= 60) : true;
-        const finalStatus = statusMode === '已結算' ? (isPassed ? '已取得' : '未取得') : '修讀中';
+        // 🌟 判斷已抵免 vs 已結算 vs 修讀中
+        const isWaived = (statusMode === '已抵免');
+        const score = (statusMode === '已結算') ? parseFloat(rawScore) : null;
+        const isPassed = isWaived ? true : (statusMode === '已結算' ? (score !== null && score >= 60) : true);
+        const finalStatus = isWaived ? '已抵免' : (statusMode === '已結算' ? (isPassed ? '已取得' : '未取得') : '修讀中');
 
-        const finalSlots = formSlotsState.map(item => ({
+        // 若為無固定時間，時段陣列為空
+        const finalSlots = isNoSchedule ? [] : formSlotsState.map(item => ({
             day: item.day,
             periods: expandPeriods(item.startPeriod, item.endPeriod)
         }));
@@ -265,10 +276,11 @@ if (courseFormEl) {
             color: color,
             textColor: textColor,
             isTentative: isTentative,
+            isNoSchedule: isNoSchedule,
             url: url,
             notes: notes,
             status: finalStatus,
-            score: score,
+            score: isWaived ? null : score,
             passed: isPassed,
             slots: finalSlots,
             recurring: true,
@@ -325,6 +337,14 @@ function editCourse(id) {
     document.getElementById('courseNotes').value = course.notes || '';
     document.getElementById('courseTentative').checked = !!course.isTentative;
 
+    // 處理無固定時間開關
+    const isNoSched = !!course.isNoSchedule || (!course.slots || course.slots.length === 0);
+    const noSchedCB = document.getElementById('courseNoSchedule');
+    if (noSchedCB) {
+        noSchedCB.checked = isNoSched;
+        toggleNoScheduleInput(isNoSched);
+    }
+
     setCourseFrequency(course.frequency || 'weekly');
 
     if (course.slots && course.slots.length > 0) {
@@ -341,7 +361,9 @@ function editCourse(id) {
 
     initColorPalette(course.color || '#2563eb');
 
-    if (course.status === '已取得' || course.status === '未取得' || (course.score !== null && course.score !== undefined)) {
+    if (course.status === '已抵免') {
+        document.getElementById('courseStatusMode').value = '已抵免';
+    } else if (course.status === '已取得' || course.status === '未取得' || (course.score !== null && course.score !== undefined)) {
         document.getElementById('courseStatusMode').value = '已結算';
         document.getElementById('courseScore').value = course.score ?? 85;
     } else {
@@ -366,6 +388,12 @@ function cancelEdit() {
 
     const cancelBtn = document.getElementById('btnCancelEdit');
     if (cancelBtn) cancelBtn.style.display = 'none';
+
+    const noSchedCB = document.getElementById('courseNoSchedule');
+    if (noSchedCB) {
+        noSchedCB.checked = false;
+        toggleNoScheduleInput(false);
+    }
 
     setCourseFrequency('weekly');
 
@@ -398,14 +426,26 @@ function showCourseDetail(id) {
     document.getElementById('modalCourseName').innerText = c.name;
     document.getElementById('modalCourseColorBar').style.backgroundColor = c.color || '#2563eb';
 
-    const baseSlotTexts = (c.slots || []).map(s => `週${dayNames[s.day]} 第 ${s.periods.join(',')} 節`).join(' ｜ ');
+    const baseSlotTexts = (c.slots && c.slots.length > 0)
+        ? c.slots.map(s => `週${dayNames[s.day]} 第 ${s.periods.join(',')} 節`).join(' ｜ ')
+        : '<span style="color:var(--tf-color-primary-light); font-weight:600;">非同步遠距 / 無固定時間</span>';
 
-    let tentativeBadge = c.isTentative 
-        ? `<div style="background:var(--tf-status-warning-bg); border:1px solid var(--tf-status-warning-border); color:var(--tf-status-warning-light); font-size:0.75rem; font-weight:bold; padding:4px 8px; border-radius:var(--tf-radius-sm); margin-bottom:4px; display:flex; align-items:center; gap:4px;">此為暫定候補時段（不計入畢業學分）</div>` 
-        : '';
+    let statusHeaderBadge = '';
+    if (c.status === '已抵免') {
+        statusHeaderBadge = `<div style="background:var(--tf-color-primary-subtle); border:1px solid var(--tf-color-primary-border); color:var(--tf-color-primary-light); font-size:0.75rem; font-weight:600; padding:4px 8px; border-radius:var(--tf-radius-sm); margin-bottom:6px;">已抵免課程（計入畢業學分，不計入 GPA）</div>`;
+    } else if (c.isTentative) {
+        statusHeaderBadge = `<div style="background:var(--tf-status-warning-bg); border:1px solid var(--tf-status-warning-border); color:var(--tf-status-warning-light); font-size:0.75rem; font-weight:bold; padding:4px 8px; border-radius:var(--tf-radius-sm); margin-bottom:4px;">此為暫定候補時段（不計入畢業學分）</div>`;
+    }
 
     let scoreHtml = '';
-    if ((c.status === '已取得' || c.status === '未取得') && c.score !== null) {
+    if (c.status === '已抵免') {
+        scoreHtml = `
+            <div class="detail-row">
+                <span class="detail-label">結算成績：</span>
+                <span class="detail-val" style="color:var(--tf-color-primary-light); font-weight:bold;">已抵免 (免計 GPA 分數)</span>
+            </div>
+        `;
+    } else if ((c.status === '已取得' || c.status === '未取得') && c.score !== null) {
         const isPass = c.score >= 60;
         const colorStyle = isPass ? 'var(--tf-status-success-light)' : 'var(--tf-status-danger-light)';
         const passText = isPass ? '及格' : '不及格';
@@ -426,10 +466,10 @@ function showCourseDetail(id) {
     const codeHtml = c.code ? `<div class="detail-row"><span class="detail-label">開課代碼：</span><span class="detail-val" style="font-family:var(--tf-font-mono);">${c.code}</span></div>` : '';
 
     document.getElementById('modalCourseContent').innerHTML = `
-        ${tentativeBadge}
+        ${statusHeaderBadge}
         <div class="detail-row"><span class="detail-label">課程類別：</span><span class="detail-badge">${c.type}</span> ｜ <span style="font-weight:bold;">${c.credits} 學分</span> ｜ <span style="color:var(--tf-color-primary-light); font-weight:bold; font-size:0.8rem;">${Icons.get('clock', { size: 12 })} ${freqText}</span></div>
         ${codeHtml}
-        <div class="detail-row"><span class="detail-label">排定時間：</span><span class="detail-val">${baseSlotTexts || '未指定'}</span></div>
+        <div class="detail-row"><span class="detail-label">排定時間：</span><span class="detail-val">${baseSlotTexts}</span></div>
         <div class="detail-row"><span class="detail-label">上課教室：</span><span class="detail-val">${c.room ? Icons.get('location', { size: 12 }) + ' ' + c.room : '未填寫'}</span></div>
         <div class="detail-row"><span class="detail-label">授課教師：</span><span class="detail-val">${c.teacher ? Icons.get('user', { size: 12 }) + ' ' + c.teacher : '未填寫'}</span></div>
         ${scoreHtml}
@@ -543,6 +583,7 @@ function deleteCourse(id) {
 if (typeof window !== 'undefined') {
     window.isCourseAlreadyInSemester = isCourseAlreadyInSemester;
     window.convertTentativeToOfficial = convertTentativeToOfficial;
+    window.toggleNoScheduleInput = toggleNoScheduleInput;
 }
 
 window.addEventListener('DOMContentLoaded', () => {

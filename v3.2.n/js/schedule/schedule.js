@@ -1,5 +1,5 @@
 // ============================================================
-// 📚 Schedule 多學期排課工作台引擎 (TimeFlow v3.2 - Clean)
+// 📚 Schedule 多學期排課工作台引擎 (TimeFlow v3.2 - Clean & Summer Support)
 // ============================================================
 
 let currentScheduleViewType = 'grid';
@@ -45,10 +45,10 @@ function renderSemesterSelect() {
     order.forEach(sem => {
         const opt = document.createElement('option');
         opt.value = sem;
-        const match = sem.match(/^([一二三四五六七八九十\d]+)(上|下)$/);
+        const match = sem.match(/^([一二三四五六七八九十\d]+)(上|下|暑)$/);
         if (match) {
             const y = match[1];
-            const t = match[2] === '上' ? '上學期' : '下學期';
+            const t = match[2] === '上' ? '上學期' : (match[2] === '下' ? '下學期' : '暑修');
             const prefix = numLabelMap[y] || `第${y}年`;
             opt.innerText = `${prefix} ${t}`;
         } else {
@@ -69,20 +69,50 @@ function renderSemesterSelect() {
     if (btnNext) btnNext.disabled = (currentIdx >= order.length - 1);
 }
 
+// 🌟 支援新增暑修或下一學期
 function addNewSemester() {
-    const nextSem = getNextSemesterName(appData.semesterOrder);
-    if (!appData.semesters[nextSem]) appData.semesters[nextSem] = [];
-    if (!appData.semesterOrder.includes(nextSem)) appData.semesterOrder.push(nextSem);
-    appData.currentSemester = nextSem;
+    const curSem = appData.currentSemester || '一上';
+    const match = curSem.match(/^([一二三四五六七八九十\d]+)/);
+    const currentYearNum = match ? match[1] : '一';
+    const summerSemName = `${currentYearNum}暑`;
+
+    let targetSem = '';
+
+    // 若當前學年尚未建立暑修，詢問是否建立
+    if (!appData.semesterOrder.includes(summerSemName)) {
+        const wantSummer = confirm(`是否要為【大${currentYearNum}】新增【${summerSemName}】(暑修)？\n\n• 點擊「確定」：新增【${summerSemName}】\n• 點擊「取消」：依序新增下一常規學期`);
+        if (wantSummer) {
+            targetSem = summerSemName;
+        }
+    }
+
+    if (!targetSem) {
+        targetSem = (typeof getNextSemesterName === 'function') 
+            ? getNextSemesterName(appData.semesterOrder) 
+            : '五上';
+    }
+
+    if (!appData.semesters[targetSem]) appData.semesters[targetSem] = [];
+    if (!appData.semesterOrder.includes(targetSem)) {
+        appData.semesterOrder.push(targetSem);
+        if (typeof sortSemesterOrder === 'function') {
+            sortSemesterOrder(appData.semesterOrder);
+        }
+    }
+
+    appData.currentSemester = targetSem;
     renderSemesterSelect();
     saveData();
     updateAppUI();
 }
 
+// 🌟 刪除學期：保護基礎 8 個常規學期，暑修與大五以上皆可隨時刪除
 function deleteCurrentSemester() {
     const currentSem = appData.currentSemester;
-    if (appData.semesterOrder.length <= 8) {
-        alert('預設的四年（前 8 個學期）為基本修業架構，無法刪除！');
+    const baseSems = ["一上", "一下", "二上", "二下", "三上", "三下", "四上", "四下"];
+    
+    if (baseSems.includes(currentSem)) {
+        alert(`「${currentSem}」為大一至大四之基本修業學期，無法刪除！\n若為暑修（如一暑）或大五加修學期方可刪除。`);
         return;
     }
 
@@ -158,12 +188,13 @@ function updateScheduleStats(currentCourses) {
         const cred = parseFloat(c.credits) || 0;
         const isTentative = !!c.isTentative;
         const isInProgress = (c.status === '修讀中');
+        const isWaived = (c.status === '已抵免');
 
         if (!isTentative) {
             validCount++;
             totalCredits += cred;
 
-            if (!isInProgress && c.score !== null && c.score !== undefined && cred > 0) {
+            if (!isInProgress && !isWaived && c.score !== null && c.score !== undefined && cred > 0) {
                 const courseScore = parseFloat(c.score) || 0;
                 const gp = (typeof getGradePoint === 'function') ? getGradePoint(courseScore) : 0;
                 semGpaCredits += cred;
@@ -262,12 +293,67 @@ function renderSchedule() {
 
     renderDesktopGridSchedule(currentCourses, activeDays, activeSlots);
     renderMobileSchedule(currentCourses, activeDays, activeSlots);
+    renderAsyncCourseStrip(currentCourses);
 
     if (typeof renderWishlist === 'function') renderWishlist();
 
     if (currentScheduleViewType === 'list') {
         renderScheduleListView();
     }
+}
+
+// 🌟 非同步遠距 / 無固定時間 / 抵免課程展示條
+function renderAsyncCourseStrip(currentCourses) {
+    const container = document.getElementById('asyncCourseContainer');
+    if (!container) return;
+
+    const asyncCourses = (currentCourses || []).filter(c => c.isNoSchedule || !c.slots || c.slots.length === 0);
+
+    if (asyncCourses.length === 0) {
+        container.style.display = 'none';
+        container.innerHTML = '';
+        return;
+    }
+
+    container.style.display = 'block';
+
+    const pillsHtml = asyncCourses.map(c => {
+        const isTentative = !!c.isTentative;
+        const isWaived = (c.status === '已抵免');
+        const borderColor = c.color || '#2563eb';
+
+        let statusBadge = '';
+        if (isWaived) {
+            statusBadge = '<span style="color:var(--tf-color-primary-light); font-size:0.68rem; font-weight:600;">[已抵免]</span>';
+        } else if (c.status === '已取得') {
+            statusBadge = `<span style="color:var(--tf-status-success-light); font-size:0.68rem; font-weight:600;">[${c.score}分]</span>`;
+        } else if (c.status === '未取得') {
+            statusBadge = `<span style="color:var(--tf-status-danger-light); font-size:0.68rem; font-weight:600;">[${c.score}分 不及格]</span>`;
+        } else if (isTentative) {
+            statusBadge = '<span style="color:var(--tf-status-warning-light); font-size:0.68rem; font-weight:600;">[暫定]</span>';
+        }
+
+        return `
+            <div style="background:var(--tf-surface-base); border:1px solid var(--tf-border-subtle); border-left:3px solid ${borderColor}; padding:4px 10px; border-radius:var(--tf-radius-sm); font-size:0.75rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background var(--tf-transition-fast);" 
+                 onclick="showCourseDetail('${c.id}')" title="點擊查看詳細資訊">
+                <span style="font-weight:600; color:var(--tf-text-primary); font-size:0.75rem;">${c.name}</span>
+                <span style="color:var(--tf-text-muted); font-size:0.7rem;">${c.credits}學分 ｜ ${c.type}</span>
+                ${statusBadge}
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = `
+        <div style="background:var(--tf-surface-sunken); border:1px solid var(--tf-border-default); border-radius:var(--tf-radius-md); padding:8px 12px; display:flex; flex-direction:column; gap:6px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; font-weight:600; color:var(--tf-text-secondary);">
+                <span>非同步遠距 / 無固定時間 / 抵免課程 (${asyncCourses.length} 門)</span>
+                <span style="font-size:0.68rem; color:var(--tf-text-muted);">正常計入本學期與畢業學分</span>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:6px;">
+                ${pillsHtml}
+            </div>
+        </div>
+    `;
 }
 
 function renderDesktopGridSchedule(currentCourses, activeDays, activeSlots) {
@@ -729,7 +815,7 @@ window.addEventListener('resize', () => {
 });
 
 // ============================================================
-// 🖐️ HTML5 拖曳排課控制器 (精確時段定位與邊界保護)
+// 🖐️ HTML5 拖曳排課控制器
 // ============================================================
 
 let draggedCourseContext = null;
