@@ -1,6 +1,18 @@
 // ============================================================
-// 📊 TimeFlow v3.2 — 成績等第運算與學期快速結算模組 (grade.js)
+// 📊 TimeFlow v3.2 — 成績等第運算與學期快速結算模組 (grade.js - Secured)
 // ============================================================
+
+// 🛡️ XSS 防護回退檢查
+function safeEscape(str) {
+    if (typeof escapeHTML === 'function') return escapeHTML(str);
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 /**
  * 成功大學標準百分制轉等第績點 (GPA 4.3 制)
@@ -83,7 +95,7 @@ function formatBatchGradeBadge(scoreVal, status) {
         return `<span class="batch-gp-badge gp-muted" style="color:var(--tf-color-primary-light); font-weight:600;">已抵免 (不計GPA)</span>`;
     }
 
-    if (scoreVal === '' || scoreVal === null || isNaN(parseFloat(scoreVal))) {
+    if (scoreVal === '' || scoreVal === null || scoreVal === undefined || isNaN(parseFloat(scoreVal))) {
         return `<span class="batch-gp-badge gp-muted">修讀中</span>`;
     }
 
@@ -118,16 +130,20 @@ function openBatchGradeModal() {
         titleEl.innerText = `結算學期：【${sem}】（共 ${courses.length} 門課程）`;
     }
 
-    // 建立快取資料
-    currentBatchGradeCache = courses.map(c => ({
-        id: c.id,
-        name: c.name,
-        credits: c.credits,
-        type: c.type || '系定必修',
-        color: c.color || 'var(--tf-color-primary)',
-        status: c.status,
-        score: (c.status === '已抵免') ? '' : ((c.score !== null && c.score !== undefined && c.status !== '修讀中') ? String(c.score) : '')
-    }));
+    // 建立快取資料（校驗色彩安全性）
+    currentBatchGradeCache = courses.map(c => {
+        const rawColor = typeof c.color === 'string' ? c.color.trim() : '';
+        const color = /^#[0-9a-fA-F]{3,8}$/.test(rawColor) ? rawColor : 'var(--tf-color-primary)';
+        return {
+            id: c.id,
+            name: c.name || '未命名課程',
+            credits: c.credits,
+            type: c.type || '系定必修',
+            color: color,
+            status: c.status,
+            score: (c.status === '已抵免') ? '' : ((c.score !== null && c.score !== undefined && c.status !== '修讀中') ? String(c.score) : '')
+        };
+    });
 
     renderBatchGradeRows();
     updateBatchGradeLiveStats();
@@ -160,7 +176,7 @@ function closeBatchGradeModal(e) {
 }
 
 /**
- * 渲染結算清單
+ * 渲染結算清單 (🛡️ 全面套用 XSS 轉義與色彩安全過濾)
  */
 function renderBatchGradeRows() {
     const container = document.getElementById('batchGradeListContainer');
@@ -177,18 +193,23 @@ function renderBatchGradeRows() {
         const credText = isWaived ? `${credNum} 學分 (已抵免)` : (credNum === 0 ? '0 學分 (不計績點)' : `${credNum} 學分`);
         const badgeHtml = formatBatchGradeBadge(item.score, item.status);
 
+        const safeName = safeEscape(item.name);
+        const safeType = safeEscape(item.type);
+        const safeScore = safeEscape(item.score);
+        const safeColor = /^#[0-9a-fA-F]{3,8}$/.test(item.color) ? item.color : 'var(--tf-color-primary)';
+
         const inputHtml = isWaived
             ? `<input type="text" class="batch-score-input" value="抵免" disabled style="opacity:0.6; cursor:not-allowed;">`
             : `<input type="number" class="batch-score-input" min="0" max="100" placeholder="未結算" 
-                      value="${item.score}" 
+                      value="${safeScore}" 
                       oninput="handleBatchScoreInput(${idx}, this.value)">`;
 
         return `
-            <div class="batch-grade-row-card" style="border-left-color: ${item.color} !important;">
+            <div class="batch-grade-row-card" style="border-left-color: ${safeColor} !important;">
                 <div class="batch-course-info">
-                    <span class="batch-course-name" title="${item.name}">${item.name}</span>
+                    <span class="batch-course-name" title="${safeName}">${safeName}</span>
                     <div class="batch-course-meta-row">
-                        <span class="batch-type-pill">${item.type}</span>
+                        <span class="batch-type-pill">${safeType}</span>
                         <span>${credText}</span>
                     </div>
                 </div>
@@ -207,9 +228,9 @@ function renderBatchGradeRows() {
  * 單科分數即時輸入監聽
  */
 function handleBatchScoreInput(index, val) {
-    if (!currentBatchGradeCache[index]) return;
+    if (index < 0 || index >= currentBatchGradeCache.length || !currentBatchGradeCache[index]) return;
 
-    const trimmedVal = val.trim();
+    const trimmedVal = typeof val === 'string' ? val.trim() : '';
     currentBatchGradeCache[index].score = trimmedVal;
 
     const tagEl = document.getElementById(`batchPreviewTag_${index}`);
@@ -346,7 +367,7 @@ function togglePrivacyMode() {
 
 function updatePrivacyIcon(isPrivate) {
     const iconEl = document.getElementById('privacyToggleBtn');
-    if (iconEl) {
+    if (iconEl && typeof Icons !== 'undefined') {
         iconEl.innerHTML = isPrivate 
             ? Icons.get('cancel', { size: 14 }) + ' 顯示成績' 
             : Icons.get('info', { size: 14 }) + ' 隱私模式';
@@ -398,6 +419,7 @@ function calculateWhatIfTarget() {
     const targetGpa = parseFloat(document.getElementById('whatIfTargetGpaInput').value) || 3.8;
     const remainCredits = parseFloat(document.getElementById('whatIfRemainCredits').value) || 0;
     const resultBox = document.getElementById('whatIfResultBox');
+    if (!resultBox) return;
 
     let currentCredits = 0;
     let currentGpaSum = 0;

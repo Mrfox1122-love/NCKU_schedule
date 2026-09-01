@@ -16,6 +16,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="TimeFlow">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: https:;
+    connect-src 'self' https:;
+    font-src 'self' data:;
+    object-src 'none';
+    base-uri 'self';
+    form-action 'self';
+">
 </head>
 <body>
 
@@ -1020,6 +1031,7 @@
 </div>
 
 <!-- 模組載入順序 -->
+<script src="js/core/security.js"></script>
 <script src="js/core/store.js"></script>
 <script src="js/core/modal.js"></script>
 <script src="js/core/icons.js"></script>

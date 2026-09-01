@@ -1,6 +1,17 @@
 // ============================================================
-// 🌟 Wishlist 課程候選庫管理模組 (TimeFlow v3.2 - Clean)
+// 🌟 Wishlist 課程候選庫管理模組 (TimeFlow v3.2 - XSS Secured)
 // ============================================================
+
+// 🛡️ XSS 防禦輔助函式
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 let currentWishlistFilter = 'current';
 
@@ -74,16 +85,16 @@ function renderWishlist() {
         return `
             <div class="tf-wishlist-card" onclick="showWishlistDetail('${item.id}')" style="cursor:pointer;" title="點擊查看詳細資訊">
                 <div class="wishlist-top-row">
-                    <span class="wishlist-course-name">${item.name}</span>
+                    <span class="wishlist-course-name">${escapeHTML(item.name)}</span>
                     <button type="button" class="btn-wishlist-add-mini" onclick="event.stopPropagation(); addWishlistToSchedule('${item.id}')">${Icons.get('plus', { size: 11 })} 排入課表</button>
                 </div>
                 <div class="wishlist-meta-text" style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
-                    ${item.teacher ? `<span>${item.teacher}</span> · ` : ''}
-                    <span>${item.type}</span> · <b>${item.credits}學分</b>
+                    ${item.teacher ? `<span>${escapeHTML(item.teacher)}</span> · ` : ''}
+                    <span>${escapeHTML(item.type)}</span> · <b>${item.credits}學分</b>
                 </div>
                 <div class="wishlist-sub-row">
-                    <span class="wishlist-time-badge">${semTag}${slotText ? `, ${slotText}` : ''}</span>
-                    ${item.room ? `<span class="wishlist-room">${Icons.get('location', { size: 11 })} ${item.room}</span>` : ''}
+                    <span class="wishlist-time-badge">${escapeHTML(semTag)}${slotText ? `, ${slotText}` : ''}</span>
+                    ${item.room ? `<span class="wishlist-room">${Icons.get('location', { size: 11 })} ${escapeHTML(item.room)}</span>` : ''}
                     <button type="button" class="btn-wishlist-del-icon" onclick="event.stopPropagation(); deleteWishlistItem('${item.id}')" title="移除候選">✕</button>
                 </div>
             </div>
@@ -107,11 +118,11 @@ function showWishlistDetail(id) {
     const freqText = freqLabelMap[item.frequency || 'weekly'] || '每週固定';
 
     document.getElementById('modalCourseContent').innerHTML = `
-        <div class="detail-row"><span class="detail-label">課程類別：</span><span class="detail-badge">${item.type}</span> ｜ <span style="font-weight:bold;">${item.credits} 學分</span> ｜ <span style="color:var(--tf-color-primary-light); font-weight:bold; font-size:0.8rem;">${Icons.get('clock', { size: 12 })} ${freqText}</span></div>
+        <div class="detail-row"><span class="detail-label">課程類別：</span><span class="detail-badge">${escapeHTML(item.type)}</span> ｜ <span style="font-weight:bold;">${item.credits} 學分</span> ｜ <span style="color:var(--tf-color-primary-light); font-weight:bold; font-size:0.8rem;">${Icons.get('clock', { size: 12 })} ${freqText}</span></div>
         <div class="detail-row"><span class="detail-label">排定時間：</span><span class="detail-val">${baseSlotTexts || '未指定'}</span></div>
-        <div class="detail-row"><span class="detail-label">上課教室：</span><span class="detail-val">${item.room ? Icons.get('location', { size: 12 }) + ' ' + item.room : '未填寫'}</span></div>
-        <div class="detail-row"><span class="detail-label">授課教師：</span><span class="detail-val">${item.teacher ? Icons.get('user', { size: 12 }) + ' ' + item.teacher : '未填寫'}</span></div>
-        ${item.notes ? `<div class="detail-notes-box">${item.notes}</div>` : ''}
+        <div class="detail-row"><span class="detail-label">上課教室：</span><span class="detail-val">${item.room ? Icons.get('location', { size: 12 }) + ' ' + escapeHTML(item.room) : '未填寫'}</span></div>
+        <div class="detail-row"><span class="detail-label">授課教師：</span><span class="detail-val">${item.teacher ? Icons.get('user', { size: 12 }) + ' ' + escapeHTML(item.teacher) : '未填寫'}</span></div>
+        ${item.notes ? `<div class="detail-notes-box">${escapeHTML(item.notes)}</div>` : ''}
     `;
 
     const moveBox = document.querySelector('.modal-move-semester-box');

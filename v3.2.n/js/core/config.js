@@ -18,24 +18,3 @@ const timeSlots = [
 const periodOrder = ['1', '2', '3', '4', 'N', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D'];
 const dayNames = ["", "一", "二", "三", "四", "五", "六", "日"];
 const numMap = ["", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"];
-
-function getNextSemesterName(existingList) {
-    if (!existingList || existingList.length === 0) return "一上";
-    const last = existingList[existingList.length - 1];
-    const match = last.match(/^([一二三四五六七八九十\d]+)(上|下)$/);
-    if (match) {
-        const yearStr = match[1];
-        const term = match[2];
-        let yearIndex = numMap.indexOf(yearStr);
-        if (yearIndex === -1 && !isNaN(parseInt(yearStr))) {
-            yearIndex = parseInt(yearStr);
-        }
-        if (term === '上') {
-            return `${yearStr}下`;
-        } else {
-            const nextYearStr = numMap[yearIndex + 1] || String(yearIndex + 1);
-            return `${nextYearStr}上`;
-        }
-    }
-    return `第${existingList.length + 1}學期`;
-}

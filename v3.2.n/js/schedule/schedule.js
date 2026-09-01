@@ -1,6 +1,17 @@
 // ============================================================
-// 📚 Schedule 多學期排課工作台引擎 (TimeFlow v3.2 - Clean & Summer Support)
+// 📚 Schedule 多學期排課工作台引擎 (TimeFlow v3.2 - XSS Secured)
 // ============================================================
+
+// 🛡️ XSS 防禦輔助函式
+function escapeHTML(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 let currentScheduleViewType = 'grid';
 
@@ -232,7 +243,7 @@ function checkScheduleConflicts(courses) {
         const result = ConflictEngine.detect(courses, 'semester');
         if (result.hasHardConflict) {
             const conflictText = result.hardConflicts.map(c => 
-                `週${c.dayName} (${c.overlapTimeDisplay})：${c.courses.map(x => x.name).join(' 與 ')}`
+                `週${escapeHTML(c.dayName)} (${escapeHTML(c.overlapTimeDisplay)})：${c.courses.map(x => escapeHTML(x.name)).join(' 與 ')}`
             ).join('；');
             banner.style.display = 'block';
             banner.innerHTML = `<div class="tf-conflict-alert">${Icons.get('warning', { size: 15 })} <b>發現衝堂：</b>${conflictText}</div>`;
@@ -302,7 +313,7 @@ function renderSchedule() {
     }
 }
 
-// 🌟 非同步遠距 / 無固定時間 / 抵免課程展示條
+// 🌟 非同步遠距 / 無固定時間 / 抵免課程展示條 (含 XSS 跳脫)
 function renderAsyncCourseStrip(currentCourses) {
     const container = document.getElementById('asyncCourseContainer');
     if (!container) return;
@@ -336,8 +347,8 @@ function renderAsyncCourseStrip(currentCourses) {
         return `
             <div style="background:var(--tf-surface-base); border:1px solid var(--tf-border-subtle); border-left:3px solid ${borderColor}; padding:4px 10px; border-radius:var(--tf-radius-sm); font-size:0.75rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background var(--tf-transition-fast);" 
                  onclick="showCourseDetail('${c.id}')" title="點擊查看詳細資訊">
-                <span style="font-weight:600; color:var(--tf-text-primary); font-size:0.75rem;">${c.name}</span>
-                <span style="color:var(--tf-text-muted); font-size:0.7rem;">${c.credits}學分 ｜ ${c.type}</span>
+                <span style="font-weight:600; color:var(--tf-text-primary); font-size:0.75rem;">${escapeHTML(c.name)}</span>
+                <span style="color:var(--tf-text-muted); font-size:0.7rem;">${c.credits}學分 ｜ ${escapeHTML(c.type)}</span>
                 ${statusBadge}
             </div>
         `;
@@ -535,15 +546,15 @@ function renderDesktopGridSchedule(currentCourses, activeDays, activeSlots) {
 
                 card.innerHTML = `
                     <div class="card-name-row" style="display:flex; justify-content:space-between; align-items:center;">
-                        <span class="card-name">${course.name}</span>
+                        <span class="card-name">${escapeHTML(course.name)}</span>
                         <div style="display:flex; gap:2px; align-items:center;">
                             ${isTentative ? '<span class="tf-card-tag tag-tentative">暫定</span>' : ''}
                         </div>
                     </div>
                     <div class="card-time">${timeRangeStr}</div>
                     <div class="card-meta">
-                        ${course.room ? `<span>${Icons.get('location', { size: 11 })} ${course.room}</span>` : ''}
-                        ${course.teacher ? `<span>${Icons.get('user', { size: 11 })} ${course.teacher}</span>` : ''}
+                        ${course.room ? `<span>${Icons.get('location', { size: 11 })} ${escapeHTML(course.room)}</span>` : ''}
+                        ${course.teacher ? `<span>${Icons.get('user', { size: 11 })} ${escapeHTML(course.teacher)}</span>` : ''}
                     </div>
                 `;
 
@@ -641,12 +652,12 @@ function renderMobileSchedule(currentCourses, activeDays, activeSlots) {
 
                 card.onclick = () => showCourseDetail(course.id);
 
-                let roomText = course.room ? `<div class="mobile-course-room">${Icons.get('location', { size: 10 })} ${course.room}</div>` : '';
-                let teacherText = (grp.length >= 2 && course.teacher) ? `<div class="mobile-course-teacher">${Icons.get('user', { size: 10 })} ${course.teacher}</div>` : '';
+                let roomText = course.room ? `<div class="mobile-course-room">${Icons.get('location', { size: 10 })} ${escapeHTML(course.room)}</div>` : '';
+                let teacherText = (grp.length >= 2 && course.teacher) ? `<div class="mobile-course-teacher">${Icons.get('user', { size: 10 })} ${escapeHTML(course.teacher)}</div>` : '';
                 let tentativeTag = isTentative ? `<span class="tf-card-tag tag-tentative" style="font-size:0.55rem; padding:0 3px;">暫定</span>` : '';
 
                 card.innerHTML = `
-                    <div class="mobile-course-name">${course.name} ${tentativeTag}</div>
+                    <div class="mobile-course-name">${escapeHTML(course.name)} ${tentativeTag}</div>
                     ${roomText}
                     ${teacherText}
                 `;
@@ -736,12 +747,12 @@ function renderScheduleListView() {
                 </div>
                 <div class="list-card-main-box">
                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
-                        <span class="l-name">${c.name}</span>
-                        <span class="l-type-badge">${c.type || '必修'}</span>
+                        <span class="l-name">${escapeHTML(c.name)}</span>
+                        <span class="l-type-badge">${escapeHTML(c.type || '必修')}</span>
                     </div>
                     <div class="l-meta">
-                        ${c.room ? `<span>${Icons.get('location', { size: 12 })} ${c.room}</span>` : ''} 
-                        ${c.teacher ? `<span>${Icons.get('user', { size: 12 })} ${c.teacher}</span>` : ''}
+                        ${c.room ? `<span>${Icons.get('location', { size: 12 })} ${escapeHTML(c.room)}</span>` : ''} 
+                        ${c.teacher ? `<span>${Icons.get('user', { size: 12 })} ${escapeHTML(c.teacher)}</span>` : ''}
                     </div>
                 </div>
                 <div class="list-card-arrow">${Icons.get('chevronRight', { size: 14 })}</div>

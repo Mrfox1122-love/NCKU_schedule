@@ -27,7 +27,8 @@ function buildTrendChart() {
         
         coursesInSem.forEach(course => {
             const credits = parseFloat(course.credits) || 0;
-            if (course.status !== '修讀中' && !course.isTentative && course.score !== undefined && course.score !== null && credits > 0) {
+            const isWaived = (course.status === '已抵免');
+            if (course.status !== '修讀中' && !course.isTentative && !isWaived && course.score !== undefined && course.score !== null && credits > 0) {
                 const gp = getGradePoint(course.score);
                 semGpaCredits += credits;
                 semGpaSum += (gp * credits);

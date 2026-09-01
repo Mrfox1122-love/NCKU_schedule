@@ -1,5 +1,5 @@
 // ============================================================
-// 📚 Course 現代化課程編輯與彈窗模組 (TimeFlow v3.2 - Clean & Waived/Async)
+// 📚 Course 現代化課程編輯與彈窗模組 (TimeFlow v3.2 - XSS Secured)
 // ============================================================
 
 let currentEditingId = null;
@@ -423,6 +423,7 @@ function showCourseDetail(id) {
     const modal = document.getElementById('courseDetailModal');
     if (!modal) return;
 
+    // 原生 innerText 賦值，安全防護
     document.getElementById('modalCourseName').innerText = c.name;
     document.getElementById('modalCourseColorBar').style.backgroundColor = c.color || '#2563eb';
 
@@ -457,21 +458,22 @@ function showCourseDetail(id) {
         `;
     }
 
-    let urlHtml = c.url ? `<div class="detail-row"><span class="detail-label">相關連結：</span><a href="${c.url}" target="_blank" class="detail-url-btn">開啟課程網頁 ↗</a></div>` : '';
-    let notesHtml = c.notes ? `<div class="detail-notes-box">${c.notes}</div>` : '';
+    const safeUrl = sanitizeURL(c.url);
+    let urlHtml = safeUrl ? `<div class="detail-row"><span class="detail-label">相關連結：</span><a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="detail-url-btn">開啟課程網頁 ↗</a></div>` : '';
+    let notesHtml = c.notes ? `<div class="detail-notes-box">${escapeHTML(c.notes)}</div>` : '';
 
     const freqLabelMap = { 'weekly': '每週固定', 'odd': '單週', 'even': '雙週' };
     const freqText = freqLabelMap[c.frequency || 'weekly'] || '每週固定';
 
-    const codeHtml = c.code ? `<div class="detail-row"><span class="detail-label">開課代碼：</span><span class="detail-val" style="font-family:var(--tf-font-mono);">${c.code}</span></div>` : '';
+    const codeHtml = c.code ? `<div class="detail-row"><span class="detail-label">開課代碼：</span><span class="detail-val" style="font-family:var(--tf-font-mono);">${escapeHTML(c.code)}</span></div>` : '';
 
     document.getElementById('modalCourseContent').innerHTML = `
         ${statusHeaderBadge}
-        <div class="detail-row"><span class="detail-label">課程類別：</span><span class="detail-badge">${c.type}</span> ｜ <span style="font-weight:bold;">${c.credits} 學分</span> ｜ <span style="color:var(--tf-color-primary-light); font-weight:bold; font-size:0.8rem;">${Icons.get('clock', { size: 12 })} ${freqText}</span></div>
+        <div class="detail-row"><span class="detail-label">課程類別：</span><span class="detail-badge">${escapeHTML(c.type)}</span> ｜ <span style="font-weight:bold;">${c.credits} 學分</span> ｜ <span style="color:var(--tf-color-primary-light); font-weight:bold; font-size:0.8rem;">${Icons.get('clock', { size: 12 })} ${freqText}</span></div>
         ${codeHtml}
         <div class="detail-row"><span class="detail-label">排定時間：</span><span class="detail-val">${baseSlotTexts}</span></div>
-        <div class="detail-row"><span class="detail-label">上課教室：</span><span class="detail-val">${c.room ? Icons.get('location', { size: 12 }) + ' ' + c.room : '未填寫'}</span></div>
-        <div class="detail-row"><span class="detail-label">授課教師：</span><span class="detail-val">${c.teacher ? Icons.get('user', { size: 12 }) + ' ' + c.teacher : '未填寫'}</span></div>
+        <div class="detail-row"><span class="detail-label">上課教室：</span><span class="detail-val">${c.room ? Icons.get('location', { size: 12 }) + ' ' + escapeHTML(c.room) : '未填寫'}</span></div>
+        <div class="detail-row"><span class="detail-label">授課教師：</span><span class="detail-val">${c.teacher ? Icons.get('user', { size: 12 }) + ' ' + escapeHTML(c.teacher) : '未填寫'}</span></div>
         ${scoreHtml}
         ${urlHtml}
         ${notesHtml}

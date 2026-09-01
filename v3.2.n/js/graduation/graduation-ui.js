@@ -1,6 +1,18 @@
 // ============================================================
-// 🎓 Graduation UI 畢業檢核與門檻視覺化模組 (TimeFlow v3.2 - Clean & Summer Fix)
+// 🎓 Graduation UI 畢業檢核與門檻視覺化模組 (TimeFlow v3.2 - Secured)
 // ============================================================
+
+// 🛡️ XSS 防護回退檢查
+function safeEscape(str) {
+    if (typeof escapeHTML === 'function') return escapeHTML(str);
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 const NCKU_DEPARTMENTS_CATALOG = [
     { college: '電機資訊學院', depts: ['電機工程學系', '資訊工程學系'] },
@@ -153,7 +165,7 @@ function onCCEPCollegeChange() {
     const matched = NCKU_DEPARTMENTS_CATALOG.find(c => c.college === colName);
     const depts = matched ? matched.depts : [];
 
-    deptSelect.innerHTML = depts.map(d => `<option value="${d}">${d}</option>`).join('');
+    deptSelect.innerHTML = depts.map(d => `<option value="${safeEscape(d)}">${safeEscape(d)}</option>`).join('');
 
     appData.ccepCollege = colName;
     appData.ccepTargetDept = deptSelect.value;
@@ -233,10 +245,10 @@ const DeptCombobox = {
             });
 
             if (matchedDepts.length > 0) {
-                html += `<div class="tf-combobox-group-title">${group.college}</div>`;
+                html += `<div class="tf-combobox-group-title">${safeEscape(group.college)}</div>`;
                 matchedDepts.forEach(d => {
                     matchCount++;
-                    html += `<div class="tf-combobox-item" onclick="DeptCombobox.selectDept('${d}')">${d}</div>`;
+                    html += `<div class="tf-combobox-item" onclick="DeptCombobox.selectDept('${safeEscape(d)}')">${safeEscape(d)}</div>`;
                 });
             }
         });
@@ -356,7 +368,7 @@ function renderGraduationUI(res, data) {
 
     const cumGpaBadge = document.getElementById('gradCumGpaBadge');
     if (cumGpaBadge && res.grades) {
-        cumGpaBadge.innerHTML = `歷年 GPA: <b>${res.grades.cumGpa}</b> ｜ 加權 <b>${res.grades.cumWeighted}</b> 分`;
+        cumGpaBadge.innerHTML = `歷年 GPA: <b>${safeEscape(res.grades.cumGpa)}</b> ｜ 加權 <b>${safeEscape(res.grades.cumWeighted)}</b> 分`;
     }
 
     const pText = document.getElementById('gradProgressText');
@@ -384,7 +396,7 @@ function renderGraduationUI(res, data) {
             reqCard.querySelector('#t-req-title').innerText = '專長養成 (院核心/輔系)';
             document.getElementById('e-req').innerText = c.facultyExp;
             document.getElementById('v-req').innerText = c.facultyCreds;
-            document.getElementById('t-req').innerText = `目標: 50 學分 (${appData.ccepCollege || '單一學院'})`;
+            document.getElementById('t-req').innerText = `目標: 50 學分 (${safeEscape(appData.ccepCollege || '單一學院')})`;
             updateCheckerCard('card-req', c.facultyCreds, c.facultyExp, 50);
         }
 
@@ -458,8 +470,8 @@ function renderGraduationUI(res, data) {
         if (crossCard) {
             if (isCrossActive) {
                 crossCard.style.display = 'flex';
-                const titleEl = document.getElementById('t-cross-title');
-                if (titleEl) titleEl.innerText = `${cross.name} (${cross.type})`;
+                const crossTitleEl = document.getElementById('t-cross-title');
+                if (crossTitleEl) crossTitleEl.innerText = `${cross.name} (${cross.type})`;
                 document.getElementById('e-cross').innerText = cross.expectedTotal;
                 document.getElementById('v-cross').innerText = cross.earnedTotal;
                 document.getElementById('t-cross-target').innerText = `目標: ${cross.target}`;
@@ -471,15 +483,15 @@ function renderGraduationUI(res, data) {
         }
     }
 
-    // 免責卡提示文字
+    // 🛡️ 免責卡提示文字 (XSS 防禦清洗)
     const noteBody = document.getElementById('deptWarningNoteBody');
     if (noteBody) {
         if (res.deptRuleNotices && res.deptRuleNotices.length > 0) {
-            noteBody.innerHTML = res.deptRuleNotices.map(n => `<div style="margin-bottom:4px; line-height:1.45;">• ${n}</div>`).join('');
+            noteBody.innerHTML = res.deptRuleNotices.map(n => `<div style="margin-bottom:4px; line-height:1.45;">• ${safeEscape(n)}</div>`).join('');
         } else {
             const studyYears = res.studyYears || 4;
             const classYear = getGraduationClassYear(res.entryYear || 118, studyYears);
-            noteBody.innerHTML = `已套用 <b>${res.deptName}（${classYear} 級）</b> 最新官方標準規章，請依修課手冊指引完成選課。`;
+            noteBody.innerHTML = `已套用 <b>${safeEscape(res.deptName)}（${safeEscape(classYear)} 級）</b> 最新官方標準規章，請依修課手冊指引完成選課。`;
         }
     }
 
@@ -560,15 +572,17 @@ function renderGraduationUI(res, data) {
             ? ` <span style="color:var(--tf-color-primary-light); font-weight:600;">(預計 ${res.generalEducation.rong.expected})</span>`
             : '';
 
+        // 🛡️ 警告清單轉義處理
         let warningsHtml = '';
         if (res.warnings && res.warnings.length > 0) {
             warningsHtml = res.warnings.map(w => {
                 const isWarning = (typeof w === 'object' && w.type === 'warning');
-                const text = typeof w === 'object' ? w.text : w;
+                const rawText = typeof w === 'object' ? w.text : w;
+                const safeText = safeEscape(rawText);
                 const color = isWarning ? 'var(--tf-status-warning-light, #f59e0b)' : 'var(--tf-status-danger-light, #ef4444)';
                 return `<div style="color:${color}; display:flex; align-items:flex-start; gap:4px; font-size:0.74rem; line-height:1.45; text-align:left;">
                     <span>•</span>
-                    <span>${text}</span>
+                    <span>${safeText}</span>
                 </div>`;
             }).join('');
         }
