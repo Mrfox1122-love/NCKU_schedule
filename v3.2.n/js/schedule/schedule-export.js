@@ -1,6 +1,18 @@
 // ============================================================
-// 📸 Schedule Export 圖片匯出模組 (極簡無 Emoji、清晰銳利字體版)
+// 📸 Schedule Export 圖片匯出模組 (TimeFlow v3.2.4 - Fully XSS Secured)
 // ============================================================
+
+// 🛡️ XSS 防護安全函式
+function safeEscape(str) {
+    if (typeof escapeHTML === 'function') return escapeHTML(str);
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 /**
  * 顏色轉換工具：將 HEX 轉為高對比 RGBA 柔光底色
@@ -83,12 +95,15 @@ function processExportSchedule(format = 'desktop') {
         exportNode.style.padding = '28px 32px';
     }
 
-    // 2. 頂部抬頭 (無 Emoji，字體清晰)
+    // 2. 頂部抬頭 (安全轉義)
+    const safeDept = safeEscape(dept);
+    const safeSem = safeEscape(sem);
+
     const headerHtml = `
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:${isWallpaper ? '16px' : '16px'}; border-bottom:${isWallpaper ? '2px' : '2px'} solid var(--tf-border-default); padding-bottom:${isWallpaper ? '12px' : '12px'};">
             <div style="display:flex; align-items:baseline; gap:${isWallpaper ? '14px' : '8px'};">
-                <h1 style="margin:0; font-size:${isWallpaper ? '30px' : '24px'}; font-weight:700; color:${isLightTheme ? '#0f172a' : '#f8fafc'}; letter-spacing:-0.3px;">${dept}</h1>
-                <span style="font-size:${isWallpaper ? '20px' : '15px'}; color:var(--tf-color-primary-light); font-weight:600;">【 ${sem} 修課課表 】</span>
+                <h1 style="margin:0; font-size:${isWallpaper ? '30px' : '24px'}; font-weight:700; color:${isLightTheme ? '#0f172a' : '#f8fafc'}; letter-spacing:-0.3px;">${safeDept}</h1>
+                <span style="font-size:${isWallpaper ? '20px' : '15px'}; color:var(--tf-color-primary-light); font-weight:600;">【 ${safeSem} 修課課表 】</span>
             </div>
             <div style="text-align:right; font-size:${isWallpaper ? '15px' : '12px'}; font-weight:500; color:${isLightTheme ? '#64748b' : '#94a3b8'};">
                 TimeFlow
@@ -127,11 +142,12 @@ function processExportSchedule(format = 'desktop') {
         h.className = 'tf-grid-header';
         h.style.gridColumn = `${dIdx + 2}`;
         h.style.gridRow = '1';
-        h.innerHTML = `<span style="font-weight:600; font-size:${isWallpaper ? '22px' : '15px'}; color:${isLightTheme ? '#0f172a' : '#f8fafc'};">週${dayNames[day]}</span>`;
+        const dayLabel = dayNames[day] ? safeEscape(dayNames[day]) : safeEscape(String(day));
+        h.innerHTML = `<span style="font-weight:600; font-size:${isWallpaper ? '22px' : '15px'}; color:${isLightTheme ? '#0f172a' : '#f8fafc'};">週${dayLabel}</span>`;
         gridBoard.appendChild(h);
     });
 
-    // 時間欄與背景格 (調降粗細，改善字體邊緣)
+    // 時間欄與背景格
     activeSlots.forEach((slot, sIdx) => {
         const rowNum = sIdx + 2;
         const t = document.createElement('div');
@@ -142,10 +158,12 @@ function processExportSchedule(format = 'desktop') {
         
         const slotLabelColor = isLightTheme ? '#0f172a' : '#f8fafc';
         const slotTimeColor = isLightTheme ? '#64748b' : '#94a3b8';
+        const safeSlotLabel = safeEscape(slot.label);
+        const safeSlotStartTime = safeEscape((slot.time || '').split('~')[0]);
 
         t.innerHTML = `
-            <strong style="font-size:${isWallpaper ? '18px' : '13px'}; font-weight:600; color:${slotLabelColor};">${slot.label}</strong>
-            <span class="time-sub" style="font-size:${isWallpaper ? '14px' : '11px'}; font-weight:400; color:${slotTimeColor}; margin-top:2px;">${slot.time.split('~')[0]}</span>
+            <strong style="font-size:${isWallpaper ? '18px' : '13px'}; font-weight:600; color:${slotLabelColor};">${safeSlotLabel}</strong>
+            <span class="time-sub" style="font-size:${isWallpaper ? '14px' : '11px'}; font-weight:400; color:${slotTimeColor}; margin-top:2px;">${safeSlotStartTime}</span>
         `;
         gridBoard.appendChild(t);
 
@@ -198,7 +216,7 @@ function processExportSchedule(format = 'desktop') {
         });
     });
 
-    // 渲染課程卡片（無 Emoji、字體銳利清晰）
+    // 渲染課程卡片 (🛡️ 全面 XSS 轉義)
     activeDays.forEach((day, dayIdx) => {
         const dayItems = renderedItems.filter(item => item.dayIdx === dayIdx);
         dayItems.forEach(item => {
@@ -208,7 +226,8 @@ function processExportSchedule(format = 'desktop') {
             const totalCols = overlapping.length;
             const colIndex = overlapping.indexOf(item);
             const course = item.course;
-            const color = course.color || '#2563eb';
+            const rawColor = typeof course.color === 'string' ? course.color.trim() : '';
+            const color = /^#[0-9a-fA-F]{3,8}$/.test(rawColor) ? rawColor : '#2563eb';
 
             const firstSlotObj = activeSlots[item.grp[0]];
             const lastSlotObj = activeSlots[item.grp[item.grp.length - 1]];
@@ -221,7 +240,6 @@ function processExportSchedule(format = 'desktop') {
             card.style.gridColumn = `${dayIdx + 2}`;
             card.style.gridRow = `${item.startRow} / ${item.endRow}`;
             
-            // 背景色與左側邊條適度收斂
             const bgAlpha = isLightTheme ? 0.22 : 0.32;
             const borderAlpha = isLightTheme ? 0.55 : 0.65;
             card.style.backgroundColor = hexToRgba(color, bgAlpha);
@@ -242,7 +260,6 @@ function processExportSchedule(format = 'desktop') {
                 card.style.marginLeft = `calc(${leftPercent}% + 2px)`;
             }
 
-            // 文字顏色設定 (對比高但不過黑/過曝)
             const titleColor = isLightTheme ? '#0f172a' : '#ffffff';
             const timeColor = isLightTheme ? '#334155' : '#e2e8f0';
             const metaColor = isLightTheme ? '#475569' : '#cbd5e1';
@@ -252,17 +269,21 @@ function processExportSchedule(format = 'desktop') {
             const courseTimeSize = isWallpaper ? '15px' : '11px';
             const courseMetaSize = isWallpaper ? '14px' : '11px';
 
-            // 乾淨組合地點與教師資訊（無 Emoji）
+            // 🛡️ 轉義課程名稱、地點與教師
+            const safeCourseName = safeEscape(course.name);
+            const safeTimeRange = safeEscape(timeRangeStr);
+
             let metaList = [];
-            if (course.room) metaList.push(course.room);
-            if (course.teacher) metaList.push(course.teacher);
+            if (course.room) metaList.push(safeEscape(course.room));
+            if (course.teacher) metaList.push(safeEscape(course.teacher));
+            
             const metaHtml = metaList.length > 0 
                 ? `<div style="font-size:${courseMetaSize}; color:${metaColor}; font-weight:400; line-height:1.35; margin-top:auto;">${metaList.join(' ｜ ')}</div>` 
                 : '';
 
             card.innerHTML = `
-                <div style="font-weight:600; font-size:${courseTitleSize}; color:${titleColor}; line-height:1.25; word-break:break-all; letter-spacing:-0.2px;">${course.name}</div>
-                <div style="font-size:${courseTimeSize}; color:${timeColor}; font-weight:400; letter-spacing:0.2px;">${timeRangeStr}</div>
+                <div style="font-weight:600; font-size:${courseTitleSize}; color:${titleColor}; line-height:1.25; word-break:break-all; letter-spacing:-0.2px;">${safeCourseName}</div>
+                <div style="font-size:${courseTimeSize}; color:${timeColor}; font-weight:400; letter-spacing:0.2px;">${safeTimeRange}</div>
                 ${metaHtml}
             `;
             gridBoard.appendChild(card);
@@ -287,9 +308,13 @@ function processExportSchedule(format = 'desktop') {
         useCORS: true,
         logging: false
     }).then(canvas => {
-        document.body.removeChild(exportNode);
+        if (document.body.contains(exportNode)) {
+            document.body.removeChild(exportNode);
+        }
         const typeLabel = isWallpaper ? '手機滿版桌布' : '寬版課表';
-        const fileName = `${dept}_${sem}_${typeLabel}.png`;
+        const safeFileDept = (dept || '成大').replace(/[\/\\:*?"<>|]/g, '_');
+        const safeFileSem = (sem || '課表').replace(/[\/\\:*?"<>|]/g, '_');
+        const fileName = `${safeFileDept}_${safeFileSem}_${typeLabel}.png`;
 
         if (canvas.toBlob) {
             canvas.toBlob(blob => {
@@ -307,7 +332,7 @@ function processExportSchedule(format = 'desktop') {
             }, 'image/png');
         }
     }).catch(err => {
-        if (document.getElementById('tfDedicatedExportNode')) {
+        if (document.body.contains(exportNode)) {
             document.body.removeChild(exportNode);
         }
         console.error('[Export PNG Error]', err);

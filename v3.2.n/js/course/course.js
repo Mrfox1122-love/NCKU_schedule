@@ -142,8 +142,11 @@ function renderSlotItemsList() {
         let endOptions = '';
         activeSlots.forEach(slot => {
             const timeParts = slot.time ? slot.time.split('~') : ['00:00', '00:00'];
-            startOptions += `<option value="${slot.period}" ${String(item.startPeriod) === String(slot.period) ? 'selected' : ''}>第 ${slot.period} 節 (${timeParts[0]})</option>`;
-            endOptions += `<option value="${slot.period}" ${String(item.endPeriod) === String(slot.period) ? 'selected' : ''}>第 ${slot.period} 節 (${timeParts[1]})</option>`;
+            const safePeriod = escapeHTML(String(slot.period));
+            const safeStart = escapeHTML(timeParts[0] || '00:00');
+            const safeEnd = escapeHTML(timeParts[1] || '00:00');
+            startOptions += `<option value="${safePeriod}" ${String(item.startPeriod) === String(slot.period) ? 'selected' : ''}>第 ${safePeriod} 節 (${safeStart})</option>`;
+            endOptions += `<option value="${safePeriod}" ${String(item.endPeriod) === String(slot.period) ? 'selected' : ''}>第 ${safePeriod} 節 (${safeEnd})</option>`;
         });
 
         card.innerHTML = `

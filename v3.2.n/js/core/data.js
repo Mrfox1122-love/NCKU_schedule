@@ -1,9 +1,13 @@
-const STORAGE_KEY = 'mySchedule';
+// ============================================================
+// 💾 Data Store Core (TimeFlow v3.2.5 - Strict Period Whitelist)
+// ============================================================
+var STORAGE_KEY = window.STORAGE_KEY || 'mySchedule';
+window.STORAGE_KEY = STORAGE_KEY;
 
-// ============================================================
-// ⏱️ TimeEngine：基礎輔助運算工具
-// ============================================================
-const TimeEngine = {
+// 🛡️ 成大官方 14 節次法定白名單
+const VALID_PERIOD_SET = new Set(['1', '2', '3', '4', 'N', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D']);
+
+var TimeEngine = window.TimeEngine || {
     formatDate(d) {
         const year = d.getFullYear();
         const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -18,11 +22,9 @@ const TimeEngine = {
         return new Date(parts[0], parts[1] - 1, parts[2]);
     }
 };
+window.TimeEngine = TimeEngine;
 
-// ============================================================
-// 🌟 學期排序與命名輔助工具 (支援暑修：一上 < 一下 < 一暑 < 二上)
-// ============================================================
-const SEMESTER_NUM_MAP = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+var SEMESTER_NUM_MAP = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 
 function sortSemesterOrder(orderList = []) {
     const getIndex = s => {
@@ -57,13 +59,10 @@ function getNextSemesterName(orderList = []) {
     }
 }
 
-// ============================================================
-// 🌟 課程資料正規化與資安防呆 (嚴格型別校驗與 ID 安全化)
-// ============================================================
+// 🌟 課程資料正規化 (嚴格節次白名單過濾)
 function normalizeCourseData(c) {
     if (!c || typeof c !== 'object') return null;
 
-    // 🛡️ 資安防護：強制 ID 必須為合法安全數值，防止屬性逃逸注入
     let cleanId;
     if (typeof c.id === 'number' && !isNaN(c.id) && c.id > 0) {
         cleanId = c.id;
@@ -73,22 +72,27 @@ function normalizeCourseData(c) {
         cleanId = Date.now() + Math.floor(Math.random() * 10000);
     }
 
-    // 🛡️ 資安防護：顏色必須符合 HEX 格式，避免 CSS 屬性注入
     const rawColor = typeof c.color === 'string' ? c.color.trim() : '';
     const color = /^#[0-9a-fA-F]{3,8}$/.test(rawColor) ? rawColor : '#2563eb';
 
     const isWaived = (c.status === '已抵免');
-    const rawScore = (!isWaived && c.score !== undefined && c.score !== null) ? parseFloat(c.score) : null;
+    const rawScore = (!isWaived && c.score !== undefined && c.score !== null && c.score !== '') ? parseFloat(c.score) : null;
     const score = (rawScore !== null && !isNaN(rawScore) && rawScore >= 0 && rawScore <= 100) ? rawScore : null;
     
     const isPassed = isWaived ? true : (c.status === '已取得' || (c.status === undefined && c.passed !== false));
-    const status = isWaived ? '已抵免' : (c.status === '修讀中' || c.status === '未取得' || c.status === '已取得' ? c.status : (isPassed ? '已取得' : '未取得'));
+    const status = isWaived ? '已抵免' : (['修讀中', '未取得', '已取得'].includes(c.status) ? c.status : (isPassed ? '已取得' : '未取得'));
 
-    // 處理時段 slots 陣列安全格式化
-    const safeSlots = Array.isArray(c.slots) ? c.slots.filter(s => s && typeof s === 'object').map(s => ({
-        day: (typeof s.day === 'number' && s.day >= 1 && s.day <= 7) ? s.day : 1,
-        periods: Array.isArray(s.periods) ? s.periods.map(p => String(p).trim()).filter(Boolean) : []
-    })) : [];
+    // 🛡️ 節次白名單檢驗：僅允許 VALID_PERIOD_SET 中的字元
+    const safeSlots = Array.isArray(c.slots) ? c.slots.filter(s => s && typeof s === 'object').map(s => {
+        const dayNum = parseInt(s.day, 10);
+        const validDay = (!isNaN(dayNum) && dayNum >= 1 && dayNum <= 7) ? dayNum : 1;
+        const validPeriods = Array.isArray(s.periods) 
+            ? s.periods
+                .map(p => String(p).trim().toUpperCase())
+                .filter(p => VALID_PERIOD_SET.has(p))
+            : [];
+        return { day: validDay, periods: validPeriods };
+    }) : [];
 
     return {
         id: cleanId,
@@ -103,7 +107,7 @@ function normalizeCourseData(c) {
         isNoSchedule: !!c.isNoSchedule,
         slots: safeSlots,
         color: color,
-        textColor: (typeof getContrastTextColor === 'function') ? getContrastTextColor(color) : '#ffffff',
+        textColor: (typeof getContrastTextColor === 'function') ? getContrastTextColor(color) : (c.textColor || '#ffffff'),
         recurring: c.recurring !== false,
         teacher: typeof c.teacher === 'string' ? c.teacher.slice(0, 50) : '',
         room: typeof c.room === 'string' ? c.room.slice(0, 50) : '',
@@ -114,8 +118,7 @@ function normalizeCourseData(c) {
     };
 }
 
-// 🌟 全域核心資料結構 (TimeFlow v3.2)
-let appData = (function() {
+var appData = (function() {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         return raw ? JSON.parse(raw) : null;
@@ -143,8 +146,8 @@ let appData = (function() {
     showWeekend: false,
     crossMajor: { type: "none", name: "", target: 40 }
 };
+window.appData = appData;
 
-// 補強初始預設值與欄位防呆
 if (!appData.deptName || typeof appData.deptName !== 'string') appData.deptName = "電機工程學系";
 if (appData.entryYear === undefined || isNaN(parseInt(appData.entryYear, 10))) appData.entryYear = 118;
 if (!appData.targetCredits || isNaN(Number(appData.targetCredits))) appData.targetCredits = 138;
@@ -163,7 +166,6 @@ if (!appData.semesterOrder || !Array.isArray(appData.semesterOrder) || appData.s
     appData.semesterOrder = ["一上", "一下", "二上", "二下", "三上", "三下", "四上", "四下"];
 }
 
-// 遍歷修復現有課程與候選清單
 Object.keys(appData.semesters).forEach(sem => {
     appData.semesters[sem] = (appData.semesters[sem] || []).map(normalizeCourseData).filter(Boolean);
 });
@@ -185,7 +187,6 @@ function saveData() {
     }
 }
 
-// 💾 匯出完整規劃 JSON
 function exportData() {
     const todayStr = TimeEngine.formatDate(new Date());
     const safeDept = (appData.deptName || '個人課表').replace(/[\/\\:*?"<>|]/g, '_');
@@ -198,12 +199,10 @@ function exportData() {
     downloadAnchor.remove();
 }
 
-// 📂 匯入備份 JSON (加入嚴格校驗防護)
 function importData(event) {
-    const file = event.target.files[0];
+    const file = event?.target?.files?.[0];
     if (!file) return;
 
-    // 限制檔案大小不超過 5MB
     if (file.size > 5 * 1024 * 1024) {
         alert("❌ 檔案過大，請確認是否為正確的 TimeFlow 規劃檔！");
         event.target.value = '';
@@ -212,92 +211,121 @@ function importData(event) {
 
     const reader = new FileReader();
     reader.onload = function(e) {
+        let importedData = null;
+
         try {
-            const importedData = JSON.parse(e.target.result);
-            if (importedData && typeof importedData === 'object' && importedData.semesters && typeof importedData.semesters === 'object') {
-                if (typeof cancelEdit === 'function') cancelEdit();
-
-                // 🛡️ 頂層欄位校驗與清洗
-                const cleanDept = typeof importedData.deptName === 'string' ? importedData.deptName.trim().slice(0, 50) : "電機工程學系";
-                const cleanYear = !isNaN(parseInt(importedData.entryYear, 10)) ? parseInt(importedData.entryYear, 10) : 118;
-                
-                importedData.deptName = cleanDept;
-                importedData.entryYear = cleanYear;
-                importedData.targetCredits = !isNaN(Number(importedData.targetCredits)) ? Number(importedData.targetCredits) : 138;
-                importedData.targetRequired = !isNaN(Number(importedData.targetRequired)) ? Number(importedData.targetRequired) : 59;
-                importedData.targetReqElective = !isNaN(Number(importedData.targetReqElective)) ? Number(importedData.targetReqElective) : 3;
-                importedData.targetElective = !isNaN(Number(importedData.targetElective)) ? Number(importedData.targetElective) : 51;
-                importedData.maxOutElective = !isNaN(Number(importedData.maxOutElective)) ? Number(importedData.maxOutElective) : 9;
-                importedData.englishWaived = !isNaN(Number(importedData.englishWaived)) ? Number(importedData.englishWaived) : 0;
-                importedData.englishPassed = !!importedData.englishPassed;
-                importedData.showNoon = importedData.showNoon !== false;
-                importedData.showNight = !!importedData.showNight;
-                importedData.showWeekend = !!importedData.showWeekend;
-                
-                if (!importedData.crossMajor || typeof importedData.crossMajor !== 'object') {
-                    importedData.crossMajor = { type: "none", name: "", target: 40 };
-                } else {
-                    importedData.crossMajor = {
-                        type: typeof importedData.crossMajor.type === 'string' ? importedData.crossMajor.type : 'none',
-                        name: typeof importedData.crossMajor.name === 'string' ? importedData.crossMajor.name.slice(0, 50) : '',
-                        target: !isNaN(Number(importedData.crossMajor.target)) ? Number(importedData.crossMajor.target) : 40
-                    };
-                }
-
-                if (!importedData.wishlist || !Array.isArray(importedData.wishlist)) {
-                    importedData.wishlist = [];
-                }
-
-                const rawSemKeys = Object.keys(importedData.semesters);
-                if (!importedData.semesterOrder || !Array.isArray(importedData.semesterOrder) || importedData.semesterOrder.length === 0) {
-                    importedData.semesterOrder = rawSemKeys.length > 0 ? rawSemKeys : ["一上", "一下", "二上", "二下", "三上", "三下", "四上", "四下"];
-                }
-
-                // 限制學期鍵名僅包含合法字元
-                importedData.semesterOrder = importedData.semesterOrder.filter(s => typeof s === 'string' && s.length <= 10);
-
-                importedData.semesterOrder.forEach(sem => {
-                    if (!importedData.semesters[sem] || !Array.isArray(importedData.semesters[sem])) {
-                        importedData.semesters[sem] = [];
-                    }
-                });
-
-                rawSemKeys.forEach(sem => {
-                    if (typeof sem === 'string' && sem.length <= 10 && !importedData.semesterOrder.includes(sem)) {
-                        importedData.semesterOrder.push(sem);
-                    }
-                });
-
-                sortSemesterOrder(importedData.semesterOrder);
-
-                if (!importedData.currentSemester || !importedData.semesterOrder.includes(importedData.currentSemester)) {
-                    importedData.currentSemester = importedData.semesterOrder[0] || '一上';
-                }
-
-                // 全面正規化各學期之課程資料
-                Object.keys(importedData.semesters).forEach(sem => {
-                    importedData.semesters[sem] = (importedData.semesters[sem] || []).map(normalizeCourseData).filter(Boolean);
-                });
-                importedData.wishlist = (importedData.wishlist || []).map(normalizeCourseData).filter(Boolean);
-
-                appData = importedData;
-                saveData();
-
-                if (typeof initTable === 'function') initTable();
-                if (typeof updateAppUI === 'function') updateAppUI();
-                alert("🎉 多學期修課規劃與候選庫已全數成功載入！");
-            } else {
-                alert("❌ 檔案結構不相容，請確認是否為 TimeFlow 匯出的 JSON 檔！");
-            }
-        } catch (err) {
-            alert("❌ 讀取檔案失敗，請檢查 JSON 檔案格式是否正確！");
+            const rawText = String(e.target.result || '').replace(/^\uFEFF/, '').trim();
+            importedData = JSON.parse(rawText);
+        } catch (parseErr) {
+            console.error("[TimeFlow Import] JSON Parse Error:", parseErr);
+            alert("❌ 檔案不是合法的 JSON 格式，請確認備份檔是否完整！");
+            event.target.value = '';
+            return;
         }
+
+        if (!importedData || typeof importedData !== 'object' || !importedData.semesters || typeof importedData.semesters !== 'object') {
+            console.error("[TimeFlow Import] Incompatible Structure:", importedData);
+            alert("❌ 檔案結構不相容，請確認是否為 TimeFlow 匯出的 JSON 檔！");
+            event.target.value = '';
+            return;
+        }
+
+        try {
+            if (typeof cancelEdit === 'function') cancelEdit();
+
+            const cleanDept = typeof importedData.deptName === 'string' ? importedData.deptName.trim().slice(0, 50) : "電機工程學系";
+            const cleanYear = !isNaN(parseInt(importedData.entryYear, 10)) ? parseInt(importedData.entryYear, 10) : 118;
+            
+            importedData.deptName = cleanDept;
+            importedData.entryYear = cleanYear;
+            importedData.targetCredits = !isNaN(Number(importedData.targetCredits)) ? Number(importedData.targetCredits) : 138;
+            importedData.targetRequired = !isNaN(Number(importedData.targetRequired)) ? Number(importedData.targetRequired) : 59;
+            importedData.targetReqElective = !isNaN(Number(importedData.targetReqElective)) ? Number(importedData.targetReqElective) : 3;
+            importedData.targetElective = !isNaN(Number(importedData.targetElective)) ? Number(importedData.targetElective) : 51;
+            importedData.maxOutElective = !isNaN(Number(importedData.maxOutElective)) ? Number(importedData.maxOutElective) : 9;
+            importedData.englishWaived = !isNaN(Number(importedData.englishWaived)) ? Number(importedData.englishWaived) : 0;
+            importedData.englishPassed = !!importedData.englishPassed;
+            importedData.showNoon = importedData.showNoon !== false;
+            importedData.showNight = !!importedData.showNight;
+            importedData.showWeekend = !!importedData.showWeekend;
+            
+            if (!importedData.crossMajor || typeof importedData.crossMajor !== 'object') {
+                importedData.crossMajor = { type: "none", name: "", target: 40 };
+            } else {
+                importedData.crossMajor = {
+                    type: typeof importedData.crossMajor.type === 'string' ? importedData.crossMajor.type : 'none',
+                    name: typeof importedData.crossMajor.name === 'string' ? importedData.crossMajor.name.slice(0, 50) : '',
+                    target: !isNaN(Number(importedData.crossMajor.target)) ? Number(importedData.crossMajor.target) : 40
+                };
+            }
+
+            if (!importedData.wishlist || !Array.isArray(importedData.wishlist)) {
+                importedData.wishlist = [];
+            }
+
+            const SEM_NAME_REGEX = /^([一二三四五六七八九十\d]{1,4})(上|下|暑)$/;
+            const rawSemKeys = Object.keys(importedData.semesters).map(k => String(k).trim()).filter(k => SEM_NAME_REGEX.test(k));
+
+            if (!importedData.semesterOrder || !Array.isArray(importedData.semesterOrder)) {
+                importedData.semesterOrder = rawSemKeys.length > 0 ? rawSemKeys : ["一上", "一下", "二上", "二下", "三上", "三下", "四上", "四下"];
+            } else {
+                importedData.semesterOrder = importedData.semesterOrder
+                    .filter(s => typeof s === 'string' && SEM_NAME_REGEX.test(s.trim()))
+                    .map(s => s.trim());
+            }
+
+            rawSemKeys.forEach(sem => {
+                if (!importedData.semesterOrder.includes(sem)) {
+                    importedData.semesterOrder.push(sem);
+                }
+            });
+
+            importedData.semesterOrder.forEach(sem => {
+                if (!importedData.semesters[sem] || !Array.isArray(importedData.semesters[sem])) {
+                    importedData.semesters[sem] = [];
+                }
+            });
+
+            sortSemesterOrder(importedData.semesterOrder);
+
+            if (!importedData.currentSemester || !importedData.semesterOrder.includes(importedData.currentSemester)) {
+                importedData.currentSemester = importedData.semesterOrder[0] || '一上';
+            }
+
+            // 正規化各學期課程
+            Object.keys(importedData.semesters).forEach(sem => {
+                if (SEM_NAME_REGEX.test(sem)) {
+                    importedData.semesters[sem] = (importedData.semesters[sem] || []).map(normalizeCourseData).filter(Boolean);
+                } else {
+                    delete importedData.semesters[sem];
+                }
+            });
+            importedData.wishlist = (importedData.wishlist || []).map(normalizeCourseData).filter(Boolean);
+
+            appData = importedData;
+            window.appData = appData;
+            saveData();
+        } catch (normErr) {
+            console.error("[TimeFlow Import] Normalization Error:", normErr);
+            alert("❌ 資料內容處理失敗，請查看 Console 錯誤資訊！");
+            event.target.value = '';
+            return;
+        }
+
+        try {
+            if (typeof initTable === 'function') initTable();
+            if (typeof updateAppUI === 'function') updateAppUI();
+            alert("🎉 多學期修課規劃與候選庫已全數成功載入！");
+        } catch (renderErr) {
+            console.error("[TimeFlow Import] UI Render Warning:", renderErr);
+            alert("⚠️ 資料已成功載入並儲存，但畫面渲染時發生警告（請查看 Console）！");
+        }
+
         event.target.value = '';
     };
     reader.readAsText(file);
 }
 
-// 🗑️ 清空當前學期所有課程
 function clearAll() {
     const curSem = appData.currentSemester;
     const courses = appData.semesters[curSem] || [];

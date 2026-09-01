@@ -1,8 +1,7 @@
 // ============================================================
-// 📚 Schedule 多學期排課工作台引擎 (TimeFlow v3.2 - XSS Secured)
+// 📚 Schedule 多學期排課工作台引擎 (TimeFlow v3.2.5 - AddEventListener & Safe Escaped)
 // ============================================================
 
-// 🛡️ XSS 防禦輔助函式
 function escapeHTML(str) {
     if (str === null || str === undefined) return '';
     return String(str)
@@ -11,6 +10,16 @@ function escapeHTML(str) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+function safeGetIcon(name, options = {}) {
+    if (typeof Icons !== 'undefined' && Icons && Icons.get) {
+        return Icons.get(name, options);
+    }
+    if (typeof window.Icons !== 'undefined' && window.Icons && window.Icons.get) {
+        return window.Icons.get(name, options);
+    }
+    return '';
 }
 
 let currentScheduleViewType = 'grid';
@@ -80,7 +89,6 @@ function renderSemesterSelect() {
     if (btnNext) btnNext.disabled = (currentIdx >= order.length - 1);
 }
 
-// 🌟 支援新增暑修或下一學期
 function addNewSemester() {
     const curSem = appData.currentSemester || '一上';
     const match = curSem.match(/^([一二三四五六七八九十\d]+)/);
@@ -89,7 +97,6 @@ function addNewSemester() {
 
     let targetSem = '';
 
-    // 若當前學年尚未建立暑修，詢問是否建立
     if (!appData.semesterOrder.includes(summerSemName)) {
         const wantSummer = confirm(`是否要為【大${currentYearNum}】新增【${summerSemName}】(暑修)？\n\n• 點擊「確定」：新增【${summerSemName}】\n• 點擊「取消」：依序新增下一常規學期`);
         if (wantSummer) {
@@ -117,7 +124,6 @@ function addNewSemester() {
     updateAppUI();
 }
 
-// 🌟 刪除學期：保護基礎 8 個常規學期，暑修與大五以上皆可隨時刪除
 function deleteCurrentSemester() {
     const currentSem = appData.currentSemester;
     const baseSems = ["一上", "一下", "二上", "二下", "三上", "三下", "四上", "四下"];
@@ -246,10 +252,10 @@ function checkScheduleConflicts(courses) {
                 `週${escapeHTML(c.dayName)} (${escapeHTML(c.overlapTimeDisplay)})：${c.courses.map(x => escapeHTML(x.name)).join(' 與 ')}`
             ).join('；');
             banner.style.display = 'block';
-            banner.innerHTML = `<div class="tf-conflict-alert">${Icons.get('warning', { size: 15 })} <b>發現衝堂：</b>${conflictText}</div>`;
+            banner.innerHTML = `<div class="tf-conflict-alert">${safeGetIcon('warning', { size: 15 })} <b>發現衝堂：</b>${conflictText}</div>`;
         } else if (result.hasTentativeWarning) {
             banner.style.display = 'block';
-            banner.innerHTML = `<div class="tf-conflict-warn">${Icons.get('info', { size: 15 })} <b>暫定時段提醒：</b>含有多時段候補排課，請留意正式選課結果。</div>`;
+            banner.innerHTML = `<div class="tf-conflict-warn">${safeGetIcon('info', { size: 15 })} <b>暫定時段提醒：</b>含有多時段候補排課，請留意正式選課結果。</div>`;
         } else {
             banner.style.display = 'none';
         }
@@ -313,7 +319,6 @@ function renderSchedule() {
     }
 }
 
-// 🌟 非同步遠距 / 無固定時間 / 抵免課程展示條 (含 XSS 跳脫)
 function renderAsyncCourseStrip(currentCourses) {
     const container = document.getElementById('asyncCourseContainer');
     if (!container) return;
@@ -388,7 +393,7 @@ function renderDesktopGridSchedule(currentCourses, activeDays, activeSlots) {
         h.className = `tf-grid-header ${day >= 6 ? 'weekend' : ''}`;
         h.style.gridColumn = `${dIdx + 2}`;
         h.style.gridRow = '1';
-        h.innerHTML = `<div class="th-content-box"><span class="th-day-name">星期${dayNames[day]}</span></div>`;
+        h.innerHTML = `<div class="th-content-box"><span class="th-day-name">星期${escapeHTML(dayNames[day])}</span></div>`;
         board.appendChild(h);
     });
 
@@ -399,7 +404,7 @@ function renderDesktopGridSchedule(currentCourses, activeDays, activeSlots) {
         t.className = 'tf-grid-time-cell';
         t.style.gridColumn = '1';
         t.style.gridRow = `${rowNum}`;
-        t.innerHTML = `<strong>${slot.label}</strong><span class="time-sub">${slot.time}</span>`;
+        t.innerHTML = `<strong>${escapeHTML(slot.label)}</strong><span class="time-sub">${escapeHTML(slot.time)}</span>`;
         board.appendChild(t);
 
         activeDays.forEach((day, dIdx) => {
@@ -409,11 +414,12 @@ function renderDesktopGridSchedule(currentCourses, activeDays, activeSlots) {
             bgCell.style.gridRow = `${rowNum}`;
             bgCell.style.cursor = 'pointer';
             bgCell.title = `點擊快速排入：星期${dayNames[day]} 第 ${slot.period} 節（亦可拖曳課程至此）`;
+            
+            // 🛡️ 改為原生事件監聽，杜絕 JS 字串注入
             bgCell.onclick = () => openQuickAddSlot(day, slot.period);
-
-            bgCell.setAttribute('ondragover', 'handleCellDragOver(event)');
-            bgCell.setAttribute('ondragleave', 'handleCellDragLeave(event)');
-            bgCell.setAttribute('ondrop', `handleCellDrop(event, ${day}, '${slot.period}')`);
+            bgCell.addEventListener('dragover', handleCellDragOver);
+            bgCell.addEventListener('dragleave', handleCellDragLeave);
+            bgCell.addEventListener('drop', (e) => handleCellDrop(e, day, slot.period));
 
             board.appendChild(bgCell);
         });
@@ -538,11 +544,14 @@ function renderDesktopGridSchedule(currentCourses, activeDays, activeSlots) {
                     card.style.zIndex = `${item.colIndex + 3}`;
                 }
 
+                // 🛡️ 拖曳改為原生監聽事件
                 card.setAttribute('draggable', 'true');
-                card.setAttribute('ondragstart', `handleCardDragStart(event, '${course.id}', ${item.slotIdx}, ${item.duration})`);
-                card.setAttribute('ondragend', 'handleCardDragEnd(event)');
-
+                card.addEventListener('dragstart', (e) => handleCardDragStart(e, course.id, item.slotIdx, item.duration));
+                card.addEventListener('dragend', handleCardDragEnd);
                 card.onclick = () => showCourseDetail(course.id);
+
+                const roomHtml = course.room ? `<span>${safeGetIcon('location', { size: 11 })} ${escapeHTML(course.room)}</span>` : '';
+                const teacherHtml = course.teacher ? `<span>${safeGetIcon('user', { size: 11 })} ${escapeHTML(course.teacher)}</span>` : '';
 
                 card.innerHTML = `
                     <div class="card-name-row" style="display:flex; justify-content:space-between; align-items:center;">
@@ -551,10 +560,10 @@ function renderDesktopGridSchedule(currentCourses, activeDays, activeSlots) {
                             ${isTentative ? '<span class="tf-card-tag tag-tentative">暫定</span>' : ''}
                         </div>
                     </div>
-                    <div class="card-time">${timeRangeStr}</div>
+                    <div class="card-time">${escapeHTML(timeRangeStr)}</div>
                     <div class="card-meta">
-                        ${course.room ? `<span>${Icons.get('location', { size: 11 })} ${escapeHTML(course.room)}</span>` : ''}
-                        ${course.teacher ? `<span>${Icons.get('user', { size: 11 })} ${escapeHTML(course.teacher)}</span>` : ''}
+                        ${roomHtml}
+                        ${teacherHtml}
                     </div>
                 `;
 
@@ -585,7 +594,7 @@ function renderMobileSchedule(currentCourses, activeDays, activeSlots) {
         h.className = `mobile-grid-header ${day >= 6 ? 'weekend' : ''}`;
         h.style.gridColumn = `${dIdx + 2}`;
         h.style.gridRow = '1';
-        h.innerHTML = `週${dayNames[day]}`;
+        h.innerHTML = `週${escapeHTML(dayNames[day])}`;
         board.appendChild(h);
     });
 
@@ -596,7 +605,7 @@ function renderMobileSchedule(currentCourses, activeDays, activeSlots) {
         t.className = 'mobile-grid-time';
         t.style.gridColumn = '1';
         t.style.gridRow = `${rowNum}`;
-        t.innerHTML = `<span>${slot.period}</span>`;
+        t.innerHTML = `<span>${escapeHTML(slot.period)}</span>`;
         board.appendChild(t);
 
         activeDays.forEach((day, dIdx) => {
@@ -652,8 +661,8 @@ function renderMobileSchedule(currentCourses, activeDays, activeSlots) {
 
                 card.onclick = () => showCourseDetail(course.id);
 
-                let roomText = course.room ? `<div class="mobile-course-room">${Icons.get('location', { size: 10 })} ${escapeHTML(course.room)}</div>` : '';
-                let teacherText = (grp.length >= 2 && course.teacher) ? `<div class="mobile-course-teacher">${Icons.get('user', { size: 10 })} ${escapeHTML(course.teacher)}</div>` : '';
+                let roomText = course.room ? `<div class="mobile-course-room">${safeGetIcon('location', { size: 10 })} ${escapeHTML(course.room)}</div>` : '';
+                let teacherText = (grp.length >= 2 && course.teacher) ? `<div class="mobile-course-teacher">${safeGetIcon('user', { size: 10 })} ${escapeHTML(course.teacher)}</div>` : '';
                 let tentativeTag = isTentative ? `<span class="tf-card-tag tag-tentative" style="font-size:0.55rem; padding:0 3px;">暫定</span>` : '';
 
                 card.innerHTML = `
@@ -714,7 +723,7 @@ function renderScheduleListView() {
         daySection.className = 'list-day-section';
 
         daySection.innerHTML = `
-            <div class="list-day-header">星期${dayNames[day]}</div>
+            <div class="list-day-header">星期${escapeHTML(dayNames[day])}</div>
             <div class="list-cards-group"></div>
         `;
         
@@ -738,11 +747,11 @@ function renderScheduleListView() {
             card.style.borderLeftColor = c.color || '#2563eb';
             card.onclick = () => showCourseDetail(c.id);
 
-            const periodsDisplay = Array.isArray(slot.periods) ? slot.periods.join(',') : slot.periods;
+            const periodsDisplay = Array.isArray(slot.periods) ? slot.periods.map(escapeHTML).join(',') : escapeHTML(String(slot.periods));
 
             card.innerHTML = `
                 <div class="list-card-time-box">
-                    <span class="l-time">${timeRangeStr}</span>
+                    <span class="l-time">${escapeHTML(timeRangeStr)}</span>
                     <span class="l-period">第 ${periodsDisplay} 節</span>
                 </div>
                 <div class="list-card-main-box">
@@ -751,11 +760,11 @@ function renderScheduleListView() {
                         <span class="l-type-badge">${escapeHTML(c.type || '必修')}</span>
                     </div>
                     <div class="l-meta">
-                        ${c.room ? `<span>${Icons.get('location', { size: 12 })} ${escapeHTML(c.room)}</span>` : ''} 
-                        ${c.teacher ? `<span>${Icons.get('user', { size: 12 })} ${escapeHTML(c.teacher)}</span>` : ''}
+                        ${c.room ? `<span>${safeGetIcon('location', { size: 12 })} ${escapeHTML(c.room)}</span>` : ''} 
+                        ${c.teacher ? `<span>${safeGetIcon('user', { size: 12 })} ${escapeHTML(c.teacher)}</span>` : ''}
                     </div>
                 </div>
-                <div class="list-card-arrow">${Icons.get('chevronRight', { size: 14 })}</div>
+                <div class="list-card-arrow">${safeGetIcon('chevronRight', { size: 14 })}</div>
             `;
             if (cardsGroup) {
                 cardsGroup.appendChild(card);
@@ -824,10 +833,6 @@ window.addEventListener('resize', () => {
         }
     }, 150);
 });
-
-// ============================================================
-// 🖐️ HTML5 拖曳排課控制器
-// ============================================================
 
 let draggedCourseContext = null;
 

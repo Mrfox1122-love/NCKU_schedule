@@ -1,10 +1,21 @@
 // ============================================================
-// 🔍 TimeFlow Discover 模組 (TimeFlow v3.2 - Fixed)
+// 🔍 TimeFlow Discover 模組 (TimeFlow v3.2.4 - Fully XSS Secured)
 // ============================================================
+
+// 🛡️ XSS 防禦輔助函式
+function safeEscape(str) {
+    if (typeof escapeHTML === 'function') return escapeHTML(str);
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
 
 let currentTargetCourseToSemester = null;
 
-// 🌟 強化：完整支援 Object 與 String 比對
 function isCourseInWishlist(targetCourse) {
     if (!targetCourse || !appData.wishlist) return false;
     const targetCode = (typeof targetCourse === 'object' && targetCourse.code) ? targetCourse.code.trim().toUpperCase() : '';
@@ -21,14 +32,15 @@ function isCourseInWishlist(targetCourse) {
 }
 
 function handleDiscoverSearch() {
-    const keyword = (document.getElementById('discoverSearchInput').value || '').trim().toLowerCase();
-    const typeFilter = document.getElementById('filterDiscoverType').value;
-    const semFilter = document.getElementById('filterDiscoverSem').value;
-    const creditFilter = document.getElementById('filterDiscoverCredits').value;
+    const inputEl = document.getElementById('discoverSearchInput');
+    const keyword = (inputEl ? inputEl.value : '').trim().toLowerCase();
+    const typeFilter = document.getElementById('filterDiscoverType')?.value || 'all';
+    const semFilter = document.getElementById('filterDiscoverSem')?.value || 'all';
+    const creditFilter = document.getElementById('filterDiscoverCredits')?.value || 'all';
 
     const results = (typeof SAMPLE_COURSE_CATALOG !== 'undefined' ? SAMPLE_COURSE_CATALOG : []).filter(c => {
         if (keyword) {
-            const matchName = c.name.toLowerCase().includes(keyword);
+            const matchName = (c.name || '').toLowerCase().includes(keyword);
             const matchTeacher = (c.teacher || '').toLowerCase().includes(keyword);
             const matchCode = (c.code || '').toLowerCase().includes(keyword);
             const matchDept = (c.dept || '').toLowerCase().includes(keyword);
@@ -64,7 +76,8 @@ function handleDiscoverSearch() {
 }
 
 function clearDiscoverSearch() {
-    document.getElementById('discoverSearchInput').value = '';
+    const inputEl = document.getElementById('discoverSearchInput');
+    if (inputEl) inputEl.value = '';
     handleDiscoverSearch();
 }
 
@@ -92,32 +105,45 @@ function renderDiscoverResults(list) {
     }
 
     let tableRowsHtml = list.map(c => {
-        const slotText = (c.slots || []).map(s => `(${dayNames[s.day]})${s.periods.join(',')}`).join(' ');
+        const slotText = (c.slots || []).map(s => {
+            const dName = (dayNames && dayNames[s.day]) ? safeEscape(dayNames[s.day]) : safeEscape(String(s.day));
+            const pStr = (s.periods || []).map(p => safeEscape(String(p))).join(',');
+            return `(${dName})${pStr}`;
+        }).join(' ');
+
         const assessmentText = c.assessment || '-';
         const isWish = isCourseInWishlist(c);
         const wishBtnClass = isWish ? 'tf-btn tf-btn-sm btn-act-wish is-active' : 'tf-btn tf-btn-sm tf-btn-ghost btn-act-wish';
         const wishBtnText = isWish ? `${Icons.get('star', { size: 12 })} 已候選` : `${Icons.get('star', { size: 12 })} 候選`;
 
         const semDisplay = c.semester === '全年' ? '全年' : (c.semester ? `${c.semester}學期` : '');
-        const deptBase = [c.dept, c.grade, semDisplay].filter(Boolean).join(' · ');
-        const patternText = c.pattern ? `<span class="table-history-sub" title="歷年開課：${(c.history || []).join(', ')}">${c.pattern}</span>` : '';
+        const deptBase = [c.dept, c.grade, semDisplay].filter(Boolean).map(safeEscape).join(' · ');
+        const patternText = c.pattern ? `<span class="table-history-sub" title="歷年開課：${safeEscape((c.history || []).join(', '))}">${safeEscape(c.pattern)}</span>` : '';
 
         let prereqTagHtml = '';
         if (typeof PrerequisiteEngine !== 'undefined') {
             const rule = PrerequisiteEngine.getRule(c);
             if (rule && rule.required && rule.required.length > 0) {
-                const reqNames = rule.required.map(r => r.name).join('、');
-                prereqTagHtml = `<span style="font-size:0.68rem; color:var(--tf-text-muted); display:inline-flex; align-items:center; gap:2px; margin-top:2px;" title="${rule.description}">${Icons.get('info', { size: 11 })} 需先修：${reqNames}</span>`;
+                const reqNames = rule.required.map(r => safeEscape(r.name)).join('、');
+                prereqTagHtml = `<span style="font-size:0.68rem; color:var(--tf-text-muted); display:inline-flex; align-items:center; gap:2px; margin-top:2px;" title="${safeEscape(rule.description)}">${Icons.get('info', { size: 11 })} 需先修：${reqNames}</span>`;
             }
         }
 
+        const safeName = safeEscape(c.name);
+        const safeCode = safeEscape(c.code);
+        const safeType = safeEscape(c.type);
+        const safeTeacher = safeEscape(c.teacher || '-');
+        const safeRoom = safeEscape(c.room);
+        const safeAssess = safeEscape(assessmentText);
+        const safeId = safeEscape(c.id);
+
         return `
-            <tr class="tf-table-row" onclick="handleTableRowClick(event, '${c.id}')">
+            <tr class="tf-table-row" onclick="handleTableRowClick(event, '${safeId}')">
                 <td class="col-name">
                     <div class="table-course-name-wrap">
-                        <span class="table-course-name">${c.name}</span>
-                        <span class="table-course-code">${c.code || ''}</span>
-                        <span class="l-type-badge">${c.type}</span>
+                        <span class="table-course-name">${safeName}</span>
+                        <span class="table-course-code">${safeCode}</span>
+                        <span class="l-type-badge">${safeType}</span>
                     </div>
                     ${prereqTagHtml}
                 </td>
@@ -128,18 +154,18 @@ function renderDiscoverResults(list) {
                     </div>
                 </td>
                 <td class="col-credit"><b>${c.credits}</b></td>
-                <td class="col-teacher">${c.teacher || '-'}</td>
+                <td class="col-teacher">${safeTeacher}</td>
                 <td class="col-time">
                     <div class="table-time-wrap">
                         <span>${slotText || '未定'}</span>
-                        ${c.room ? `<span class="table-room-sub">${c.room}</span>` : ''}
+                        ${safeRoom ? `<span class="table-room-sub">${safeRoom}</span>` : ''}
                     </div>
                 </td>
-                <td class="col-assess" title="${assessmentText}">${assessmentText}</td>
+                <td class="col-assess" title="${safeAssess}">${safeAssess}</td>
                 <td class="col-actions" onclick="event.stopPropagation()">
                     <div class="table-action-btns">
-                        <button type="button" class="${wishBtnClass}" onclick="addDiscoverToWishlist('${c.id}')">${wishBtnText}</button>
-                        <button type="button" class="tf-btn tf-btn-sm tf-btn-primary btn-act-plan" onclick="openAddToSemesterModal('${c.id}')">${Icons.get('plus', { size: 12 })} 排入</button>
+                        <button type="button" class="${wishBtnClass}" onclick="addDiscoverToWishlist('${safeId}')">${wishBtnText}</button>
+                        <button type="button" class="tf-btn tf-btn-sm tf-btn-primary btn-act-plan" onclick="openAddToSemesterModal('${safeId}')">${Icons.get('plus', { size: 12 })} 排入</button>
                     </div>
                 </td>
             </tr>
@@ -147,46 +173,57 @@ function renderDiscoverResults(list) {
     }).join('');
 
     let mobileListHtml = list.map(c => {
-        const slotText = (c.slots || []).map(s => `(${dayNames[s.day]})${s.periods.join(',')}`).join(' ');
-        // 🌟 修正：傳入完整物件 c 進行精準判斷
+        const slotText = (c.slots || []).map(s => {
+            const dName = (dayNames && dayNames[s.day]) ? safeEscape(dayNames[s.day]) : safeEscape(String(s.day));
+            const pStr = (s.periods || []).map(p => safeEscape(String(p))).join(',');
+            return `(${dName})${pStr}`;
+        }).join(' ');
+
         const isWish = isCourseInWishlist(c);
         const wishBtnClass = isWish ? 'tf-btn tf-btn-sm btn-act-wish is-active' : 'tf-btn tf-btn-sm tf-btn-secondary';
         const wishBtnText = isWish ? `${Icons.get('star', { size: 12 })} 已候選` : `${Icons.get('star', { size: 12 })} 候選`;
         
         const semDisplay = c.semester === '全年' ? '全年' : (c.semester ? `${c.semester}學期` : '');
-        const metaText = [c.dept, c.grade, semDisplay].filter(Boolean).join(' · ');
+        const metaText = [c.dept, c.grade, semDisplay].filter(Boolean).map(safeEscape).join(' · ');
 
         let mobilePrereqHtml = '';
         if (typeof PrerequisiteEngine !== 'undefined') {
             const rule = PrerequisiteEngine.getRule(c);
             if (rule && rule.required && rule.required.length > 0) {
-                const reqNames = rule.required.map(r => r.name).join('、');
+                const reqNames = rule.required.map(r => safeEscape(r.name)).join('、');
                 mobilePrereqHtml = ` · <span style="color:var(--tf-text-muted);">需先修：${reqNames}</span>`;
             }
         }
 
+        const safeName = safeEscape(c.name);
+        const safeType = safeEscape(c.type);
+        const safeTeacher = safeEscape(c.teacher || '教師未定');
+        const safePattern = safeEscape(c.pattern);
+        const safeRoom = safeEscape(c.room);
+        const safeId = safeEscape(c.id);
+
         return `
-            <div class="tf-discover-mobile-row" onclick="showDiscoverDetail('${c.id}')">
+            <div class="tf-discover-mobile-row" onclick="showDiscoverDetail('${safeId}')">
                 <div class="m-row-top">
                     <div class="m-row-title-wrap">
-                        <span class="m-row-title">${c.name}</span>
-                        <span class="l-type-badge">${c.type}</span>
+                        <span class="m-row-title">${safeName}</span>
+                        <span class="l-type-badge">${safeType}</span>
                     </div>
                 </div>
                 <div class="m-row-meta">
                     <span>${metaText}</span> · 
                     <span><b>${c.credits}</b> 學分</span> · 
-                    <span>${c.teacher || '教師未定'}</span>
-                    ${c.pattern ? ` · <span style="color:var(--tf-text-muted);">${c.pattern}</span>` : ''}
+                    <span>${safeTeacher}</span>
+                    ${safePattern ? ` · <span style="color:var(--tf-text-muted);">${safePattern}</span>` : ''}
                     ${mobilePrereqHtml}
                 </div>
                 <div class="m-row-time">
                     <span>${Icons.get('clock', { size: 11 })} ${slotText || '時段未定'}</span>
-                    ${c.room ? `<span> · ${Icons.get('location', { size: 11 })} ${c.room}</span>` : ''}
+                    ${safeRoom ? `<span> · ${Icons.get('location', { size: 11 })} ${safeRoom}</span>` : ''}
                 </div>
                 <div class="m-row-actions" onclick="event.stopPropagation()">
-                    <button type="button" class="${wishBtnClass}" onclick="addDiscoverToWishlist('${c.id}')">${wishBtnText}</button>
-                    <button type="button" class="tf-btn tf-btn-sm tf-btn-primary" onclick="openAddToSemesterModal('${c.id}')">${Icons.get('plus', { size: 12 })} 排入規劃</button>
+                    <button type="button" class="${wishBtnClass}" onclick="addDiscoverToWishlist('${safeId}')">${wishBtnText}</button>
+                    <button type="button" class="tf-btn tf-btn-sm tf-btn-primary" onclick="openAddToSemesterModal('${safeId}')">${Icons.get('plus', { size: 12 })} 排入規劃</button>
                 </div>
             </div>
         `;
@@ -229,21 +266,26 @@ function showDiscoverDetail(catalogId) {
     const modal = document.getElementById('courseDetailModal');
     if (!modal) return;
 
-    document.getElementById('modalCourseName').innerText = c.name;
+    document.getElementById('modalCourseName').innerText = c.name || '未命名課程';
     document.getElementById('modalCourseColorBar').style.backgroundColor = '#7c3aed';
 
-    const baseSlotTexts = (c.slots || []).map(s => `週${dayNames[s.day]} 第 ${s.periods.join(',')} 節`).join(' ｜ ');
-    const syllabusUrl = c.syllabusUrl || 'https://course.ncku.edu.tw/index.php?c=qry_all';
+    const baseSlotTexts = (c.slots || []).map(s => {
+        const dName = (dayNames && dayNames[s.day]) ? safeEscape(dayNames[s.day]) : safeEscape(String(s.day));
+        const pStr = (s.periods || []).map(p => safeEscape(String(p))).join(',');
+        return `週${dName} 第 ${pStr} 節`;
+    }).join(' ｜ ');
+
+    const syllabusUrl = sanitizeURL(c.syllabusUrl || 'https://course.ncku.edu.tw/index.php?c=qry_all');
     const isWish = isCourseInWishlist(c);
     const semDisplay = c.semester === '全年' ? '全年開課' : (c.semester ? `${c.semester}學期開課` : '');
 
-    const historyPills = (c.history || []).map(h => `<span class="detail-badge" style="background:var(--tf-surface-sunken); border:1px solid var(--tf-border-default);">${h}</span>`).join(' ');
+    const historyPills = (c.history || []).map(h => `<span class="detail-badge" style="background:var(--tf-surface-sunken); border:1px solid var(--tf-border-default);">${safeEscape(h)}</span>`).join(' ');
     const historyHtml = c.history && c.history.length > 0 ? `
         <div class="detail-row">
             <span class="detail-label">歷年開課：</span>
             <div class="detail-val" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                 ${historyPills}
-                <span style="font-size:0.75rem; color:var(--tf-color-primary-light); font-weight:500;">(${c.pattern || '常態開課'})</span>
+                <span style="font-size:0.75rem; color:var(--tf-color-primary-light); font-weight:500;">(${safeEscape(c.pattern || '常態開課')})</span>
             </div>
         </div>
     ` : '';
@@ -259,35 +301,46 @@ function showDiscoverDetail(catalogId) {
                 <div style="background:var(--tf-surface-sunken); border:1px solid var(--tf-border-default); border-radius:var(--tf-radius-md); padding:8px 10px; margin-top:2px;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <span style="font-weight:600; font-size:0.8rem; color:var(--tf-text-primary);">先修條件</span>
-                        <span class="tf-badge ${badgeClass}">${statusTagText} (${appData.currentSemester}基準)</span>
+                        <span class="tf-badge ${badgeClass}">${statusTagText} (${safeEscape(appData.currentSemester)}基準)</span>
                     </div>
-                    <div style="font-size:0.75rem; color:var(--tf-text-muted); margin-top:3px;">${pRes.message}</div>
+                    <div style="font-size:0.75rem; color:var(--tf-text-muted); margin-top:3px;">${safeEscape(pRes.message)}</div>
                 </div>
             `;
         }
     }
 
+    const safeType = safeEscape(c.type);
+    const safeMeta = [c.dept, c.grade, semDisplay].filter(Boolean).map(safeEscape).join(' · ');
+    const safeCode = safeEscape(c.code);
+    const safeTeacher = safeEscape(c.teacher);
+    const safeRoom = safeEscape(c.room);
+    const safeAssess = safeEscape(c.assessment || '依授課計畫');
+    const safeNotes = safeEscape(c.notes);
+    const safeId = safeEscape(c.id);
+
     document.getElementById('modalCourseContent').innerHTML = `
         <div class="detail-row">
             <span class="detail-label">課程類別：</span>
-            <span class="detail-badge">${c.type}</span> ｜ 
+            <span class="detail-badge">${safeType}</span> ｜ 
             <span style="font-weight:bold;">${c.credits} 學分</span> ｜ 
-            <span style="color:var(--tf-text-secondary); font-size:0.8rem;">${[c.dept, c.grade, semDisplay].filter(Boolean).join(' · ')}</span>
+            <span style="color:var(--tf-text-secondary); font-size:0.8rem;">${safeMeta}</span>
         </div>
-        <div class="detail-row"><span class="detail-label">開課代碼：</span><span class="detail-val">${c.code || '無代碼'}</span></div>
-        <div class="detail-row"><span class="detail-label">授課教師：</span><span class="detail-val">${c.teacher ? c.teacher : '未填寫'}</span></div>
+        <div class="detail-row"><span class="detail-label">開課代碼：</span><span class="detail-val">${safeCode || '無代碼'}</span></div>
+        <div class="detail-row"><span class="detail-label">授課教師：</span><span class="detail-val">${safeTeacher || '未填寫'}</span></div>
         <div class="detail-row"><span class="detail-label">上課時段：</span><span class="detail-val">${baseSlotTexts || '未指定'}</span></div>
-        <div class="detail-row"><span class="detail-label">上課教室：</span><span class="detail-val">${c.room ? c.room : '未指定'}</span></div>
-        <div class="detail-row"><span class="detail-label">評量方式：</span><span class="detail-val">${c.assessment || '依授課計畫'}</span></div>
+        <div class="detail-row"><span class="detail-label">上課教室：</span><span class="detail-val">${safeRoom || '未指定'}</span></div>
+        <div class="detail-row"><span class="detail-label">評量方式：</span><span class="detail-val">${safeAssess}</span></div>
         ${prereqHtml}
         ${historyHtml}
-        <div class="detail-row" style="margin-top:4px;">
-            <span class="detail-label">課程大綱：</span>
-            <a href="${syllabusUrl}" target="_blank" rel="noopener noreferrer" class="tf-btn tf-btn-sm tf-btn-secondary detail-url-btn">
-                ${Icons.get('info', { size: 13 })} 查看課程大綱 ↗
-            </a>
-        </div>
-        ${c.notes ? `<div class="detail-notes-box">${c.notes}</div>` : ''}
+        ${syllabusUrl ? `
+            <div class="detail-row" style="margin-top:4px;">
+                <span class="detail-label">課程大綱：</span>
+                <a href="${syllabusUrl}" target="_blank" rel="noopener noreferrer" class="tf-btn tf-btn-sm tf-btn-secondary detail-url-btn">
+                    ${Icons.get('info', { size: 13 })} 查看課程大綱 ↗
+                </a>
+            </div>
+        ` : ''}
+        ${safeNotes ? `<div class="detail-notes-box">${safeNotes}</div>` : ''}
     `;
 
     const moveBox = document.querySelector('.modal-move-semester-box');
@@ -299,8 +352,8 @@ function showDiscoverDetail(catalogId) {
     const footer = document.querySelector('.course-detail-footer');
     if (footer) {
         footer.innerHTML = `
-            <button type="button" class="${wishBtnClass}" onclick="addDiscoverToWishlist('${c.id}'); showDiscoverDetail('${c.id}');">${Icons.get('star', { size: 12 })} ${wishBtnText}</button>
-            <button type="button" class="tf-btn tf-btn-sm tf-btn-primary" onclick="closeCourseDetail(); openAddToSemesterModal('${c.id}');">${Icons.get('plus', { size: 12 })} 排入規劃</button>
+            <button type="button" class="${wishBtnClass}" onclick="addDiscoverToWishlist('${safeId}'); showDiscoverDetail('${safeId}');">${Icons.get('star', { size: 12 })} ${wishBtnText}</button>
+            <button type="button" class="tf-btn tf-btn-sm tf-btn-primary" onclick="closeCourseDetail(); openAddToSemesterModal('${safeId}');">${Icons.get('plus', { size: 12 })} 排入規劃</button>
             <button type="button" class="tf-btn tf-btn-sm tf-btn-ghost" onclick="closeCourseDetail()">關閉</button>
         `;
     }
@@ -357,21 +410,26 @@ function openAddToSemesterModal(catalogId) {
     const select = document.getElementById('targetSemesterSelect');
     const info = document.getElementById('addToSemTargetInfo');
 
-    info.innerText = `課程：${item.name} (${item.credits} 學分 · ${item.type})`;
-    select.innerHTML = '';
+    if (info) {
+        info.innerText = `課程：${item.name} (${item.credits} 學分 · ${item.type})`;
+    }
+    if (select) {
+        select.innerHTML = '';
+        (appData.semesterOrder || ["一上", "一下", "二上", "二下", "三上", "三下", "四上", "四下"]).forEach(sem => {
+            const opt = document.createElement('option');
+            opt.value = sem;
+            opt.innerText = `${sem} 課表`;
+            if (sem === appData.currentSemester) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
 
-    (appData.semesterOrder || ["一上", "一下", "二上", "二下", "三上", "三下", "四上", "四下"]).forEach(sem => {
-        const opt = document.createElement('option');
-        opt.value = sem;
-        opt.innerText = `${sem} 課表`;
-        if (sem === appData.currentSemester) opt.selected = true;
-        select.appendChild(opt);
-    });
-
-    document.getElementById('btnConfirmAddToSem').onclick = confirmAddDiscoverToSemester;
+    const btnConfirm = document.getElementById('btnConfirmAddToSem');
+    if (btnConfirm) {
+        btnConfirm.onclick = confirmAddDiscoverToSemester;
+    }
 
     updateAddToSemesterPrereqPreview();
-
     ModalManager.open('addToSemesterModal');
 }
 
@@ -414,13 +472,16 @@ function updateAddToSemesterPrereqPreview() {
         badgeHtml = `<span class="tf-badge tf-badge-neutral">先修待確認</span>`;
     }
 
+    const safeTargetSem = safeEscape(targetSem);
+    const safeMessage = safeEscape(pRes.message);
+
     alertBox.innerHTML = `
         <div style="background:${boxBg}; border:1px solid ${borderCol}; border-radius:var(--tf-radius-md); padding:8px 10px; font-size:0.75rem; display:flex; flex-direction:column; gap:4px;">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <span style="font-weight:600; color:var(--tf-text-primary);">排入【${targetSem}】先修檢核</span>
+                <span style="font-weight:600; color:var(--tf-text-primary);">排入【${safeTargetSem}】先修檢核</span>
                 ${badgeHtml}
             </div>
-            <div style="color:var(--tf-text-secondary); line-height:1.4;">${pRes.message}</div>
+            <div style="color:var(--tf-text-secondary); line-height:1.4;">${safeMessage}</div>
         </div>
     `;
 }

@@ -2,7 +2,7 @@
 // ⚡ TimeFlow PWA Service Worker (sw.js)
 // ============================================================
 
-const CACHE_NAME = 'timeflow-cache-v3.2.1';
+const CACHE_NAME = 'timeflow-cache-v3.2.4';
 
 // 需要快取的靜態資源清單
 const STATIC_ASSETS = [
