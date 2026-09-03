@@ -32,12 +32,12 @@
 
     // 1. 電機工程學系
     window.DEPARTMENT_GRADUATION_RULES['電機工程學系'] = {
-        '119': { targetCredits: 138, requiredCredits: 59, requiredElectiveCredits: 3, electiveCredits: 51, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed112Plus,warningNote: '【通識限制】不採計特定通識課程。<br>【必選課程】核心選修至少須修滿 3 學分。<br>【外系選修】外系選修至多採計 9 學分。' },
-        '118': { targetCredits: 138, requiredCredits: 59, requiredElectiveCredits: 3, electiveCredits: 51, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed112Plus,warningNote: '【通識限制】不採計特定通識課程。<br>【必選課程】核心選修至少須修滿 3 學分。<br>【外系選修】外系選修至多採計 9 學分。'},
-        '117': { targetCredits: 144, requiredCredits: 62, requiredElectiveCredits: 3, electiveCredits: 54, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed112Plus,warningNote: '【通識限制】不採計特定通識課程。<br>【必選課程】核心選修至少須修滿 3 學分。<br>【外系選修】外系選修至多採計 9 學分。'},
-        '116': { targetCredits: 144, requiredCredits: 62, requiredElectiveCredits: 3, electiveCredits: 54, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed112Plus,warningNote: '【通識限制】不採計特定通識課程。<br>【必選課程】核心選修至少須修滿 3 學分。<br>【外系選修】外系選修至多採計 9 學分。'},
-        '115': { targetCredits: 144, requiredCredits: 64, requiredElectiveCredits: 4, electiveCredits: 52, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed111Before,warningNote: '【通識限制】不採計特定通識課程。<br>【必選課程】核心選修至少須修滿 4 學分。<br>【外系選修】外系選修至多採計 9 學分。'},
-        '114': { targetCredits: 144, requiredCredits: 64, requiredElectiveCredits: 7, electiveCredits: 52, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed111Before,warningNote: '【通識限制】不採計特定通識課程。<br>【必選課程】核心選修至少須修滿 7 學分。<br>【外系選修】外系選修至多採計 9 學分。'}
+        '119': { targetCredits: 138, requiredCredits: 59, requiredElectiveCredits: 3, electiveCredits: 51, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed112Plus,warningNote: '【通識限制】不採計特定通識課程。\n【必選課程】核心選修至少須修滿 3 學分。\n【外系選修】外系選修至多採計 9 學分。' },
+        '118': { targetCredits: 138, requiredCredits: 59, requiredElectiveCredits: 3, electiveCredits: 51, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed112Plus,warningNote: '【通識限制】不採計特定通識課程。\n【必選課程】核心選修至少須修滿 3 學分。\n【外系選修】外系選修至多採計 9 學分。'},
+        '117': { targetCredits: 144, requiredCredits: 62, requiredElectiveCredits: 3, electiveCredits: 54, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed112Plus,warningNote: '【通識限制】不採計特定通識課程。\n【必選課程】核心選修至少須修滿 3 學分。\n【外系選修】外系選修至多採計 9 學分。'},
+        '116': { targetCredits: 144, requiredCredits: 62, requiredElectiveCredits: 3, electiveCredits: 54, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed112Plus,warningNote: '【通識限制】不採計特定通識課程。\n【必選課程】核心選修至少須修滿 3 學分。\n【外系選修】外系選修至多採計 9 學分。'},
+        '115': { targetCredits: 144, requiredCredits: 64, requiredElectiveCredits: 4, electiveCredits: 52, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed111Before,warningNote: '【通識限制】不採計特定通識課程。\n【必選課程】核心選修至少須修滿 4 學分。\n【外系選修】外系選修至多採計 9 學分。'},
+        '114': { targetCredits: 144, requiredCredits: 64, requiredElectiveCredits: 7, electiveCredits: 52, maxOutsideDeptElective: 9, excludedGeneralDomains: [], disallowedGeneralCourses: eeDisallowed111Before,warningNote: '【通識限制】不採計特定通識課程。\n【必選課程】核心選修至少須修滿 7 學分。\n【外系選修】外系選修至多採計 9 學分。'}
     };
     window.DEPARTMENT_GRADUATION_RULES['電機系'] = window.DEPARTMENT_GRADUATION_RULES['電機工程學系'];
 
@@ -50,7 +50,7 @@
         maxOutsideDeptElective: 21,
         excludedGeneralDomains: [],
         disallowedGeneralCourses: csDisallowed,
-        warningNote: '【通識限制】不採計特定通識課程。<br>【外系選修】外系選修至多採計 21 學分。'
+        warningNote: '【通識限制】不採計特定通識課程。\n【外系選修】外系選修至多採計 21 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['資訊工程學系'] = {

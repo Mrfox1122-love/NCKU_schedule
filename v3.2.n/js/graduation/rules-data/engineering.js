@@ -18,7 +18,7 @@
         excludedGeneralDomains: ['自然與工程科學', '自然與工程', '自然', 'nature'],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【核心選修】須自 6 門中必選 4 門(12學分)：工數(三)、熱力(二)、材力(二)、機動(二)、伺服控制、機械振動。<br>【外系選修】系內選修至少 18 學分，外系選修至多採計 17 學分。'
+        warningNote: '【核心選修】須自 6 門中必選 4 門(12學分)：工數(三)、熱力(二)、材力(二)、機動(二)、伺服控制、機械振動。\n【外系選修】系內選修至少 18 學分，外系選修至多採計 17 學分。'
     };
 
     const meRules110_112 = {
@@ -63,7 +63,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: cheDisallowedGeneral,
-        warningNote: '【通識限制】不採計特定 9 門通識課程。<br>【選修規定】本系選修(含必選)至少修滿 21 學分，外系選修至多採計 12 學分；必選 10 學分含計概(3)、電工電子(3)、工安(3)、論文/文獻(1)。'
+        warningNote: '【通識限制】不採計特定 9 門通識課程。\n【選修規定】本系選修(含必選)至少修滿 21 學分，外系選修至多採計 12 學分；必選 10 學分含計概(3)、電工電子(3)、工安(3)、論文/文獻(1)。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['化學工程學系'] = {
@@ -89,7 +89,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【必選修】結構學(二)、材料力學(二)、基礎工程學須修過 1 次。<br>【外系選修】系專選得含環工、測量、水利及規設院課程至多 9 學分（非本系 Coursera 至多 6 學分）。'
+        warningNote: '【必選修】結構學(二)、材料力學(二)、基礎工程學須修過 1 次。\n【外系選修】系專選得含環工、測量、水利及規設院課程至多 9 學分（非本系 Coursera 至多 6 學分）。'
     };
 
     const civilRules110_112 = {
@@ -102,7 +102,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【必修】必修 53 學分含運輸工程學(3)。<br>【必選修】結構學(二)、材料力學(二)、基礎工程學、環境工程學。<br>【外系選修】系專選得含土環學群及規設院至多 9 學分。'
+        warningNote: '【必修】必修 53 學分含運輸工程學(3)。\n【必選修】結構學(二)、材料力學(二)、基礎工程學、環境工程學。\n【外系選修】系專選得含土環學群及規設院至多 9 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['土木工程學系'] = {
@@ -154,7 +154,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【外系選修】外系選修最多採計 6 學分（A 開頭除外）。<br>【通識限制】通識內容不可與本系必選修相似，材化資學群開授之科目不予承認。'
+        warningNote: '【外系選修】外系選修最多採計 6 學分（A 開頭除外）。\n【通識限制】通識內容不可與本系必選修相似，材化資學群開授之科目不予承認。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['材料科學與工程學系'] = {
@@ -180,7 +180,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【必修/必選】設計必修 4 學分(防洪/水資源/海洋/海岸工程設計 4 選 2)；必選 1 學分為水利及海洋工程概論。<br>【修課限制】水文學與流體力學僅限修本系。<br>【外系選修】本系選修至少 10 學分，外系選修至多採計 21 學分。'
+        warningNote: '【必修/必選】設計必修 4 學分(防洪/水資源/海洋/海岸工程設計 4 選 2)；必選 1 學分為水利及海洋工程概論。\n【修課限制】水文學與流體力學僅限修本系。\n【外系選修】本系選修至少 10 學分，外系選修至多採計 21 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['水利及海洋工程學系'] = {
@@ -207,7 +207,7 @@
         excludedGeneralDomains: ['自然與工程科學', '自然與工程', '自然', 'nature'],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【外系選修】外系選修至多採計 9 學分（至外系修讀本系歷年曾開授之選修課可認列系內選修）。<br>【門檻規定】英文門檻為多益785 / 英檢中高級 / 托福87 / 雅思5.5。'
+        warningNote: '【外系選修】外系選修至多採計 9 學分（至外系修讀本系歷年曾開授之選修課可認列系內選修）。\n【門檻規定】英文門檻為多益785 / 英檢中高級 / 托福87 / 雅思5.5。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['工程科學系'] = {
@@ -233,7 +233,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: { '自然與工程科學': 2, '自然與工程': 2, '自然': 2, nature: 2 },
         disallowedGeneralCourses: [],
-        warningNote: '【外系選修】外系選修至多採計 6 學分 (工電專業課至多 3 學分 + 他系課至多 3 學分)。<br>【分組選修】須通過本組至少 5 門 + 跨組大三課 1 門 (共用 5 門★至多採計 1 門)。'
+        warningNote: '【外系選修】外系選修至多採計 6 學分 (工電專業課至多 3 學分 + 他系課至多 3 學分)。\n【分組選修】須通過本組至少 5 門 + 跨組大三課 1 門 (共用 5 門★至多採計 1 門)。'
     };
 
     const seRules110_111 = {
@@ -246,7 +246,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: { '自然與工程科學': 2, '自然與工程': 2, '自然': 2, nature: 2 },
         disallowedGeneralCourses: [],
-        warningNote: '【外系選修】外系選修至多採計 3 學分 (僅限工學院或電資學院專業課 1 門)。<br>【分組選修】須通過本組至少 5 門 + 跨組 2 門。'
+        warningNote: '【外系選修】外系選修至多採計 3 學分 (僅限工學院或電資學院專業課 1 門)。\n【分組選修】須通過本組至少 5 門 + 跨組 2 門。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['系統及船舶機電工程學系'] = {
@@ -273,7 +273,7 @@
         excludedGeneralDomains: ['自然與工程科學', '自然與工程', '自然', 'nature'],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【外系選修】本系選修(含航太所/民航所)至少修滿 18 學分，外系選修上限 12 學分。<br>【修課限制】「論文(一)(二)」或「航太實作專題(一)(二)」須修畢 1 與 2 始得採計。'
+        warningNote: '【外系選修】本系選修(含航太所/民航所)至少修滿 18 學分，外系選修上限 12 學分。\n【修課限制】「論文(一)(二)」或「航太實作專題(一)(二)」須修畢 1 與 2 始得採計。'
     };
 
     const iaaeRules110 = {
@@ -286,7 +286,7 @@
         excludedGeneralDomains: ['自然與工程科學', '自然與工程', '自然', 'nature'],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【外系選修】本系選修(含航太所/民航所)至少修滿 18 學分，外系選修上限 14 學分。<br>【修課限制】「論文(一)(二)」或「航太實作專題(一)(二)」須修畢 1 與 2 始得採計。'
+        warningNote: '【外系選修】本系選修(含航太所/民航所)至少修滿 18 學分，外系選修上限 14 學分。\n【修課限制】「論文(一)(二)」或「航太實作專題(一)(二)」須修畢 1 與 2 始得採計。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['航空太空工程學系'] = {
@@ -318,7 +318,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: reDisallowedGeneral,
-        warningNote: '【通識限制】不採計特定 10 門自然科學領域通識。<br>【選修規定】系共同必修 61 學分 (共 18 門)；選修至少 39 學分 (系選修為 E4/N4 開課序號，得採計外系選課)。<br>【門檻規定】須通過英文能力門檻或修習補強英文。'
+        warningNote: '【通識限制】不採計特定 10 門自然科學領域通識。\n【選修規定】系共同必修 61 學分 (共 18 門)；選修至少 39 學分 (系選修為 E4/N4 開課序號，得採計外系選課)。\n【門檻規定】須通過英文能力門檻或修習補強英文。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['資源工程學系'] = {
@@ -359,7 +359,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: { '自然與工程科學': 2, '自然與工程': 2, '自然': 2, nature: 2, '生命與健康': 4, '生命科學與健康': 4, bio: 4 },
         disallowedGeneralCourses: eveDisallowedGeneral,
-        warningNote: '【通識限制】不採計特定 31 門通識課程。<br>【外系選修】外系選修上限 6 學分。<br>【必選修】必選 18 學分 (生物學、電工電子、污水、RC、環工物理概論、環工設計一)。'
+        warningNote: '【通識限制】不採計特定 31 門通識課程。\n【外系選修】外系選修上限 6 學分。\n【必選修】必選 18 學分 (生物學、電工電子、污水、RC、環工物理概論、環工設計一)。'
     };
 
     const eveRules112 = {
@@ -372,7 +372,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: { '自然與工程科學': 2, '自然與工程': 2, '自然': 2, nature: 2 },
         disallowedGeneralCourses: eveDisallowedGeneral,
-        warningNote: '【通識限制】不採計特定 31 門通識課程。<br>【外系選修】外系選修上限 6 學分。<br>【必選修】必選 18 學分 (生物學、電工電子、污水、RC、環工物理概論、環工設計一)。'
+        warningNote: '【通識限制】不採計特定 31 門通識課程。\n【外系選修】外系選修上限 6 學分。\n【必選修】必選 18 學分 (生物學、電工電子、污水、RC、環工物理概論、環工設計一)。'
     };
 
     const eveRules110_111 = {
@@ -385,7 +385,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: { '自然與工程科學': 2, '自然與工程': 2, '自然': 2, nature: 2 },
         disallowedGeneralCourses: eveDisallowedGeneral,
-        warningNote: '【必修】必修 69 學分 (含應力 3、材力 3)。<br>【通識限制】不採計特定 31 門通識課程。<br>【外系選修】外系選修上限 6 學分。<br>【必選修】必選 18 學分。'
+        warningNote: '【必修】必修 69 學分 (含應力 3、材力 3)。\n【通識限制】不採計特定 31 門通識課程。\n【外系選修】外系選修上限 6 學分。\n【必選修】必選 18 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['環境工程學系'] = {
@@ -411,7 +411,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【外系選修】本系選修至少須修滿 22 學分，外系選修至多採計 16 學分（須填寫外系學分承認單並經導師簽核）。<br>【必選修】甲組力學必選生醫材料導論(3)+實驗(1)，乙組醫電必選電子學與實驗(一)(4)+電子學與實驗(二)(4)。<br>【門檻規定】英文門檻為 CEFR B2。'
+        warningNote: '【外系選修】本系選修至少須修滿 22 學分，外系選修至多採計 16 學分（須填寫外系學分承認單並經導師簽核）。\n【必選修】甲組力學必選生醫材料導論(3)+實驗(1)，乙組醫電必選電子學與實驗(一)(4)+電子學與實驗(二)(4)。\n【門檻規定】英文門檻為 CEFR B2。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['生物醫學工程學系'] = {
@@ -464,7 +464,7 @@
         excludedGeneralDomains: ['自然與工程科學', '自然與工程', '自然', 'nature'],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【外系選修】學程選修至少修滿 20 學分(碩博課程可認列)，外系選修上限 14 學分。<br>【修課限制】「專題論文(一)(二)」須修畢 1 與 2 始得採計。'
+        warningNote: '【外系選修】學程選修至少修滿 20 學分(碩博課程可認列)，外系選修上限 14 學分。\n【修課限制】「專題論文(一)(二)」須修畢 1 與 2 始得採計。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['能源工程國際學士學位學程'] = {

@@ -1214,6 +1214,7 @@ body {
     overflow-y: auto;
     margin: 4px 0;
     padding-right: 2px;
+    white-space: pre-line;
 }
 .notice-footer-disclaimer {
     font-size: 0.68rem;

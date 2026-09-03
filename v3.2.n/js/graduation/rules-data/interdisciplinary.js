@@ -59,7 +59,7 @@
         excludedGeneralDomains: [],
         disallowedGeneralCourses: [],
         courseraCap: 8,
-        warningNote: '專長養成須修滿單一學院50學分且滿足該系輔系門檻。<br>醫學院全系、建築系、法律系不可作為單一主修畢業專長。'
+        warningNote: '專長養成須修滿單一學院50學分且滿足該系輔系門檻。\n醫學院全系、建築系、法律系不可作為單一主修畢業專長。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['全校不分系學士學位學程'] = {

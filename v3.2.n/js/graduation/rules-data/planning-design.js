@@ -56,7 +56,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: upDisallowedGeneral,
-        warningNote: '【通識限制】不採計特定 30 門通識課程。<br>【外系選修】外系選修至多採計 7 學分。'
+        warningNote: '【通識限制】不採計特定 30 門通識課程。\n【外系選修】外系選修至多採計 7 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['都市計劃學系'] = {
@@ -82,7 +82,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【必修說明】必選「建築敘事」1 學分。<br>【外系選修】外系選修至多採計 12 學分。'
+        warningNote: '【必修說明】必選「建築敘事」1 學分。\n【外系選修】外系選修至多採計 12 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['建築學系 (四年制)'] = {
@@ -108,7 +108,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【修業年限】五年制學程。<br>【外系選修】外系選修至多採計 12 學分。'
+        warningNote: '【修業年限】五年制學程。\n【外系選修】外系選修至多採計 12 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['建築學系 (五年制)'] = {

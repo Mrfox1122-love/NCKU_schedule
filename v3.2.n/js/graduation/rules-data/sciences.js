@@ -18,7 +18,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【選修說明】進階核心選修 6 選 3（至少 9 學分）。<br>【外系選修】外系選修至多採計 12 學分。'
+        warningNote: '【選修說明】進階核心選修 6 選 3（至少 9 學分）。\n【外系選修】外系選修至多採計 12 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['數學系'] = {
@@ -44,7 +44,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【系選修限制】本系專業選修至少 15 學分。<br>【外系選修】外系選修至多採計 25 學分。'
+        warningNote: '【系選修限制】本系專業選修至少 15 學分。\n【外系選修】外系選修至多採計 25 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['物理學系'] = {
@@ -70,7 +70,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【系選修限制】本系專業選修至少 17 學分。<br>【外系選修】外系選修至多採計 24 學分。'
+        warningNote: '【系選修限制】本系專業選修至少 17 學分。\n【外系選修】外系選修至多採計 24 學分。'
     };
 
     const chemRules110 = {
@@ -83,7 +83,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: {},
         disallowedGeneralCourses: [],
-        warningNote: '【系選修限制】本系專業選修至少 24 學分。<br>【外系選修】外系選修至多採計 17 學分。'
+        warningNote: '【系選修限制】本系專業選修至少 24 學分。\n【外系選修】外系選修至多採計 17 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['化學學系'] = {
@@ -137,7 +137,7 @@
             nature: 4, '自然與工程科學': 4 // 自然與工程科學領域至多採計 2 門 (4 學分)
         },
         disallowedGeneralCourses: [],
-        warningNote: '【通識限制】本系開出之通識不予採計。<br>【外系選修】自由選修上限 18 學分。'
+        warningNote: '【通識限制】本系開出之通識不予採計。\n【外系選修】自由選修上限 18 學分。'
     };
 
     const optoRules110 = {
@@ -152,7 +152,7 @@
             nature: 4, '自然與工程科學': 4
         },
         disallowedGeneralCourses: [],
-        warningNote: '【通識限制】本系開出之通識不予採計。<br>【外系選修】自由選修上限 17 學分。'
+        warningNote: '【通識限制】本系開出之通識不予採計。\n【外系選修】自由選修上限 17 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['光電科學與工程學系'] = {

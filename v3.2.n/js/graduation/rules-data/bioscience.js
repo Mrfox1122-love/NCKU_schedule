@@ -27,7 +27,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: { '生命與健康': 2, '生命科學與健康': 2, bio: 2 },
         disallowedGeneralCourses: lsDisallowedGeneral,
-        warningNote: '【通識限制】不採計特定 28 門通識課程。<br>【外系選修】外系選修至多採計 20 學分。'
+        warningNote: '【通識限制】不採計特定 28 門通識課程。\n【外系選修】外系選修至多採計 20 學分。'
     };
 
     const lsRules110_111 = {
@@ -39,7 +39,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: { '生命與健康': 2, '生命科學與健康': 2, bio: 2 },
         disallowedGeneralCourses: lsDisallowedGeneral,
-        warningNote: '【通識限制】不採計特定 28 門通識課程。<br>【外系選修】外系選修至多採計 20 學分。'
+        warningNote: '【通識限制】不採計特定 28 門通識課程。\n【外系選修】外系選修至多採計 20 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['生命科學系'] = {
@@ -81,7 +81,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: { '生命與健康': 2, '生命科學與健康': 2, bio: 2 },
         disallowedGeneralCourses: dbbsDisallowed113Plus,
-        warningNote: '【通識限制】不採計特定通識課程。<br>【外系選修】外系選修至多採計 23 學分。'
+        warningNote: '【通識限制】不採計特定通識課程。\n【外系選修】外系選修至多採計 23 學分。'
     };
 
     const dbbsRules112 = {
@@ -93,7 +93,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: { '生命與健康': 2, '生命科學與健康': 2, bio: 2 },
         disallowedGeneralCourses: dbbsDisallowed112,
-        warningNote: '【通識限制】不採計特定通識課程。<br>【外系選修】外系選修至多採計 18 學分。'
+        warningNote: '【通識限制】不採計特定通識課程。\n【外系選修】外系選修至多採計 18 學分。'
     };
 
     const dbbsRules110_111 = {
@@ -105,7 +105,7 @@
         excludedGeneralDomains: [],
         generalDomainCaps: { '生命與健康': 2, '生命科學與健康': 2, bio: 2 },
         disallowedGeneralCourses: dbbsDisallowed110_111,
-        warningNote: '【通識限制】不採計特定通識課程。<br>【外系選修】外系選修至多採計 18 學分。'
+        warningNote: '【通識限制】不採計特定通識課程。\n【外系選修】外系選修至多採計 18 學分。'
     };
 
     window.DEPARTMENT_GRADUATION_RULES['生物科技與產業科學學系'] = {
