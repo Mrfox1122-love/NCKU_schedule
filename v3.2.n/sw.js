@@ -2,15 +2,15 @@
 // ⚡ TimeFlow PWA Service Worker (sw.js)
 // ============================================================
 
-const CACHE_NAME = 'timeflow-cache-v3.2.4';
+const CACHE_NAME = 'timeflow-cache-v3.2.5';
 
-// 需要快取的靜態資源清單
 const STATIC_ASSETS = [
     './',
     './index.html',
     './css/tokens.css',
     './css/components.css',
     './css/style.css',
+    './js/core/security.js',
     './js/core/store.js',
     './js/core/modal.js',
     './js/core/icons.js',
@@ -39,8 +39,9 @@ const STATIC_ASSETS = [
     './js/course/wishlist.js',
     './js/app.js',
     './manifest.webmanifest',
-    'https://cdn.jsdelivr.net/npm/chart.js',
-    'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
+    // 🌟 本機化函式庫（原本為 CDN 網址）
+    './js/libs/chart.min.js',
+    './js/libs/html2canvas.min.js'
 ];
 
 // 安裝事件：下載並快取靜態資源

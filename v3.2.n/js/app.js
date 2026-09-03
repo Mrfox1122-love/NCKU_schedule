@@ -61,24 +61,52 @@ function setAppTheme(themeName) {
     updateThemeButtonsState();
 }
 
+// 🎨 主題選單摺疊控制
+function toggleThemeAccordion() {
+    const body = document.getElementById('themeAccordionBody');
+    const arrow = document.getElementById('themeAccordionArrow');
+    if (!body) return;
+
+    const isCollapsed = body.classList.toggle('collapsed');
+    if (arrow) {
+        arrow.classList.toggle('open', !isCollapsed);
+    }
+    localStorage.setItem('timeflow_theme_collapsed', isCollapsed ? '1' : '0');
+}
+
 function updateThemeButtonsState() {
     const currentTheme = document.documentElement.dataset.theme || localStorage.getItem('timeflow_theme') || 'purple';
+    let currentThemeName = '夜幕紫';
+
     document.querySelectorAll('.theme-opt-btn').forEach(btn => {
         if (btn.getAttribute('data-theme-val') === currentTheme) {
             btn.classList.add('active');
+            const textEl = btn.querySelector('.theme-opt-text');
+            if (textEl) {
+                // 取括號前的主題中文名稱
+                currentThemeName = textEl.innerText.split(' ')[0];
+            }
         } else {
             btn.classList.remove('active');
         }
     });
+
+    const badge = document.getElementById('currentThemeBadge');
+    if (badge) {
+        badge.innerText = currentThemeName;
+    }
 }
 
+// 初始化時記憶使用者上次的展開/收合狀態 (預設為收合)
 window.addEventListener('DOMContentLoaded', () => {
-    const settingsIconEl = document.getElementById('icon-nav-settings');
-    if (settingsIconEl && typeof Icons !== 'undefined') {
-        settingsIconEl.innerHTML = Icons.get('settings', { size: 18 });
+    const isCollapsed = localStorage.getItem('timeflow_theme_collapsed') !== '0';
+    const body = document.getElementById('themeAccordionBody');
+    const arrow = document.getElementById('themeAccordionArrow');
+    if (body && arrow) {
+        body.classList.toggle('collapsed', isCollapsed);
+        arrow.classList.toggle('open', !isCollapsed);
     }
-    const savedTheme = localStorage.getItem('timeflow_theme') || 'purple';
-    setAppTheme(savedTheme);
+    updateThemeButtonsState();
 });
 
 // ============================================================

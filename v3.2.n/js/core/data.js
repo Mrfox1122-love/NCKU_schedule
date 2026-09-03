@@ -230,6 +230,30 @@ function importData(event) {
             return;
         }
 
+        // 🛡️ 資料規模上限防護 (防止惡意大量資料引發 DoS / 記憶體崩潰)
+        const MAX_SEMESTERS = 16;       // 最多 16 個學期
+        const MAX_COURSES_PER_SEM = 40; // 單學期最多 40 門課
+        const MAX_WISHLIST = 60;        // 候選庫最多 60 門課
+
+        const rawSemKeysAll = Object.keys(importedData.semesters);
+        if (rawSemKeysAll.length > MAX_SEMESTERS) {
+            alert(`❌ 檔案包含 ${rawSemKeysAll.length} 個學期，超過系統上限（最多 ${MAX_SEMESTERS} 個學期）！`);
+            event.target.value = '';
+            return;
+        }
+
+        // 截斷單學期過多課程
+        rawSemKeysAll.forEach(sem => {
+            if (Array.isArray(importedData.semesters[sem]) && importedData.semesters[sem].length > MAX_COURSES_PER_SEM) {
+                importedData.semesters[sem] = importedData.semesters[sem].slice(0, MAX_COURSES_PER_SEM);
+            }
+        });
+
+        // 截斷過多候選課
+        if (Array.isArray(importedData.wishlist) && importedData.wishlist.length > MAX_WISHLIST) {
+            importedData.wishlist = importedData.wishlist.slice(0, MAX_WISHLIST);
+        }
+
         try {
             if (typeof cancelEdit === 'function') cancelEdit();
 
@@ -342,4 +366,30 @@ function clearAll() {
         if (typeof updateAppUI === 'function') updateAppUI();
         alert(`🗑️ 已成功清空「${curSem}」的所有課程！`);
     }
+}
+
+// 🧹 公用電腦實體隱私：一鍵抹除本機所有資料
+function resetAllAppData() {
+    const msg = "⚠️ 警告：這將會完全抹除此瀏覽器儲存的所有課表、成績、GPA 與自訂設定！\n\n" +
+                "適用情境：於學校計中、圖書館等公用電腦使用完畢準備離開。\n\n" +
+                "確定要清除所有資料並重設嗎？";
+
+    if (confirm(msg)) {
+        if (confirm("請再次確認：所有尚未匯出備份的資料將永久遺失，確定清除？")) {
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem('timeflow_theme');
+                localStorage.removeItem('timeflow_privacy_mode');
+                localStorage.removeItem('nckuee_grad_config_collapsed');
+            } catch (e) {
+                console.error("LocalStorage 清除失敗:", e);
+            }
+            alert("🧹 所有本機修課資料已完全清除！即將重新載入預設頁面。");
+            location.reload();
+        }
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.resetAllAppData = resetAllAppData;
 }

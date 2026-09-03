@@ -2,22 +2,34 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
+    <!-- 🛡️ 純前端防點擊劫持防禦 (Framebusting) -->
+    <style id="antiClickjack">
+        body { display: none !important; }
+    </style>
+    <script>
+        if (self === top) {
+            var antiClickjack = document.getElementById("antiClickjack");
+            if (antiClickjack) antiClickjack.parentNode.removeChild(antiClickjack);
+        } else {
+            top.location = self.location;
+        }
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- 🛡️ CSP 置頂防護：在所有外部資源解析前生效 -->
+    <!-- 1. 修改 CSP：只允許本機來源，移除外部 CDN -->
     <meta http-equiv="Content-Security-Policy" content="
         default-src 'self';
-        script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net;
+        script-src 'self' 'unsafe-inline';
         style-src 'self' 'unsafe-inline';
         img-src 'self' data: https:;
-        connect-src 'self' https:;
+        connect-src 'self';
         font-src 'self' data:;
         object-src 'none';
         base-uri 'self';
         form-action 'self';
     ">
     <title>TimeFlow - 成大生修課與畢業規劃系統</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="js/libs/chart.min.js"></script>
+    <script src="js/libs/html2canvas.min.js"></script>
     <link rel="stylesheet" href="css/tokens.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/style.css">
@@ -800,61 +812,70 @@
                 <button type="button" class="modal-close-btn" onclick="closeSettingsModal()">✕</button>
             </div>
             <div class="settings-modal-body">
-                <!-- 1. 介面外觀色彩 -->
+                <!-- 1. 介面外觀色彩 (可摺疊) -->
                 <div class="settings-section">
-                    <label class="settings-label">介面色彩主題</label>
-                    <div class="theme-switcher-grid">
-                        <button type="button" class="theme-opt-btn" data-theme-val="purple" onclick="setAppTheme('purple')">
-                            <span class="theme-color-preview" style="background: #6366f1;"></span>
-                            <span class="theme-opt-text">夜幕紫 (Dark)</span>
-                        </button>
-                        <button type="button" class="theme-opt-btn" data-theme-val="blue" onclick="setAppTheme('blue')">
-                            <span class="theme-color-preview" style="background: #3b82f6;"></span>
-                            <span class="theme-opt-text">深海藍 (Dark)</span>
-                        </button>
-                        <button type="button" class="theme-opt-btn" data-theme-val="forest" onclick="setAppTheme('forest')">
-                            <span class="theme-color-preview" style="background: #15803d;"></span>
-                            <span class="theme-opt-text">深林墨綠 (Dark)</span>
-                        </button>
-                        <button type="button" class="theme-opt-btn" data-theme-val="neutral" onclick="setAppTheme('neutral')">
-                            <span class="theme-color-preview" style="background: #71717a;"></span>
-                            <span class="theme-opt-text">暖岩灰 (Dark)</span>
-                        </button>
-                        <button type="button" class="theme-opt-btn" data-theme-val="sunset" onclick="setAppTheme('sunset')">
-                            <span class="theme-color-preview" style="background: #d97706;"></span>
-                            <span class="theme-opt-text">暮光琥珀 (Dark)</span>
-                        </button>
-                        <button type="button" class="theme-opt-btn" data-theme-val="aurora" onclick="setAppTheme('aurora')">
-                            <span class="theme-color-preview" style="background: #14b8a6;"></span>
-                            <span class="theme-opt-text">極光幽夜 (Dark)</span>
-                        </button>
-
-                        <button type="button" class="theme-opt-btn" data-theme-val="glacier" onclick="setAppTheme('glacier')">
-                            <span class="theme-color-preview" style="background: #d9e5ec; border: 1px solid #1d63b8;"></span>
-                            <span class="theme-opt-text">冰川晴空 (Light)</span>
-                        </button>
-                        <button type="button" class="theme-opt-btn" data-theme-val="mist" onclick="setAppTheme('mist')">
-                            <span class="theme-color-preview" style="background: #d6dce3; border: 1px solid #355370;"></span>
-                            <span class="theme-opt-text">晨霧灰藍 (Light)</span>
-                        </button>
-                        <button type="button" class="theme-opt-btn" data-theme-val="latte" onclick="setAppTheme('latte')">
-                            <span class="theme-color-preview" style="background: #e5ded4; border: 1px solid #7c5335;"></span>
-                            <span class="theme-opt-text">燕麥拿鐵 (Light)</span>
-                        </button>
-                        <button type="button" class="theme-opt-btn" data-theme-val="macaron" onclick="setAppTheme('macaron')">
-                            <span class="theme-color-preview" style="background: #d8e0eb; border: 1px solid #63589f;"></span>
-                            <span class="theme-opt-text">馬卡龍紫 (Light)</span>
-                        </button>
-                        <button type="button" class="theme-opt-btn" data-theme-val="sakura" onclick="setAppTheme('sakura')">
-                            <span class="theme-color-preview" style="background: #e4d8d8; border: 1px solid #8b4f58;"></span>
-                            <span class="theme-opt-text">和風櫻茶 (Light)</span>
-                        </button>
-                        <button type="button" class="theme-opt-btn" data-theme-val="white" onclick="setAppTheme('white')">
-                            <span class="theme-color-preview" style="background: #ffffff; border: 1px solid #cbd5e1;"></span>
-                            <span class="theme-opt-text">全亮白 (Light)</span>
-                        </button>
+                    <div class="settings-accordion-header" onclick="toggleThemeAccordion()" title="點擊展開 / 收合主題選單">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span class="settings-label" style="cursor: pointer; margin: 0;">介面色彩主題</span>
+                            <span id="currentThemeBadge" class="theme-current-badge">夜幕紫</span>
+                        </div>
+                        <span id="themeAccordionArrow" class="settings-accordion-arrow">▼</span>
                     </div>
-                </div>
+
+                    <!-- 預設收合 (collapsed) -->
+                    <div id="themeAccordionBody" class="settings-accordion-body collapsed">
+                        <div class="theme-switcher-grid">
+                            <button type="button" class="theme-opt-btn" data-theme-val="purple" onclick="setAppTheme('purple')">
+                                <span class="theme-color-preview" style="background: #6366f1;"></span>
+                                <span class="theme-opt-text">夜幕紫 (Dark)</span>
+                            </button>
+                            <button type="button" class="theme-opt-btn" data-theme-val="blue" onclick="setAppTheme('blue')">
+                                <span class="theme-color-preview" style="background: #3b82f6;"></span>
+                                <span class="theme-opt-text">深海藍 (Dark)</span>
+                            </button>
+                            <button type="button" class="theme-opt-btn" data-theme-val="forest" onclick="setAppTheme('forest')">
+                                <span class="theme-color-preview" style="background: #15803d;"></span>
+                                <span class="theme-opt-text">深林墨綠 (Dark)</span>
+                            </button>
+                            <button type="button" class="theme-opt-btn" data-theme-val="neutral" onclick="setAppTheme('neutral')">
+                                <span class="theme-color-preview" style="background: #71717a;"></span>
+                                <span class="theme-opt-text">暖岩灰 (Dark)</span>
+                            </button>
+                            <button type="button" class="theme-opt-btn" data-theme-val="sunset" onclick="setAppTheme('sunset')">
+                                <span class="theme-color-preview" style="background: #d97706;"></span>
+                                <span class="theme-opt-text">暮光琥珀 (Dark)</span>
+                            </button>
+                            <button type="button" class="theme-opt-btn" data-theme-val="aurora" onclick="setAppTheme('aurora')">
+                                <span class="theme-color-preview" style="background: #14b8a6;"></span>
+                                <span class="theme-opt-text">極光幽夜 (Dark)</span>
+                            </button>
+
+                            <button type="button" class="theme-opt-btn" data-theme-val="glacier" onclick="setAppTheme('glacier')">
+                                <span class="theme-color-preview" style="background: #d9e5ec; border: 1px solid #1d63b8;"></span>
+                                <span class="theme-opt-text">冰川晴空 (Light)</span>
+                            </button>
+                            <button type="button" class="theme-opt-btn" data-theme-val="mist" onclick="setAppTheme('mist')">
+                                <span class="theme-color-preview" style="background: #d6dce3; border: 1px solid #355370;"></span>
+                                <span class="theme-opt-text">晨霧灰藍 (Light)</span>
+                            </button>
+                            <button type="button" class="theme-opt-btn" data-theme-val="latte" onclick="setAppTheme('latte')">
+                                    <span class="theme-color-preview" style="background: #e5ded4; border: 1px solid #7c5335;"></span>
+                                    <span class="theme-opt-text">燕麥拿鐵 (Light)</span>
+                            </button>
+                            <button type="button" class="theme-opt-btn" data-theme-val="macaron" onclick="setAppTheme('macaron')">
+                                <span class="theme-color-preview" style="background: #d8e0eb; border: 1px solid #63589f;"></span>
+                                <span class="theme-opt-text">馬卡龍紫 (Light)</span>
+                            </button>
+                            <button type="button" class="theme-opt-btn" data-theme-val="sakura" onclick="setAppTheme('sakura')">
+                                <span class="theme-color-preview" style="background: #e4d8d8; border: 1px solid #8b4f58;"></span>
+                                <span class="theme-opt-text">和風櫻茶 (Light)</span>
+                            </button>
+                            <button type="button" class="theme-opt-btn" data-theme-val="white" onclick="setAppTheme('white')">
+                                <span class="theme-color-preview" style="background: #ffffff; border: 1px solid #cbd5e1;"></span>
+                                <span class="theme-opt-text">全亮白 (Light)</span>
+                            </button>
+                        </div>
+                    </div>
 
                 <!-- 2. 說明、支援與條款 -->
                 <div class="settings-section">
@@ -879,7 +900,20 @@
                     </div>
                 </div>
 
-                <!-- 3. 版本號與 GitHub 連結 -->
+                <!-- 3. 公用電腦隱私清理與重設 -->
+                <div class="settings-section" style="border-top: 1px dashed var(--tf-border-default); padding-top: 12px;">
+                    <label class="settings-label" style="color: var(--tf-status-danger-light); display: flex; align-items: center; gap: 6px;">
+                        <span>資料重設與隱私清理</span>
+                    </label>
+                    <button type="button" class="tf-btn tf-btn-danger" style="width: 100%; height: 34px; font-weight: bold;" onclick="resetAllAppData()">
+                        清除所有本機修課資料 (公用電腦離開前使用)
+                    </button>
+                    <span style="font-size: 0.72rem; color: var(--tf-text-muted); line-height: 1.45;">
+                        此操作將抹除瀏覽器儲存的所有課表、百分制成績與 GPA 紀錄。在學校計中或圖書館公用電腦使用完畢後，請務必點擊此按鈕以保護隱私。
+                    </span>
+                </div>
+
+                <!-- 4. 版本號與 GitHub 連結 -->
                 <div class="settings-version-footer">
                     <span>TimeFlow 修課與畢業審查系統</span>
                     <div class="settings-footer-right">
@@ -888,7 +922,7 @@
                             <span>GitHub</span>
                         </a>
                         <span class="footer-dot">·</span>
-                        <span>v3.2.5 (2026.09.02)</span>
+                        <span>v3.2.6 (2026.09.03)</span>
                     </div>
                 </div>
             </div>
