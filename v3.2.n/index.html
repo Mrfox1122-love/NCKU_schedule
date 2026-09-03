@@ -14,6 +14,13 @@
             top.location = self.location;
         }
     </script>
+    <!-- 🎨 記憶主題即時載入防閃爍 (避免 F5 刷新跳回預設色) -->
+    <script>
+        (function() {
+            var savedTheme = localStorage.getItem('timeflow_theme') || 'purple';
+            document.documentElement.dataset.theme = savedTheme;
+        })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- 1. 修改 CSP：只允許本機來源，移除外部 CDN -->
     <meta http-equiv="Content-Security-Policy" content="
@@ -223,8 +230,15 @@
                 <span class="nav-text">畢業</span>
             </div>
             <div class="nav-item" id="nav-settings" onclick="openSettingsModal()">
-                <span class="nav-icon" id="icon-nav-settings"></span>
-                <span>設定</span>
+                <span class="nav-icon">
+                    <span class="tf-svg-icon" style="width:18px;height:18px;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </span>
+                </span>
+                <span class="nav-text">設定</span>
             </div>
         </nav>
 
@@ -859,8 +873,8 @@
                                 <span class="theme-opt-text">晨霧灰藍 (Light)</span>
                             </button>
                             <button type="button" class="theme-opt-btn" data-theme-val="latte" onclick="setAppTheme('latte')">
-                                    <span class="theme-color-preview" style="background: #e5ded4; border: 1px solid #7c5335;"></span>
-                                    <span class="theme-opt-text">燕麥拿鐵 (Light)</span>
+                                <span class="theme-color-preview" style="background: #e5ded4; border: 1px solid #7c5335;"></span>
+                                <span class="theme-opt-text">燕麥拿鐵 (Light)</span>
                             </button>
                             <button type="button" class="theme-opt-btn" data-theme-val="macaron" onclick="setAppTheme('macaron')">
                                 <span class="theme-color-preview" style="background: #d8e0eb; border: 1px solid #63589f;"></span>
@@ -876,6 +890,7 @@
                             </button>
                         </div>
                     </div>
+                </div>
 
                 <!-- 2. 說明、支援與條款 -->
                 <div class="settings-section">
