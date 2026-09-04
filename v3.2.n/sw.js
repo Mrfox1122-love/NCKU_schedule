@@ -2,7 +2,7 @@
 // ⚡ TimeFlow PWA Service Worker (sw.js)
 // ============================================================
 
-const CACHE_NAME = 'timeflow-cache-v3.2.5';
+const CACHE_NAME = 'timeflow-cache-v3.2.7';
 
 const STATIC_ASSETS = [
     './',
