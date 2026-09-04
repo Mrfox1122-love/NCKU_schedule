@@ -462,7 +462,13 @@ function showCourseDetail(id) {
     }
 
     const safeUrl = sanitizeURL(c.url);
-    let urlHtml = safeUrl ? `<div class="detail-row"><span class="detail-label">相關連結：</span><a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="detail-url-btn">開啟課程網頁 ↗</a></div>` : '';
+    let urlHtml = safeUrl ? `
+    <div class="detail-row">
+        <span class="detail-label">相關連結：</span>
+        <button type="button" class="detail-url-btn" onclick="safeOpenExternalURL('${safeUrl}')" style="background:none; border:none; padding:0; font:inherit; color:var(--tf-color-primary-light); cursor:pointer; text-decoration:underline;">
+            開啟課程網頁 ↗
+        </button>
+    </div>` : '';
     let notesHtml = c.notes ? `<div class="detail-notes-box">${escapeHTML(c.notes)}</div>` : '';
 
     const freqLabelMap = { 'weekly': '每週固定', 'odd': '單週', 'even': '雙週' };
