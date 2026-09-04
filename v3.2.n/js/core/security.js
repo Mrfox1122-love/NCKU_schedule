@@ -3,7 +3,7 @@
 // ============================================================
 
 /**
- * HTML 字元實體編碼（防止 HTML Injection / XSS）
+ * HTML 字元實體編碼（僅用於字串要插入 HTML 內容或屬性時）
  */
 function escapeHTML(str) {
     if (str === null || str === undefined) return '';
@@ -16,26 +16,32 @@ function escapeHTML(str) {
 }
 
 /**
- * 安全 URL 驗證（僅允許 http:// 與 https://，阻擋 javascript: 與 data: 偽協定）
+ * 安全 URL 驗證（僅回傳乾淨合法的原始 URL，不混用 HTML escape）
  */
 function sanitizeURL(url) {
     if (!url || typeof url !== 'string') return '';
     const trimmed = url.trim();
-    // 嚴格限制僅能以 http:// 或 https:// 開頭
-    if (/^https?:\/\//i.test(trimmed)) {
-        return escapeHTML(trimmed);
+    try {
+        const parsed = new URL(trimmed);
+        // 嚴格限制僅允許 http: 與 https: 協定
+        if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+            return parsed.href;
+        }
+    } catch (e) {
+        return '';
     }
-    return ''; // 若包含 javascript: 等不安全協定則直接抹除
+    return '';
 }
 
 /**
  * 安全外部跳轉：針對非成大官方網域加入防釣魚確認
  */
-function safeOpenExternalURL(url) {
-    const safe = sanitizeURL(url);
+function handleExternalLinkClick(e, rawUrl) {
+    const safe = sanitizeURL(rawUrl);
     if (!safe) {
+        e.preventDefault();
         alert("❌ 無效或不安全的網址連結！");
-        return;
+        return false;
     }
 
     try {
@@ -52,16 +58,20 @@ function safeOpenExternalURL(url) {
                                `確定要繼續前往嗎？`;
 
             if (!confirm(warningMsg)) {
-                return;
+                e.preventDefault();
+                return false;
             }
         }
-
-        window.open(safe, '_blank', 'noopener,noreferrer');
-    } catch (e) {
-        window.open(safe, '_blank', 'noopener,noreferrer');
+    } catch (err) {
+        e.preventDefault();
+        return false;
     }
+
+    return true;
 }
 
 if (typeof window !== 'undefined') {
-    window.safeOpenExternalURL = safeOpenExternalURL;
+    window.escapeHTML = escapeHTML;
+    window.sanitizeURL = sanitizeURL;
+    window.handleExternalLinkClick = handleExternalLinkClick;
 }

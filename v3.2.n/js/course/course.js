@@ -461,13 +461,13 @@ function showCourseDetail(id) {
         `;
     }
 
-    const safeUrl = sanitizeURL(c.url);
-    let urlHtml = safeUrl ? `
+    const rawSafeUrl = sanitizeURL(c.url);
+    let urlHtml = rawSafeUrl ? `
     <div class="detail-row">
         <span class="detail-label">相關連結：</span>
-        <button type="button" class="detail-url-btn" onclick="safeOpenExternalURL('${safeUrl}')" style="background:none; border:none; padding:0; font:inherit; color:var(--tf-color-primary-light); cursor:pointer; text-decoration:underline;">
+        <a href="${escapeHTML(rawSafeUrl)}" target="_blank" rel="noopener noreferrer" class="detail-url-btn" onclick="return handleExternalLinkClick(event, this.href)">
             開啟課程網頁 ↗
-        </button>
+        </a>
     </div>` : '';
     let notesHtml = c.notes ? `<div class="detail-notes-box">${escapeHTML(c.notes)}</div>` : '';
 
