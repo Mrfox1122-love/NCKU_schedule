@@ -665,6 +665,20 @@ function showDiscoverDetail(catalogId) {
 /**
  * 將資料庫課程轉為 TimeFlow 課程物件共用欄位
  */
+/**
+ * 課程來源：開課系所、系號-序號、資料來源（本學期開課或歷年課程）
+ */
+function describeCatalogSource(item) {
+    const semester = window.COURSE_CATALOG_META ? window.COURSE_CATALOG_META.semester : '本學期';
+    return {
+        dept: item.dept || '',
+        deptSeq: item.isHistory ? '' : (item.deptSeq || ''),
+        source: item.isHistory
+            ? `找課・歷年課程${item.lastSemester ? `（最近 ${item.lastSemester} 開課）` : ''}`
+            : `找課・${semester} 開課`
+    };
+}
+
 function buildCourseFromCatalog(item) {
     const notes = [
         item.isHistory ? `時段依 ${item.lastSemester} 開課資料預估，實際以當學期公告為準。` : '',
@@ -676,6 +690,7 @@ function buildCourseFromCatalog(item) {
     return {
         code: item.code || '',
         catalogId: item.id,
+        ...describeCatalogSource(item),
         name: item.name,
         credits: item.credits,
         type: resolveCatalogType(item),

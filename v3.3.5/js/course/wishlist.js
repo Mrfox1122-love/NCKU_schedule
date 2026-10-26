@@ -79,6 +79,8 @@ function renderWishlist() {
         }).join('、');
 
         const semTag = escapeHTML(item.semester || '通用');
+        const origin = getWishlistOrigin(item);
+        const originText = [origin.dept, origin.deptSeq || item.code].filter(Boolean).map(escapeHTML).join(' · ');
         const safeName = escapeHTML(item.name);
         const safeTeacher = escapeHTML(item.teacher);
         const safeType = escapeHTML(item.type);
@@ -91,6 +93,7 @@ function renderWishlist() {
                     <span class="wishlist-course-name">${safeName}</span>
                     <button type="button" class="btn-wishlist-add-mini" onclick="event.stopPropagation(); addWishlistToSchedule('${cleanId}')">${Icons.get('plus', { size: 11 })} 排入課表</button>
                 </div>
+                ${originText ? `<div class="wishlist-meta-text" title="${escapeHTML(origin.source)}">${originText}</div>` : ''}
                 <div class="wishlist-meta-text" style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
                     ${safeTeacher ? `<span>${safeTeacher}</span> · ` : ''}
                     <span>${safeType}</span> · <b>${escapeHTML(item.credits)}學分</b>
@@ -103,6 +106,16 @@ function renderWishlist() {
             </div>
         `;
     }).join('');
+}
+
+/**
+ * 候選課程的來源；舊資料沒有存來源時，用 catalogId 回查課程資料補上
+ */
+function getWishlistOrigin(item) {
+    if (item.source || item.dept) return { dept: item.dept || '', deptSeq: item.deptSeq || '', source: item.source || '' };
+    const catalogItem = (item.catalogId && typeof findCatalogCourse === 'function') ? findCatalogCourse(item.catalogId) : null;
+    if (catalogItem && typeof describeCatalogSource === 'function') return describeCatalogSource(catalogItem);
+    return { dept: '', deptSeq: '', source: item.catalogId ? '找課' : '' };
 }
 
 function showWishlistDetail(id) {
@@ -135,8 +148,13 @@ function showWishlistDetail(id) {
     const safeTeacher = escapeHTML(item.teacher);
     const safeNotes = escapeHTML(item.notes);
     const cleanId = (typeof item.id === 'number' || /^\d+$/.test(item.id)) ? Number(item.id) : Date.now();
+    const origin = getWishlistOrigin(item);
+    const codeText = [origin.deptSeq, item.code].filter(Boolean).map(escapeHTML).join(' ｜ ');
 
     document.getElementById('modalCourseContent').innerHTML = `
+        <div class="detail-row"><span class="detail-label">加入來源：</span><span class="detail-val">${escapeHTML(origin.source || '手動新增')}</span></div>
+        ${origin.dept ? `<div class="detail-row"><span class="detail-label">開課系所：</span><span class="detail-val">${escapeHTML(origin.dept)}</span></div>` : ''}
+        ${codeText ? `<div class="detail-row"><span class="detail-label">系號 ｜ 課號：</span><span class="detail-val">${codeText}</span></div>` : ''}
         <div class="detail-row"><span class="detail-label">課程類別：</span><span class="detail-badge">${safeType}</span> ｜ <span style="font-weight:bold;">${escapeHTML(item.credits)} 學分</span> ｜ <span style="color:var(--tf-color-primary-light); font-weight:bold; font-size:0.8rem;">${Icons.get('clock', { size: 12 })} ${freqText}</span></div>
         <div class="detail-row"><span class="detail-label">排定時間：</span><span class="detail-val">${baseSlotTexts || '未指定'}</span></div>
         <div class="detail-row"><span class="detail-label">上課教室：</span><span class="detail-val">${safeRoom ? Icons.get('location', { size: 12 }) + ' ' + safeRoom : '未填寫'}</span></div>

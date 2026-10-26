@@ -99,6 +99,10 @@ function normalizeCourseData(c) {
         code: typeof c.code === 'string' ? c.code.slice(0, 30) : '',
         // 由找課加入的課程記錄其課程資料庫 id，供先修規則精準比對班別
         catalogId: typeof c.catalogId === 'string' ? c.catalogId.slice(0, 60) : '',
+        // 由找課加入的課程記錄來源：開課系所、系號-序號、資料來源
+        dept: typeof c.dept === 'string' ? c.dept.slice(0, 40) : '',
+        deptSeq: typeof c.deptSeq === 'string' ? c.deptSeq.slice(0, 20) : '',
+        source: typeof c.source === 'string' ? c.source.slice(0, 40) : '',
         name: typeof c.name === 'string' ? (c.name.trim() || '未命名課程') : '未命名課程',
         credits: (!isNaN(parseFloat(c.credits)) && parseFloat(c.credits) >= 0) ? parseFloat(c.credits) : 0,
         type: typeof c.type === 'string' ? c.type : '系定必修',
