@@ -343,7 +343,7 @@ function renderAsyncCourseStrip(currentCourses) {
             <div style="background:var(--tf-surface-base); border:1px solid var(--tf-border-subtle); border-left:3px solid ${borderColor}; padding:4px 10px; border-radius:var(--tf-radius-sm); font-size:0.75rem; cursor:pointer; display:inline-flex; align-items:center; gap:6px; transition:background var(--tf-transition-fast);" 
                  onclick="showCourseDetail('${c.id}')" title="點擊查看詳細資訊">
                 <span style="font-weight:600; color:var(--tf-text-primary); font-size:0.75rem;">${escapeHTML(c.name)}</span>
-                <span style="color:var(--tf-text-muted); font-size:0.7rem;">${c.credits}學分 ｜ ${escapeHTML(c.type)}</span>
+                <span style="color:var(--tf-text-muted); font-size:0.7rem;">${escapeHTML(c.credits)}學分 ｜ ${escapeHTML(c.type)}</span>
                 ${statusBadge}
             </div>
         `;

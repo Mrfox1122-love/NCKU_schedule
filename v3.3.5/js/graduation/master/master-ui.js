@@ -138,7 +138,36 @@ function updateMasterCourseTypeOptions() {
     if ([...select.options].some(o => o.value === currentVal)) select.value = currentVal;
 }
 
+// 找課「類別」篩選：依學制只顯示該學制的類別
+const DISCOVER_TYPE_OPTIONS = {
+    bachelor: [
+        ['all', '全部'], ['系定必修', '系定必修'], ['選修-本系', '選修-本系'], ['選修-外系', '選修-外系'],
+        ['通識', '通識（全部領域）'], ['通識-人文', '通識-人文'], ['通識-社科', '通識-社科'], ['通識-自然', '通識-自然'],
+        ['通識-生醫', '通識-生醫'], ['通識-科際', '通識-科際'], ['融通', '融通'],
+        ['國文/英文/體育/軍訓', '國文 / 英文 / 體育 / 軍訓'], ['第二外語', '第二外語']
+    ],
+    master: [
+        ['all', '全部'], ['本所必修', '本所必修'], ['本所選修', '本所選修'], ['外所選修', '外所選修'],
+        ['專題討論', '專題討論'], ['大學部課程', '大學部課程（不計學分）']
+    ]
+};
+
+function updateDiscoverTypeFilter(isMaster) {
+    const select = document.getElementById('filterDiscoverType');
+    const mode = isMaster ? 'master' : 'bachelor';
+    if (!select || select.dataset.mode === mode) return;
+    const current = select.value;
+    select.innerHTML = DISCOVER_TYPE_OPTIONS[mode]
+        .map(([value, label]) => `<option value="${escapeHTML(value)}">${escapeHTML(label)}</option>`).join('');
+    select.dataset.mode = mode;
+    const kept = DISCOVER_TYPE_OPTIONS[mode].some(([value]) => value === current);
+    select.value = kept ? current : 'all';
+    // 原本選的類別在新學制不存在時，重新套用篩選
+    if (!kept && typeof handleDiscoverSearch === 'function' && window.COURSE_CATALOG) handleDiscoverSearch();
+}
+
 function applyDegreeLayout(isMaster) {
+    updateDiscoverTypeFilter(isMaster);
     const masterPanel = document.getElementById('masterGradPanel');
     const bachelorPanel = document.getElementById('bachelorGradPanel');
     if (masterPanel) masterPanel.style.display = isMaster ? '' : 'none';

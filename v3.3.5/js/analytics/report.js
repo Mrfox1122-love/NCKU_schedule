@@ -279,7 +279,7 @@ function generateReportContent() {
                 html += `<tr style="${trStyle}">
                             <td>${escapeHTML(c.sem)}</td>
                             <td style="text-align:left; font-weight:600;">${escapeHTML(c.name)}</td>
-                            <td>${c.credits}</td>
+                            <td>${escapeHTML(c.credits)}</td>
                             <td>${scoreStr}</td>
                             <td>${statusStr}</td>
                          </tr>`;

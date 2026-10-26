@@ -93,7 +93,7 @@ function renderWishlist() {
                 </div>
                 <div class="wishlist-meta-text" style="display:flex; align-items:center; gap:4px; flex-wrap:wrap;">
                     ${safeTeacher ? `<span>${safeTeacher}</span> · ` : ''}
-                    <span>${safeType}</span> · <b>${item.credits}學分</b>
+                    <span>${safeType}</span> · <b>${escapeHTML(item.credits)}學分</b>
                 </div>
                 <div class="wishlist-sub-row">
                     <span class="wishlist-time-badge">${semTag}${slotText ? `, ${slotText}` : ''}</span>
@@ -137,7 +137,7 @@ function showWishlistDetail(id) {
     const cleanId = (typeof item.id === 'number' || /^\d+$/.test(item.id)) ? Number(item.id) : Date.now();
 
     document.getElementById('modalCourseContent').innerHTML = `
-        <div class="detail-row"><span class="detail-label">課程類別：</span><span class="detail-badge">${safeType}</span> ｜ <span style="font-weight:bold;">${item.credits} 學分</span> ｜ <span style="color:var(--tf-color-primary-light); font-weight:bold; font-size:0.8rem;">${Icons.get('clock', { size: 12 })} ${freqText}</span></div>
+        <div class="detail-row"><span class="detail-label">課程類別：</span><span class="detail-badge">${safeType}</span> ｜ <span style="font-weight:bold;">${escapeHTML(item.credits)} 學分</span> ｜ <span style="color:var(--tf-color-primary-light); font-weight:bold; font-size:0.8rem;">${Icons.get('clock', { size: 12 })} ${freqText}</span></div>
         <div class="detail-row"><span class="detail-label">排定時間：</span><span class="detail-val">${baseSlotTexts || '未指定'}</span></div>
         <div class="detail-row"><span class="detail-label">上課教室：</span><span class="detail-val">${safeRoom ? Icons.get('location', { size: 12 }) + ' ' + safeRoom : '未填寫'}</span></div>
         <div class="detail-row"><span class="detail-label">授課教師：</span><span class="detail-val">${safeTeacher ? Icons.get('user', { size: 12 }) + ' ' + safeTeacher : '未填寫'}</span></div>
