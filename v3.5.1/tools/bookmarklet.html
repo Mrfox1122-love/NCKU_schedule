@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>課程頁面下載書籤</title>
+<style>
+    :root { --bg: #f8fafc; --fg: #0f172a; --muted: #475569; --card: #ffffff; --line: #e2e8f0; --accent: #4f46e5; }
+    @media (prefers-color-scheme: dark) {
+        :root { --bg: #13141f; --fg: #e2e8f0; --muted: #94a3b8; --card: #1c1d2b; --line: #2e3045; --accent: #818cf8; }
+    }
+    body { margin: 0; padding: 32px 16px; background: var(--bg); color: var(--fg); font-family: system-ui, "Microsoft JhengHei", sans-serif; line-height: 1.7; }
+    main { max-width: 720px; margin: 0 auto; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
+    .bm { display: inline-block; padding: 10px 18px; border-radius: 8px; background: var(--accent); color: #fff; font-weight: 700; text-decoration: none; cursor: grab; }
+    ol { padding-left: 20px; }
+    code, pre { font-family: Consolas, monospace; font-size: 13px; }
+    pre { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 12px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+    .muted { color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+    <h1>課程頁面下載書籤</h1>
+
+    <div class="card">
+        <p>把下面的按鈕<strong>拖曳到瀏覽器的書籤列</strong>（書籤列沒顯示的話按 <code>Ctrl+Shift+B</code>）：</p>
+        <p><a id="bm" class="bm" href="#">📥 存課程頁</a></p>
+        <p class="muted">直接點這個按鈕不會有作用，一定要拖到書籤列。</p>
+    </div>
+
+    <div class="card">
+        <h2>使用方式</h2>
+        <ol>
+            <li>打開 <code>course.ncku.edu.tw/index.php?c=qry_all</code>，點進一個系所。</li>
+            <li>等課程列表完全載入。</li>
+            <li>按書籤列上的「📥 存課程頁」，會自動下載成 <code>E2.html</code> 這類檔名，並回到系所列表。</li>
+            <li>直接點下一個系所，重複以上步驟。</li>
+            <li>全部存完後，把下載的檔案搬到學期資料夾（例如 <code>115-1/</code>），再到 TimeFlow 資料夾執行 <code>python tools/update_course_data.py current ../../課程資訊/115-1</code>（詳見 tools/README.md）。</li>
+        </ol>
+        <h3>歷年課程查詢</h3>
+        <ol>
+            <li>打開 <code>course-query.acad.ncku.edu.tw/index.php?c=qry11225</code>，選學年期範圍與系所後送出查詢。</li>
+            <li><strong>一直捲到最底</strong>（可按住 <code>End</code> 鍵），直到出現「已載入全部課程」。請不要捲太快，學校有請求頻率限制。</li>
+            <li>按「📥 存課程頁」，確認檔名（例如 <code>E2_11101-11402</code>）後下載。</li>
+            <li>若出現「已達本次載入上限」，請縮小學期範圍分次查詢。</li>
+            <li>存到歷年資料夾（例如 <code>old/</code>）後，到 TimeFlow 資料夾執行 <code>python tools/update_course_data.py history ../../課程資訊/old</code>。</li>
+        </ol>
+        <p class="muted">書籤只會把「你目前開著的這一頁」存成檔案，不會自動去開其他系所，也不會對學校網站發出任何請求。</p>
+        <p class="muted">小技巧：在 Chrome 設定 →「下載」把下載位置改成學期資料夾，就不用再搬檔案；第一次下載時若詢問「允許下載多個檔案」，請選允許。</p>
+    </div>
+
+    <div class="card">
+        <h2>書籤原始碼</h2>
+        <pre id="src"></pre>
+    </div>
+</main>
+
+<script type="text/plain" id="bookmarkletSource">
+(() => {
+    const download = (fileName) => {
+        const html = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        return link.href;
+    };
+
+    // ── 歷年課程查詢頁（course-query.acad.ncku.edu.tw）──
+    const historyCards = document.querySelectorAll('.course-card-item');
+    if (historyCards.length > 0) {
+        const total = parseInt((document.getElementById('total-course-count') || {}).textContent, 10) || 0;
+        const pageText = document.body.innerText;
+        if (pageText.includes('已達本次載入上限')) {
+            alert('這次查詢已達學校的載入上限，資料不完整。\n請縮小學期範圍（例如一次查 2～3 個學年）後重新查詢。');
+            return;
+        }
+        if (total && historyCards.length < total) {
+            const ok = confirm(`目前只載入 ${historyCards.length} / ${total} 筆。\n請先捲到最底，直到出現「已載入全部課程」再存。\n\n仍要存目前這些嗎？`);
+            if (!ok) return;
+        }
+        const depts = [...document.querySelectorAll('#filter-tags-container [data-id^="dept_"]')]
+            .map(el => el.dataset.id.replace('dept_', ''));
+        const semText = id => {
+            const sel = document.getElementById(id);
+            return sel && sel.selectedOptions[0] ? sel.selectedOptions[0].textContent.trim() : '';
+        };
+        const range = [semText('semesterStartDropdown'), semText('semesterEndDropdown')].filter(Boolean).sort().join('-');
+        const guess = [depts.join('+') || 'ALL', range].filter(Boolean).join('_');
+        const name = prompt('檔名（系所代碼_學期範圍）', guess);
+        if (!name) return;
+        const href = download(name.trim() + '.html');
+        setTimeout(() => URL.revokeObjectURL(href), 1000);
+        return;
+    }
+
+    // ── 本學期系所課程頁（course.ncku.edu.tw）──
+    if (!document.querySelector('.course_name')) {
+        alert('這頁沒有課程列表，請先點進系所，並等表格載入完成。');
+        return;
+    }
+    // 以第一個「系號-序號」(例如 E2-054) 的前段推測系所代碼
+    const seq = [...document.querySelectorAll('.dept_seq')]
+        .map(el => el.textContent.trim())
+        .find(Boolean);
+    const guess = seq ? seq.split('-')[0] : '';
+    // 推測得到就直接存，推測不到才詢問
+    const code = guess || prompt('推測不到系所代碼，請手動輸入（將作為檔名）', '');
+    if (!code) return;
+
+    const href = download(code.trim() + '.html');
+    setTimeout(() => {
+        URL.revokeObjectURL(href);
+        // 存完回到系所列表，直接點下一個系所
+        history.back();
+    }, 800);
+})();
+</script>
+<script>
+    // 讀取上方原始碼（type="text/plain" 不會在本頁執行）產生書籤連結
+    const source = document.getElementById('bookmarkletSource').textContent.trim();
+    document.getElementById('bm').href = 'javascript:' + encodeURIComponent(source);
+    document.getElementById('src').textContent = source;
+</script>
+</body>
+</html>
