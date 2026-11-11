@@ -166,6 +166,13 @@ describe('PWA 與版本', () => {
     const sw = read('sw.js');
     const html = read('index.html');
 
+    test('所有腳本都加 defer（平行下載、依序執行），只有 boot.js 與 inline-styles.js 要在 head 同步載入', () => {
+        const tags = [...html.matchAll(/<script\s+src="([^"]+)"([^>]*)>/g)];
+        assert.ok(tags.length > 60);
+        const SYNC = new Set(['js/core/boot.js', 'js/core/inline-styles.js']);
+        const wrong = tags.filter(([, src, attrs]) => SYNC.has(src) ? /\bdefer\b/.test(attrs) : !/\bdefer\b/.test(attrs)).map(t => t[1]);
+        assert.deepEqual(wrong, []);
+    });
     test('index.html 載入的 css / js 都在 sw.js 快取清單內', () => {
         const assets = [...html.matchAll(/(?:src|href)="((?:js|css)\/[^"]+)"/g)].map(m => m[1])
             .filter(a => !a.startsWith('js/libs/'));
