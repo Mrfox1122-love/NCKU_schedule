@@ -1,0 +1,64 @@
+{
+  "deptName": "<script>alert('XSS: deptName')</script><img src=x onerror=\"alert('XSS: deptName Img')\">成大電機資安測試系",
+  "entryYear": 118,
+  "currentSemester": "一上",
+  "semesterOrder": ["一上", "一下"],
+  "semesters": {
+    "一上": [
+      {
+        "id": "10001');alert('XSS: id property escape');//",
+        "name": "<script>alert('XSS: Course Name')</script><img src=x onerror=\"alert('XSS: Course Name Img')\">微積分(一)",
+        "credits": 3,
+        "type": "<b onmouseover=\"alert('XSS: Type')\">系定必修</b>",
+        "status": "已取得",
+        "score": 85,
+        "passed": true,
+        "isTentative": false,
+        "slots": [
+          {
+            "day": 1,
+            "periods": ["1", "2"]
+          }
+        ],
+        "color": "#2563eb\" onclick=\"alert('XSS: Color Escape')\"",
+        "textColor": "#ffffff",
+        "teacher": "<img src=x onerror=\"alert('XSS: Teacher')\">張老師",
+        "room": "<img src=x onerror=\"alert('XSS: Room')\">92177",
+        "url": "javascript:alert('XSS: javascript: URL')",
+        "notes": "<script>alert('XSS: Notes')</script>備註測試",
+        "frequency": "weekly"
+      },
+      {
+        "id": "10002",
+        "name": "<img src=x onerror=\"alert('XSS: Disallowed Course')\">生活中的毒物",
+        "credits": 2,
+        "type": "通識-生醫",
+        "status": "修讀中",
+        "score": null,
+        "passed": true,
+        "isTentative": false,
+        "slots": [
+          {
+            "day": 2,
+            "periods": ["3", "4"]
+          }
+        ],
+        "color": "#10b981",
+        "url": "data:text/html;base64,PHNjcmlwdD5hbGVydCgnWFNTOiBkYXRhOiBVUkwnKTwvc2NyaXB0Pg==",
+        "notes": "測試系所不採計通識警示字串"
+      }
+    ]
+  },
+  "wishlist": [
+    {
+      "id": "20001\");alert('XSS: Wishlist ID');//",
+      "name": "<img src=x onerror=\"alert('XSS: Wishlist Name')\">候選資安測試課",
+      "credits": 3,
+      "type": "選修-外系",
+      "teacher": "<script>alert('XSS: Wishlist Teacher')</script>",
+      "room": "資訊系館",
+      "color": "#7c3aed",
+      "slots": []
+    }
+  ]
+}

@@ -110,7 +110,7 @@ python -m http.server 8000
 
 - 所有課表、成績與設定只存在瀏覽器的 LocalStorage，不會上傳到任何伺服器。
 - 清除瀏覽器資料或更換裝置前，請先到設定頁**匯出 JSON 備份**。
-- 匯入的資料會經過格式檢查與跳脫處理；`security.json` 是用來測試 XSS 防護的惡意資料範例，請勿當成一般備份使用。
+- 匯入的資料會經過格式檢查與跳脫處理；`tests/fixtures/security.json` 是用來測試 XSS 防護的惡意資料範例，請勿當成一般備份使用。
 
 ---
 
@@ -196,7 +196,7 @@ npm test
 
 | 檔案 | 內容 |
 |---|---|
-| `tests/core.test.js` | `escapeHTML`、`sanitizeURL`、匯入資料清洗，以及 `security.json` 惡意資料的 XSS 防護 |
+| `tests/core.test.js` | `escapeHTML`、`sanitizeURL`、匯入資料清洗，以及 `tests/fixtures/security.json` 惡意資料的 XSS 防護 |
 | `tests/grade.test.js` | 4.3 制等第／績點邊界值、學期與歷年 GPA 加權 |
 | `tests/conflict.test.js` | 衝堂偵測：重疊、暫定課程、單雙週 |
 | `tests/prerequisite.test.js` | 先修判斷（分數門檻、同學期、修讀中）與由課程資料建立規則 |

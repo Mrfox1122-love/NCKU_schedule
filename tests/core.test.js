@@ -89,7 +89,7 @@ describe('normalizeCourseData（匯入資料清洗）', () => {
     });
 
     test('security.json 的惡意資料：顏色與節次被清洗，輸出端跳脫後不含可執行標籤', () => {
-        const evil = JSON.parse(fs.readFileSync(path.join(ROOT, 'security.json'), 'utf8'));
+        const evil = JSON.parse(fs.readFileSync(path.join(__dirname, 'fixtures', 'security.json'), 'utf8'));
         const courses = Object.values(evil.semesters).flat();
         assert.ok(courses.length > 0);
         for (const raw of courses) {

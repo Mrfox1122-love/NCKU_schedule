@@ -24,7 +24,9 @@ function run(src, extra = {}) {
     scope.window = { print: () => calls.push(['print']) };
     const event = { stopPropagation() { calls.push(['stop']); }, preventDefault() { calls.push(['prevent']); }, key: 'Enter' };
     const el = { nodeType: 1, value: 'V', checked: true, href: 'http://x/', dataset: { name: 'N', find: '{"a":1}' } };
-    const result = A.execute(src, { el, event, scope });
+    // 測試用的白名單（正式環境用 actions.js 內建的 ALLOWED_CALLS）
+    const allow = new Set(['rec', 'Obj.method', ...(extra.allow || [])]);
+    const result = A.execute(src, { el, event, scope, allow });
     return { result, calls };
 }
 
@@ -97,6 +99,55 @@ describe('TimeFlowActions：拒絕的寫法（避免變成任意程式碼執行�
     test('呼叫未定義的函式會報錯而不是靜默略過', () => {
         rejects(`notExistingFunction()`);
     });
+    test('白名單以外的函式即使存在也不能呼叫', () => {
+        const scope = { secret: () => 'x', Other: { method: () => 'x' } };
+        assert.throws(() => run(`secret()`, { scope }));
+        assert.throws(() => run(`Other.method()`, { scope }));
+        assert.throws(() => run(`Obj.other()`));
+        assert.doesNotThrow(() => run(`secret()`, { scope, allow: ['secret'] }));
+    });
+    test('不能把全域變數當參數讀出來', () => {
+        rejects(`rec(appData)`);
+        assert.throws(() => run(`rec(secretData)`, { scope: { secretData: { a: 1 } } }));
+        assert.throws(() => run(`rec(Obj.method)`));
+    });
+    test('this 只能讀 value / checked / href / dataset，不能呼叫方法或讀其他屬性', () => {
+        rejects(`this.setAttribute('href', 'http://evil/')`);
+        rejects(`this.remove()`);
+        rejects(`rec(this.ownerDocument)`);
+        rejects(`rec(this.innerHTML)`);
+        rejects(`rec(this.dataset.name.concat('x'))`);
+        rejects(`this.dataset.name.concat('x')`);
+    });
+    test('event 只能讀 key 與呼叫 stopPropagation / preventDefault', () => {
+        rejects(`rec(event.view)`);
+        rejects(`rec(event.target)`);
+        rejects(`event.view.localStorage.clear()`);
+    });
+    test('不能經由 iframe 的 contentWindow 繞出去', () => {
+        rejects(`document.getElementById('f').contentWindow.localStorage.clear()`);
+        rejects(`rec(document.getElementById('f').contentWindow)`);
+        rejects(`document.getElementById('f').click('x')`);
+    });
+    test('JSON 只開放 parse', () => {
+        rejects(`rec(JSON.stringify(this))`);
+    });
+});
+
+describe('TimeFlowActions：內建白名單', () => {
+    test('白名單內的名稱都真的是函式', () => {
+        const bad = Array.from(A.ALLOWED_CALLS).filter(name => {
+            const [root, method] = name.split('.');
+            const target = method ? (app.ctx[root] || {})[method] : app.ctx[root];
+            return typeof target !== 'function';
+        });
+        assert.deepEqual(bad, []);
+    });
+    test('不包含能執行任意程式碼或直接碰儲存空間的名稱', () => {
+        for (const name of ['eval', 'Function', 'setTimeout', 'setInterval', 'fetch', 'open', 'escapeHTML', 'saveData']) {
+            assert.ok(!A.ALLOWED_CALLS.includes(name), name);
+        }
+    });
 });
 
 describe('畫面中的所有 data-on* 事件', () => {
@@ -142,6 +193,33 @@ describe('畫面中的所有 data-on* 事件', () => {
             }
         }
         assert.deepEqual(Array.from(missing), []);
+    });
+    test('白名單（ALLOWED_CALLS）與畫面實際用到的函式完全一致', () => {
+        const used = new Set();
+        for (const f of found) A.collectCalls(f.src).forEach(name => used.add(name));
+        const allowed = new Set(A.ALLOWED_CALLS);
+        const missing = [...used].filter(n => !allowed.has(n)).sort();
+        const unused = [...allowed].filter(n => !used.has(n)).sort();
+        assert.deepEqual(missing, [], '這些函式被 data-on* 使用，但沒有加進 js/core/actions.js 的 ALLOWED_CALLS');
+        assert.deepEqual(unused, [], '這些名稱已經沒有任何 data-on* 使用，請從 ALLOWED_CALLS 移除');
+    });
+    test('每一個都通過白名單檢查（以不做事的替身函式實際執行一次）', () => {
+        const noop = () => undefined;
+        const scope = {
+            document: { nodeType: 9, getElementById: () => ({ nodeType: 1, click: noop }), querySelector: () => null },
+            window: { print: noop }
+        };
+        for (const name of A.ALLOWED_CALLS) {
+            const [root, method] = name.split('.');
+            if (method) (scope[root] = scope[root] || {})[method] = noop; else scope[root] = noop;
+        }
+        const el = { nodeType: 1, value: '1', checked: true, href: 'http://x/', dataset: new Proxy({}, { get: () => '{}' }) };
+        const event = { stopPropagation: noop, preventDefault: noop, key: 'Enter' };
+        const bad = [];
+        for (const f of found) {
+            try { A.execute(f.src, { el, event, scope }); } catch (e) { bad.push(`${f.rel}: ${f.src} → ${e.message}`); }
+        }
+        assert.deepEqual(bad, []);
     });
     test('不再有行內事件屬性（onclick= 等），否則會被 CSP 擋下', () => {
         const bad = [];

@@ -135,7 +135,7 @@ describe('匯入：拒絕與防護', () => {
     });
     test('security.json（含 XSS）匯入後：顏色與節次已清洗、連結被擋、文字可安全輸出', () => {
         const app = freshApp();
-        importText(app, fs.readFileSync(path.join(ROOT, 'security.json'), 'utf8'));
+        importText(app, fs.readFileSync(path.join(__dirname, 'fixtures', 'security.json'), 'utf8'));
         const all = JSON.parse(app.run('JSON.stringify(Object.values(appData.semesters).flat())'));
         assert.ok(all.length > 0);
         for (const c of all) {
@@ -189,5 +189,103 @@ describe('持久化（localStorage）', () => {
         assert.equal(app.run('saveData()'), false);
         assert.equal(shown.length, 1);
         assert.match(shown[0][1], /已滿/);
+    });
+});
+
+describe('匯入：設定欄位與 localStorage 載入共用同一份正規化', () => {
+    const X = '<img src=x onerror=alert(1)>';
+
+    test('轉系備份、課程地圖隱藏清單在匯入當下就被清洗（不必等重新整理）', () => {
+        const app = freshApp(makeStorage());
+        importText(app, backup({
+            transferBackup: { savedAt: 'x'.repeat(500), toDept: 5, deptName: 'D'.repeat(500), entryYear: 118, types: { 'bad key': 'x', 12: 't'.repeat(100) } },
+            courseMapHidden: [1, '', 'n'.repeat(500), { a: 1 }]
+        }));
+        const tb = JSON.parse(app.run('JSON.stringify(appData.transferBackup)'));
+        assert.equal(tb.savedAt.length, 30);
+        assert.equal(tb.deptName.length, 50);
+        assert.equal(tb.toDept, '');
+        assert.deepEqual(Object.keys(tb.types), ['12']);
+        const hidden = JSON.parse(app.run('JSON.stringify(appData.courseMapHidden)'));
+        assert.equal(hidden.length, 1);
+        assert.equal(hidden[0].length, 60);
+    });
+    test('格式不對的轉系備份直接丟棄', () => {
+        const app = freshApp(makeStorage());
+        importText(app, backup({ transferBackup: [X] }));
+        assert.equal(app.run('appData.transferBackup'), null);
+    });
+    test('跨領域類別只接受選單上的四種', () => {
+        const app = freshApp(makeStorage());
+        importText(app, backup({ crossMajor: { type: X, name: 'N'.repeat(200), target: 'abc' } }));
+        assert.deepEqual(JSON.parse(app.run('JSON.stringify(appData.crossMajor)')), { type: 'none', name: 'N'.repeat(50), target: 40 });
+        importText(app, backup({ crossMajor: { type: '輔系', name: '資訊系', target: 20 } }));
+        assert.deepEqual(JSON.parse(app.run('JSON.stringify(appData.crossMajor)')), { type: '輔系', name: '資訊系', target: 20 });
+    });
+    test('課程名稱與類別限制長度，overrides 過大時清空', () => {
+        const app = freshApp(makeStorage());
+        importText(app, backup({ semesters: { 一上: [
+            course('N'.repeat(5000), { type: 'T'.repeat(5000), overrides: { big: 'x'.repeat(5000) } }),
+            course('正常', { id: 2, overrides: { '2026-01-01': 'skip' } })
+        ], 一下: [] } }));
+        const [a, b] = JSON.parse(app.run('JSON.stringify(appData.semesters["一上"])'));
+        assert.equal(a.name.length, 120);
+        assert.equal(a.type.length, 30);
+        assert.deepEqual(a.overrides, {});
+        assert.deepEqual(b.overrides, { '2026-01-01': 'skip' });
+    });
+    test('不認得的欄位只保留簡單的值', () => {
+        const app = freshApp(makeStorage());
+        importText(app, backup({ futureFlag: true, futureNumber: 3, futureText: 'ok', junkObject: { a: [X] }, junkArray: [X], junkLong: 'x'.repeat(101) }));
+        const keys = JSON.parse(app.run('JSON.stringify(Object.keys(appData))'));
+        for (const k of ['futureFlag', 'futureNumber', 'futureText']) assert.ok(keys.includes(k), k);
+        for (const k of ['junkObject', 'junkArray', 'junkLong']) assert.ok(!keys.includes(k), k);
+    });
+    test('從 localStorage 載入時套用相同規則', () => {
+        const storage = makeStorage();
+        storage.setItem('timeflow_data', JSON.stringify({ semesters: { 一上: [] }, crossMajor: { type: X }, junkObject: { a: 1 }, courseMapHidden: 'x' }));
+        const app = loadApp({ storage });
+        assert.equal(app.errors.length, 0);
+        assert.equal(app.run('appData.crossMajor.type'), 'none');
+        assert.equal(app.run('"junkObject" in appData'), false);
+        assert.deepEqual(JSON.parse(app.run('JSON.stringify(appData.courseMapHidden)')), []);
+    });
+});
+
+describe('儲存 key 改名（mySchedule → timeflow_data）', () => {
+    test('新的 key 帶有 timeflow_ 前綴', () => {
+        assert.equal(loadApp({ storage: makeStorage() }).run('STORAGE_KEY'), 'timeflow_data');
+    });
+    test('舊 key 的資料會搬到新 key，並刪掉舊的', () => {
+        const storage = makeStorage();
+        storage.setItem('mySchedule', backup({ deptName: '舊資料學系' }));
+        const app = loadApp({ storage });
+        assert.equal(app.run('appData.deptName'), '舊資料學系');
+        assert.equal(storage.getItem('mySchedule'), null);
+        assert.equal(JSON.parse(storage.getItem('timeflow_data')).deptName, '舊資料學系');
+    });
+    test('新舊都有資料時以新的為準，舊的清掉', () => {
+        const storage = makeStorage();
+        storage.setItem('mySchedule', backup({ deptName: '舊' }));
+        storage.setItem('timeflow_data', backup({ deptName: '新' }));
+        const app = loadApp({ storage });
+        assert.equal(app.run('appData.deptName'), '新');
+        assert.equal(storage.getItem('mySchedule'), null);
+        assert.equal(JSON.parse(storage.getItem('timeflow_data')).deptName, '新');
+    });
+    test('寫入新 key 失敗時保留舊資料', () => {
+        const storage = makeStorage();
+        storage.setItem('mySchedule', backup({ deptName: '舊資料學系' }));
+        storage.setItem = () => { throw new Error('quota'); };
+        const app = loadApp({ storage });
+        assert.equal(app.run('appData.deptName'), '舊資料學系');
+        assert.notEqual(storage.getItem('mySchedule'), null);
+    });
+    test('舊 key 內容損毀時不當機', () => {
+        const storage = makeStorage();
+        storage.setItem('mySchedule', '{broken');
+        const app = loadApp({ storage });
+        assert.equal(app.errors.length, 0);
+        assert.equal(app.run('appData.deptName'), '電機工程學系');
     });
 });
