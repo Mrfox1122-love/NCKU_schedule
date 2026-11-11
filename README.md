@@ -73,6 +73,7 @@
 - 刪除課程、清空或刪除學期、移除候選課後，可在底部提示按**復原**。
 - 發布新版後會提示「重新整理」；儲存失敗（空間已滿、無痕模式）時會立即警告並提供匯出備份。
 - 完整 JSON 匯入／匯出備份。
+- **鍵盤與無障礙**：彈窗開啟時背景設為 inert、焦點鎖定在彈窗內，可用 Tab／Esc 操作並在關閉後回到原按鈕；手風琴標題會朗讀展開／收合狀態；課表格子、課程卡片與側欄都能用鍵盤（Enter／空白鍵）操作；有鍵盤焦點外框，並尊重系統「減少動態效果」設定。
 - 設定頁附資料來源、法規依據、常見問題與使用者條款。
 
 ---
@@ -120,7 +121,7 @@ python -m http.server 8000
 ├── icons/                     # App 圖示
 ├── js/
 │   ├── app.js                 # 視圖切換、學期切換等全域操作
-│   ├── core/                  # 資料存取、彈窗、提示列、設定、安全處理
+│   ├── core/                  # 資料存取、彈窗（含焦點管理）、事件處理（actions.js）、行內樣式（inline-styles.js）、無障礙輔助、提示列、設定、安全處理、啟動腳本
 │   ├── schedule/              # 課表、衝堂偵測、圖片匯出
 │   ├── course/                # 課程編輯、候選課與比較、先修檢查
 │   ├── discover/              # 找課、就地找課（quick-find.js）；catalog-data.js / history-data.js 為自動產生的課程資料
@@ -136,6 +137,7 @@ python -m http.server 8000
 │   │   ├── what-if.js         # 轉系／雙主修試算與轉系套用
 │   │   └── program-check.js   # 學分學程／微學程檢核
 │   └── libs/                  # Chart.js、html2canvas
+├── tests/                     # 自動化測試（npm test）
 └── tools/                     # 課程資料更新工具（Python）
 ```
 
@@ -181,6 +183,34 @@ python tools/bump_version.py 3.5.1           # 日期預設今天，可加 --dat
 
 腳本也會檢查 `index.html` 載入的檔案是否都在 `sw.js` 的快取清單中。
 
+### 自動化測試
+
+測試使用 Node 內建的 test runner，不需安裝任何套件（需 Node 22 以上）。它會用 `vm` 把 `index.html` 內的腳本載入模擬的瀏覽器環境，直接測試純計算的部分：
+
+```bash
+npm test
+```
+
+| 檔案 | 內容 |
+|---|---|
+| `tests/core.test.js` | `escapeHTML`、`sanitizeURL`、匯入資料清洗，以及 `security.json` 惡意資料的 XSS 防護 |
+| `tests/grade.test.js` | 4.3 制等第／績點邊界值、學期與歷年 GPA 加權 |
+| `tests/conflict.test.js` | 衝堂偵測：重疊、暫定課程、單雙週 |
+| `tests/prerequisite.test.js` | 先修判斷（分數門檻、同學期、修讀中）與由課程資料建立規則 |
+| `tests/graduation.test.js` | 大學部畢業檢核與必修科目表版本選擇 |
+| `tests/master.test.js` | 研究所 135 個所別規則的結構檢查與檢核計算 |
+| `tests/actions.test.js` | `data-on*` 事件解析器（含拒絕危險寫法）、畫面上每個事件都能解析且函式存在、CSP 沒有 `unsafe-inline` |
+| `tests/import-export.test.js` | JSON 匯入（BOM、壞檔、超量、惡意資料）、匯出再匯入往返一致、localStorage 持久化與儲存失敗警告 |
+| `tests/whatif.test.js` | 轉系／雙主修歸類、套用轉系與復原還原所有課程類別 |
+| `tests/inline-styles.test.js` | `data-style` 解析、模板不再使用 `style=` 與 `<style>`、`style-src` 只允許 self、防點擊劫持機制 |
+| `tests/data-integrity.test.js` | 必修表與學分規則是否一致、課程資料格式、`sw.js` 快取清單與版本號 |
+
+修改畢業規則、必修科目表或課程資料後務必跑一次；`data-integrity` 會抓出學分合計對不上、快取清單漏檔等問題。已知但尚未核對的例外寫在該測試檔內並附原因。
+
+### 快取與離線
+
+`sw.js` 安裝時只預先快取程式與樣式（約 1.5 MB）。課程資料 `catalog-data.js`、`history-data.js`（合計約 6 MB）改為使用者第一次開啟「找課」時才下載並快取，之後可離線使用；它們只隨版本更新，所以不會在背景重複下載。新增檔案時仍需同時加到 `index.html` 與 `sw.js` 的清單。
+
 ### 測試時的快取
 
 Service Worker 採 stale-while-revalidate，修改檔案後瀏覽器可能仍顯示舊版。測試前可在開發者工具執行：
@@ -198,6 +228,11 @@ location.reload();
 - 原生 JavaScript，無框架、無建置流程。
 - 檔案使用 CRLF 換行，請保持一致。
 - 插入畫面的文字一律經過 `escapeHTML()`。
+- **不使用行內事件與行內 `<script>`**：內容安全政策（CSP）的 `script-src` 只允許自己的檔案（沒有 `unsafe-inline`、`unsafe-eval`）。畫面模板請寫 `data-onclick="fn('x')"`、`data-onchange`、`data-oninput`、`data-onkeydown`，不要寫 `onclick=`；`js/core/actions.js` 用一個不使用 eval 的小型解析器執行它們。
+  - 可用寫法：呼叫全域函式或全域物件的方法、字串／數字／布林參數、`this.value`、`this.dataset.x`、`event`、`return fn(...)`、`event.stopPropagation()`、`document.getElementById('x').click()`；其他寫法會被拒絕。
+  - 被呼叫的函式必須掛在 `window` 上：`function` 宣告自動符合；用 `const X = {...}` 宣告的物件要再加一行 `window.X = X;`。`npm test` 會檢查每個 `data-on*` 都能解析、呼叫的名稱確實存在。
+- **不使用 `style="..."`**：`style-src` 也只允許 `'self'`。模板的行內樣式請寫 `data-style="color:red; margin:4px"`；`js/core/inline-styles.js` 會在元素出現時用 CSSOM（`el.style.setProperty`）套用，效果與原本的行內樣式相同（程式之後用 `el.style.xxx` 設定的值優先）。程式碼裡要設定樣式請直接用 `el.style.xxx` 或 `el.style.cssText`，不要用 `setAttribute('style', ...)`，那會被 CSP 擋下。
+- 防點擊劫持不再使用行內 `<style>`：`components.css` 預設隱藏 `body`，`boot.js` 確認自己是最上層頁面後才加上 `tf-top` 顯示。
 
 ---
 

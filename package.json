@@ -1,0 +1,9 @@
+{
+  "name": "timeflow-tests",
+  "private": true,
+  "description": "TimeFlow 測試用設定；網站本身不需要 npm 或建置步驟",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test \"tests/*.test.js\""
+  }
+}
