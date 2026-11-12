@@ -111,4 +111,19 @@ describe('CSP style-src 與防點擊劫持', () => {
         assert.match(css, /html:not\(\.tf-top\)\s+body\s*\{[^}]*display:\s*none\s*!important/);
         assert.match(fs.readFileSync(path.join(ROOT, 'js/core/boot.js'), 'utf8'), /classList\.add\('tf-top'\)/);
     });
+    test('data-style 不套用外部 url(http/https/協議相對)', () => {
+        const applied = [];
+        const makeFakeEl = styleText => ({
+            nodeType: 1,
+            hasAttribute: a => a === 'data-style',
+            getAttribute: a => (a === 'data-style' ? styleText : null),
+            style: {
+                getPropertyValue: () => '',
+                setProperty: (k, v) => applied.push([k, v])
+            }
+        });
+        S.applyTree(makeFakeEl('background: url("https://evil.example/track"); color: red'));
+        S.applyTree(makeFakeEl('background-image: url(//evil.example/x); font-size: 12px'));
+        assert.deepEqual(applied, [['color', 'red'], ['font-size', '12px']]);
+    });
 });
