@@ -1,4 +1,4 @@
-# 先跑自動化測試，通過才部署到 GitHub Pages（由 tools/release.py 產生，部署資料夾：v3.6.2）
+# 先跑自動化測試，通過才部署到 GitHub Pages（由 tools/release.py 產生，部署資料夾：v3.6.3）
 name: Test and deploy to Pages
 
 on:
@@ -29,7 +29,7 @@ jobs:
       - name: Run tests against the deployed folder
         run: npm test
         env:
-          TIMEFLOW_ROOT: ./v3.6.2
+          TIMEFLOW_ROOT: ./v3.6.3
 
   deploy:
     needs: test
@@ -46,7 +46,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3.0.1
         with:
-          path: './v3.6.2'
+          path: './v3.6.3'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
