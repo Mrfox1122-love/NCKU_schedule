@@ -83,9 +83,13 @@ describe('recommend：排除與排序', () => {
         const r = G.recommend({ needs: base(), pool: [c], taken: [{ name: '別的名字', code: 'a92f300' }] });
         assert.equal(r.candidates.length, 0);
     });
-    test('本系不承認的通識被排除（比對時忽略「介／界」與標點）', () => {
-        const pool = [ge('界面化學的生活應用', '通識-自然', 1, ['1']), ge('其他自然課', '通識-自然', 2, ['1'])];
-        const r = G.recommend({ needs: base(), pool, disallowed: ['介面化學的生活應用'] });
+    test('本系不承認的通識被排除（比對時忽略「介／界」與標點，並支援子字串）', () => {
+        const pool = [
+            ge('界面化學的生活應用', '通識-自然', 1, ['1']),
+            ge('普通化學實驗（二）', '通識-自然', 3, ['1']),
+            ge('其他自然課', '通識-自然', 2, ['1'])
+        ];
+        const r = G.recommend({ needs: base(), pool, disallowed: ['介面化學的生活應用', '普通化學實驗'] });
         assert.deepEqual(Array.from(r.candidates, c => c.course.name), ['其他自然課']);
     });
     test('領域已滿或本系不採計 → 該領域不推薦', () => {
@@ -188,5 +192,15 @@ describe('用真實課程資料的整合測試', () => {
         assert.equal(after.needs.neededNewDomains, 2);
         assert.notEqual(after.rec.candidates[0].domainKey, 'human');
         assert.ok(!after.rec.candidates.some(c => c.course.name === first.course.name), '已排的課不應再推薦');
+    });
+    test('buildGeRecommendation 依 wishlist.catalogId 正確標記 inWishlist', () => {
+        const a = setup('一上');
+        const target = a.run('buildGeRecommendation()').rec.candidates[0].course;
+        a.ctx.__target = target;
+        a.run('appData.wishlist.push({ id: 999999, catalogId: __target.id, name: __target.name, credits: __target.credits, slots: __target.slots })');
+        const updated = a.run('buildGeRecommendation()');
+        const matched = updated.rec.candidates.find(c => c.course.id === target.id);
+        assert.ok(matched);
+        assert.equal(matched.inWishlist, true);
     });
 });

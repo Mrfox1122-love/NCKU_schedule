@@ -126,4 +126,71 @@ describe('CSP style-src 與防點擊劫持', () => {
         S.applyTree(makeFakeEl('background-image: url(//evil.example/x); font-size: 12px'));
         assert.deepEqual(applied, [['color', 'red'], ['font-size', '12px']]);
     });
+
+    test('data-style 更新可覆寫舊值、清除移除的屬性，但保留程式直接設定的樣式，且 outerHTML 生效', () => {
+        const makeStyleBag = (initial = {}) => {
+            const map = new Map(Object.entries(initial));
+            return {
+                getPropertyValue: k => map.get(k) || '',
+                setProperty: (k, v) => { map.set(k, v); },
+                removeProperty: k => { map.delete(k); },
+                _dump: () => Object.fromEntries(map)
+            };
+        };
+        const makeNode = (attrText, initialStyle = {}) => {
+            let attr = attrText;
+            return {
+                nodeType: 1,
+                hasAttribute: a => a === 'data-style' && attr !== null,
+                getAttribute: a => (a === 'data-style' ? attr : null),
+                setDataStyle(next) { attr = next; },
+                style: makeStyleBag(initialStyle)
+            };
+        };
+
+        let observerCb;
+        class TestObserver {
+            constructor(cb) { observerCb = cb; }
+            observe() {}
+        }
+        const proto = { insertAdjacentHTML() {} };
+        Object.defineProperty(proto, 'innerHTML', { get() { return ''; }, set() {}, configurable: true });
+        Object.defineProperty(proto, 'outerHTML', {
+            get() { return ''; },
+            set() {
+                // 模擬原生 outerHTML：舊節點脫離 parentNode，parentNode 出現替換後的新子節點
+                const parent = this.parentNode;
+                this.parentNode = null;
+                parent._replacedChild = makeNode('padding: 8px;');
+                parent.querySelectorAll = () => [parent._replacedChild];
+            },
+            configurable: true
+        });
+        const ctx = vm.createContext({
+            document: { documentElement: {} },
+            MutationObserver: TestObserver,
+            Element: { prototype: proto }
+        });
+        ctx.window = ctx;
+        vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/core/inline-styles.js'), 'utf8'), ctx);
+
+        const el = makeNode('color: red; margin: 4px;', { fontWeight: 'bold' });
+        el.style.setProperty('opacity', '0.5'); // 程式直接設定，之後不得被 data-style 覆寫
+        ctx.TimeFlowStyles.applyTree(el);
+        assert.deepEqual(el.style._dump(), { fontWeight: 'bold', opacity: '0.5', color: 'red', margin: '4px' });
+
+        // 更新 data-style（改變 color、移除 margin、嘗試寫入 opacity）
+        el.setDataStyle('color: blue; opacity: 1;');
+        observerCb([{ type: 'attributes', target: el }]);
+        assert.equal(el.style.getPropertyValue('color'), 'blue');
+        assert.equal(el.style.getPropertyValue('margin'), '');
+        assert.equal(el.style.getPropertyValue('opacity'), '0.5');
+
+        // outerHTML 寫入後能於 parentNode 上找到並套用新替換節點
+        const parent = { nodeType: 1, hasAttribute: () => false, querySelectorAll: () => [] };
+        const child = Object.create(proto);
+        child.parentNode = parent;
+        Object.getOwnPropertyDescriptor(proto, 'outerHTML').set.call(child, '<div data-style="padding: 8px;"></div>');
+        assert.equal(parent._replacedChild.style.getPropertyValue('padding'), '8px');
+    });
 });

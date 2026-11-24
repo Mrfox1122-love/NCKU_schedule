@@ -1,0 +1,197 @@
+/* ============================================================
+   📱 TimeFlow v4.0.1 — 手機優先調整 (mobile.css)
+   ------------------------------------------------------------
+   在 style.css 之後載入。桌機版面不變，主要調整 ≤768px：
+   今天的課、規劃頁「更多」、找課篩選抽屜、畢業頁設定、提示列，
+   以及分享課表彈窗（桌機也會用到）。
+   ============================================================ */
+
+/* ── 只在手機出現的元素：桌機預設隱藏 ── */
+.tf-more-btn,
+.tf-filter-toggle,
+.tf-sheet-backdrop,
+.tf-sheet-head,
+.tf-sheet-done,
+.tf-today-card { display: none; }
+
+/* ── 分享彈窗（桌機與手機共用）── */
+.tf-share-card { max-width: 480px; }
+.tf-share-body { display: flex; flex-direction: column; gap: 12px; }
+.tf-share-qr {
+    align-self: center;
+    width: min(260px, 70vw);
+    aspect-ratio: 1;
+    padding: 8px;
+    background: #fff;
+    border-radius: var(--tf-radius-md);
+}
+.tf-share-qr svg { width: 100%; height: 100%; display: block; }
+.tf-share-note { margin: 0; font-size: var(--tf-text-xs); line-height: 1.6; color: var(--tf-text-secondary); }
+.tf-share-link-row .modern-input { width: 100%; font-size: var(--tf-text-xs); }
+.tf-share-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.tf-share-actions .tf-btn { flex: 1 1 140px; }
+.tf-share-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; max-height: 45vh; overflow-y: auto; }
+.tf-share-row {
+    display: flex; align-items: flex-start; gap: 8px;
+    padding: 8px 10px;
+    background: var(--tf-surface-sunken);
+    border: 1px solid var(--tf-border-default);
+    border-radius: var(--tf-radius-md);
+}
+.tf-share-dot { width: 10px; height: 10px; margin-top: 4px; border-radius: 50%; flex-shrink: 0; }
+.tf-share-row-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: var(--tf-text-sm); color: var(--tf-text-primary); }
+.tf-share-row-main .master-muted { font-size: var(--tf-text-xs); }
+.tf-share-import-row { display: flex; align-items: center; gap: 8px; font-size: var(--tf-text-sm); color: var(--tf-text-secondary); }
+.tf-share-import-row select { flex: 1; }
+
+@media (max-width: 768px) {
+
+    /* ── 今天的課 ── */
+    .tf-today-card:not([hidden]) {
+        display: block;
+        margin-bottom: 8px;
+        padding: 10px 12px;
+        background: var(--tf-surface-elevated);
+        border: 1px solid var(--tf-border-default);
+        border-radius: var(--tf-radius-md);
+    }
+    .tf-today-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+    .tf-today-title { font-size: var(--tf-text-sm); font-weight: var(--tf-weight-semibold); color: var(--tf-text-primary); }
+    .tf-today-sem { font-size: var(--tf-text-xs); color: var(--tf-text-muted); }
+    .tf-today-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+    .tf-today-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+    .tf-today-row + .tf-today-row { border-top: 1px dashed var(--tf-border-subtle); }
+    .tf-today-time {
+        display: flex; flex-direction: column; width: 42px; flex-shrink: 0;
+        font-size: var(--tf-text-sm); font-variant-numeric: tabular-nums; color: var(--tf-text-primary);
+    }
+    .tf-today-time small { font-size: 0.68rem; color: var(--tf-text-muted); }
+    .tf-today-bar { width: 4px; align-self: stretch; border-radius: 2px; flex-shrink: 0; }
+    .tf-today-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .tf-today-main b { font-size: var(--tf-text-sm); color: var(--tf-text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tf-today-meta { font-size: var(--tf-text-xs); color: var(--tf-text-muted); }
+    .tf-today-tag {
+        flex-shrink: 0; padding: 2px 8px; border-radius: var(--tf-radius-full);
+        font-size: 0.68rem; font-weight: var(--tf-weight-semibold);
+        background: var(--tf-color-primary-subtle); color: var(--tf-color-primary-light);
+        border: 1px solid var(--tf-color-primary-border);
+    }
+    .tf-today-row.is-now .tf-today-tag { background: var(--tf-status-success-bg); color: var(--tf-status-success-light); border-color: var(--tf-status-success-border); }
+    .tf-today-row.is-done { opacity: 0.45; }
+    .tf-today-next { margin-top: 4px; font-size: var(--tf-text-xs); color: var(--tf-text-secondary); line-height: 1.6; }
+
+    /* ── 規劃頁：次要按鈕收進「更多」── */
+    #view-plan .tf-sched-topbar-left { flex-wrap: wrap; align-items: center; }
+    /* 收起時：學期切換、網格／清單與「⋯」擠在同一列，學期選單自動縮窄 */
+    #view-plan .tf-sched-topbar:not(.is-more-open) .tf-sched-topbar-left { flex-wrap: nowrap; }
+    #view-plan .tf-sched-topbar:not(.is-more-open) .tf-sem-nav-group { flex: 1 1 auto; min-width: 0; }
+    #view-plan .tf-sched-topbar:not(.is-more-open) .tf-sem-pill-select { flex: 1 1 auto; min-width: 0; }
+    #view-plan .tf-sched-topbar:not(.is-more-open) .tf-sem-dropdown { width: 100%; min-width: 0; text-overflow: ellipsis; }
+    #view-plan .tf-sched-topbar:not(.is-more-open) .tf-view-pills { flex-shrink: 0; }
+    #view-plan .tf-sem-step-btn { width: 28px; min-width: 28px; padding: 0; }
+    #view-plan .tf-sem-nav-group { gap: 4px; }
+    .tf-more-btn {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 32px; height: 28px; padding: 0; margin-left: auto;
+        border: 1px solid var(--tf-border-default); border-radius: var(--tf-radius-md);
+        background: var(--tf-surface-overlay); color: var(--tf-text-secondary);
+        font-size: 1rem; line-height: 1; cursor: pointer;
+    }
+    .tf-more-btn[aria-expanded="true"] { color: var(--tf-color-primary-light); border-color: var(--tf-color-primary-border); }
+    #view-plan .tf-sched-topbar:not(.is-more-open) .options-pills,
+    #view-plan .tf-sched-topbar:not(.is-more-open) .tf-sched-topbar-right { display: none; }
+    #view-plan .tf-sched-topbar.is-more-open .tf-sched-topbar-right .tf-btn-group { flex-wrap: wrap; }
+
+    /* ── 找課：篩選改成底部抽屜 ── */
+    .tf-search-bar-wrap { display: flex; align-items: center; gap: 6px; }
+    .tf-search-bar-wrap .tf-search-input { flex: 1; min-width: 0; }
+    /* 清除鈕原本貼在搜尋框右緣，旁邊多了篩選鈕，要往左讓出 76px＋間距 */
+    .tf-search-bar-wrap .tf-btn-search-clear { right: 92px; }
+    .tf-filter-toggle {
+        display: inline-flex; align-items: center; justify-content: center; gap: 4px; flex-shrink: 0;
+        width: 76px; height: 38px; padding: 0 8px;
+        border: 1px solid var(--tf-border-default); border-radius: var(--tf-radius-md);
+        background: var(--tf-surface-overlay); color: var(--tf-text-primary);
+        font-size: var(--tf-text-sm); cursor: pointer;
+    }
+    .tf-filter-count {
+        min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+        background: var(--tf-color-primary); color: #fff;
+        font-size: 0.68rem; line-height: 18px; text-align: center;
+    }
+    .tf-filter-count[hidden] { display: none; }
+
+    #view-discover .tf-discover-header:not(.filters-open) .tf-filter-bar { display: none; }
+    #view-discover .tf-discover-header.filters-open .tf-sheet-backdrop {
+        display: block; position: fixed; inset: 0; z-index: 4500;
+        background: rgba(0, 0, 0, 0.5);
+    }
+    #view-discover .tf-discover-header.filters-open .tf-filter-bar {
+        position: fixed; left: 0; right: 0; bottom: 0; z-index: 4600;
+        max-height: 80vh; overflow-y: auto;
+        display: grid; grid-template-columns: 1fr 1fr; gap: 10px 12px; align-items: end;
+        padding: 0 16px calc(16px + env(safe-area-inset-bottom, 0px));
+        background: var(--tf-surface-elevated);
+        border-top: 1px solid var(--tf-border-strong);
+        border-radius: 16px 16px 0 0;
+        box-shadow: var(--tf-shadow-lg);
+        animation: tf-sheet-in 0.2s ease-out;
+    }
+    .tf-discover-header.filters-open .tf-sheet-head {
+        grid-column: 1 / -1;
+        display: flex; justify-content: space-between; align-items: center;
+        position: sticky; top: 0; z-index: 1;
+        margin: 0 -16px; padding: 12px 16px 8px;
+        background: var(--tf-surface-elevated);
+        border-bottom: 1px solid var(--tf-border-default);
+    }
+    .tf-sheet-title { font-size: var(--tf-text-base); font-weight: var(--tf-weight-semibold); color: var(--tf-text-primary); }
+    .tf-discover-header.filters-open .tf-filter-group { display: flex; flex-direction: column; align-items: stretch; gap: 4px; min-width: 0; }
+    .tf-discover-header.filters-open .tf-filter-group .modern-input,
+    .tf-discover-header.filters-open .tf-filter-group .modern-select { width: 100% !important; min-width: 0; height: 40px; }
+    /* 系所、學程是可輸入的欄位，佔整列比較好打字 */
+    .tf-discover-header.filters-open .tf-filter-group:has(#filterDiscoverDept),
+    .tf-discover-header.filters-open .tf-filter-group:has(#filterDiscoverProgram),
+    .tf-discover-header.filters-open .tf-filter-group:has(#filterDiscoverType) { grid-column: 1 / -1; }
+    .tf-discover-header.filters-open label.tf-filter-group { flex-direction: row; align-items: center; gap: 8px; height: 40px; }
+    .tf-discover-header.filters-open .tf-sheet-done { display: block; grid-column: 1 / -1; height: 44px; }
+    body.tf-sheet-open { overflow: hidden; }
+
+    /* ── 畢業頁：工具按鈕改成一排橫向滑動，設定表單改兩欄 ── */
+    .grad-action-btns {
+        flex-wrap: nowrap !important;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 2px;
+    }
+    .grad-action-btns::-webkit-scrollbar { display: none; }
+    .grad-action-btns > * { flex-shrink: 0; white-space: nowrap; }
+
+    .config-row-group { flex-direction: column; align-items: stretch; }
+    .config-group-tag { align-self: flex-start; }
+    .config-pills-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .config-pills-wrap > .cfg-pill { width: 100%; min-width: 0; justify-content: space-between; }
+    .config-pills-wrap > .cfg-pill.tf-combobox-wrap,
+    .config-pills-wrap > .cfg-pill:has(select) { grid-column: 1 / -1; }
+    .config-pills-wrap .cfg-input-num { width: 56px; }
+
+    /* ── 提示列：縮小，並讓頁面底部留出空間，不會永久蓋住內容 ── */
+    .tf-notify { padding: 8px 10px; gap: 8px; font-size: var(--tf-text-xs); }
+    .tf-notify-text { line-height: 1.45; }
+    body:has(.tf-notify-host .tf-notify) { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)) !important; }
+
+    /* ── 分享彈窗在手機改為貼底 ── */
+    .tf-share-card { width: 100%; }
+}
+
+/* 常駐提示（備份提醒、儲存失敗等）在彈窗或篩選抽屜開著時先藏起來，避免蓋住彈窗底部的按鈕；關閉後會再出現 */
+body:has(.course-detail-overlay.show) .tf-notify[data-banner],
+body:has(.settings-overlay.show) .tf-notify[data-banner],
+body.tf-sheet-open .tf-notify[data-banner] { display: none; }
+
+@keyframes tf-sheet-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+    #view-discover .tf-discover-header.filters-open .tf-filter-bar { animation: none; }
+}

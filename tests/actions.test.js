@@ -129,6 +129,53 @@ describe('TimeFlowActions：拒絕的寫法（避免變成任意程式碼執行�
         rejects(`rec(document.getElementById('f').contentWindow)`);
         rejects(`document.getElementById('f').click('x')`);
     });
+    test('真實事件委派：還原 event.currentTarget，點擊遮罩可關閉且內部停止冒泡', () => {
+        const vm = require('vm');
+        const listeners = {};
+        const calls = [];
+        const doc = {
+            addEventListener(type, fn) { (listeners[type] ||= []).push(fn); }
+        };
+        const ctx = vm.createContext({
+            document: doc,
+            console,
+            closeShareModal(e) {
+                calls.push(['closeShareModal', e.target === e.currentTarget]);
+                if (e && e.target !== e.currentTarget) return;
+                calls.push(['closed']);
+            }
+        });
+        ctx.window = ctx;
+        vm.runInContext(fs.readFileSync(path.join(ROOT, 'js/core/actions.js'), 'utf8'), ctx);
+
+        const makeEl = (attrs, parent = null) => ({
+            nodeType: 1,
+            parentElement: parent,
+            hasAttribute: a => Object.prototype.hasOwnProperty.call(attrs, a),
+            getAttribute: a => attrs[a]
+        });
+        const overlay = makeEl({ 'data-onclick': 'closeShareModal(event)' }, null);
+        const card = makeEl({ 'data-onclick': 'event.stopPropagation()' }, overlay);
+        const btn = makeEl({}, card);
+
+        const dispatch = (target) => {
+            const ev = {
+                type: 'click',
+                target,
+                currentTarget: doc,
+                cancelBubble: false,
+                stopPropagation() { this.cancelBubble = true; },
+                preventDefault() {}
+            };
+            listeners.click.forEach(fn => fn(ev));
+        };
+
+        dispatch(btn);
+        assert.deepEqual(calls, [], '點擊內層卡片應被 stopPropagation 阻擋，不觸發遮罩關閉');
+
+        dispatch(overlay);
+        assert.deepEqual(calls, [['closeShareModal', true], ['closed']], '點擊遮罩時 event.currentTarget 應還原為 overlay');
+    });
     test('JSON 只開放 parse', () => {
         rejects(`rec(JSON.stringify(this))`);
     });

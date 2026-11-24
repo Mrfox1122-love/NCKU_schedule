@@ -75,6 +75,22 @@ describe('PrerequisiteEngine.check', () => {
     test('null 課程不丟例外', () => {
         assert.equal(check(null, {}).overallStatus, 'unknown');
     });
+    test('已抵免課程同時滿足 passed（成績門檻）與 completed（修過即可）', () => {
+        const waivedCalc1 = calc1({ status: '已抵免', score: null });
+        const r1 = check(calc2, { 一上: [waivedCalc1], 一下: [] });
+        assert.equal(r1.overallStatus, 'passed');
+        assert.equal(r1.details[0].status, 'passed');
+
+        const waivedEE = { code: 'EE2001', name: '電路學', status: '已抵免', score: null };
+        const r2 = check({ code: 'EE3001', name: '某選修' }, { 一上: [waivedEE], 一下: [] });
+        assert.equal(r2.overallStatus, 'passed');
+    });
+    test('暫定候補課程（isTentative）不計為已排／已修先修', () => {
+        const tentativeCalc1 = calc1({ status: '修讀中', score: null, isTentative: true });
+        const r = check(calc2, { 一上: [tentativeCalc1], 一下: [] });
+        assert.equal(r.overallStatus, 'blocked');
+        assert.equal(r.details[0].status, 'missing');
+    });
 });
 
 describe('PrerequisiteEngine 工具', () => {

@@ -1,0 +1,15 @@
+# 全專案維持 CRLF 換行（與 README 約定一致）
+* text=auto eol=crlf
+*.sh text eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.pdf binary
+*.xlsx binary
+*.zip binary

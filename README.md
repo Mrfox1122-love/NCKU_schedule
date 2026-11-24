@@ -31,9 +31,12 @@
 - **衝堂即時提醒**：時間重疊的課程會立即標出。
 - **網格／清單切換**：支援中午 N 節、夜間 A～D 節與週末顯示。
 - **匯出圖片／桌布**：多種版面，可匯出單一學期或整份規劃。
+- **分享課表連結與 QR code**：把某學期的課表變成一條連結或 QR code 傳給同學。資料壓縮後放在網址裡，不經過任何伺服器，也不含成績與備註；對方開啟會先看到預覽，再自己選擇匯入到哪個學期（已有的同一門課會略過，可復原）。
+- **手機版**：規劃頁最上方顯示「今天的課」，標出上課中與下一堂，今天上完會提示下一個有課的日子；次要按鈕收進「⋯」，課表不會被擠到下面。
 
 ### 二、找課
 
+- 手機上篩選條件收進「篩選」按鈕，從底部滑出，按鈕上會顯示目前套用了幾個條件。
 - **本學期開課**與**歷年課程**兩種資料來源，可依系所、年級、學分、星期、節次、上下學期、課程類別篩選，也能只看不衝堂的課。
 - **歷年開課規律**：顯示「每年上學期」「近 4 年開 2 次」等資訊，方便規劃還沒開課的學期。
 - 歷年課程依**班別**分開列出，不同教師、時段的同名課程不會混在一起。
@@ -120,12 +123,12 @@ python -m http.server 8000
 ├── index.html                 # 單頁應用主頁面
 ├── sw.js                      # Service Worker（離線快取，快取名稱含版本號）
 ├── manifest.webmanifest       # PWA 設定
-├── css/                       # 樣式與主題 tokens
+├── css/                       # 樣式與主題 tokens；mobile.css 是 4.0 的手機版調整
 ├── icons/                     # App 圖示
 ├── js/
 │   ├── app.js                 # 視圖切換、學期切換等全域操作
 │   ├── core/                  # 資料存取、彈窗（含焦點管理）、事件處理（actions.js）、行內樣式（inline-styles.js）、無障礙輔助、提示列、設定、安全處理、啟動腳本
-│   ├── schedule/              # 課表、衝堂偵測、圖片匯出
+│   ├── schedule/              # 課表、衝堂偵測、圖片匯出、手機版輔助（mobile.js）、分享連結（share.js）
 │   ├── course/                # 課程編輯、候選課與比較、先修檢查
 │   ├── discover/              # 找課、就地找課（quick-find.js）；catalog-data.js / history-data.js 為自動產生的課程資料
 │   ├── analytics/             # 成績結算、圖表、報表
@@ -139,7 +142,7 @@ python -m http.server 8000
 │   │   ├── planning-assist.js # 找課補足、必修排程檢查
 │   │   ├── what-if.js         # 轉系／雙主修試算與轉系套用
 │   │   └── program-check.js   # 學分學程／微學程檢核
-│   └── libs/                  # Chart.js、html2canvas
+│   └── libs/                  # Chart.js、html2canvas、qrcode-generator（MIT）
 ├── tests/                     # 自動化測試（npm test）
 └── tools/                     # 課程資料更新工具（Python）
 ```
@@ -209,6 +212,7 @@ npm test
 | `tests/import-export.test.js` | JSON 匯入（BOM、壞檔、超量、惡意資料）、匯出再匯入往返一致、localStorage 持久化與儲存失敗警告 |
 | `tests/whatif.test.js` | 轉系／雙主修歸類、套用轉系與復原還原所有課程類別 |
 | `tests/inline-styles.test.js` | `data-style` 解析、模板不再使用 `style=` 與 `<style>`、`style-src` 只允許 self、防點擊劫持機制 |
+| `tests/share.test.js` | 分享連結的打包／解析／壓縮來回、不含成績、惡意內容過濾、匯入略過重複；「今天的課」的排序、拆段與上課中／下一堂判斷 |
 | `tests/data-integrity.test.js` | 必修表與學分規則是否一致、課程資料格式、`sw.js` 快取清單與版本號 |
 
 修改畢業規則、必修科目表或課程資料後務必跑一次；`data-integrity` 會抓出學分合計對不上、快取清單漏檔等問題。已知但尚未核對的例外寫在該測試檔內並附原因。
@@ -237,7 +241,12 @@ location.reload();
 - 插入畫面的文字一律經過 `escapeHTML()`。
 - **不使用行內事件與行內 `<script>`**：內容安全政策（CSP）的 `script-src` 只允許自己的檔案（沒有 `unsafe-inline`、`unsafe-eval`）。畫面模板請寫 `data-onclick="fn('x')"`、`data-onchange`、`data-oninput`、`data-onkeydown`，不要寫 `onclick=`；`js/core/actions.js` 用一個不使用 eval 的小型解析器執行它們。
   - 可用寫法：呼叫全域函式或全域物件的方法、字串／數字／布林參數、`this.value`、`this.dataset.x`、`event`、`return fn(...)`、`event.stopPropagation()`、`document.getElementById('x').click()`；其他寫法會被拒絕。
-  - 被呼叫的函式必須掛在 `window` 上：`function` 宣告自動符合；用 `const X = {...}` 宣告的物件要再加一行 `window.X = X;`。`npm test` 會檢查每個 `data-on*` 都能解析、呼叫的名稱確實存在。
+  - 被呼叫的函式必須掛在 `window` 上：功能模組請列進檔案最後的 `TimeFlow.expose(...)`（見下方「模組與相依性」）。`npm test` 會檢查每個 `data-on*` 都能解析、呼叫的名稱確實存在。
+- **模組與相依性**（`npm test` 的 `tests/dependencies.test.js` 會檢查）：
+  - `js/core/` 的共用核心（security、actions、store、modal、a11y、notify、icons、config、data）可以直接宣告全域，但不可引用任何功能模組。
+  - 其餘功能模組整支檔案包在 `(function () { ... })();` 裡，只有列進檔案最後 `TimeFlow.expose('模組名', { ... })` 的名稱會公開（同時掛在 `TimeFlow.模組名` 與 `window` 上），其他函式都只在模組內可見，不會再被別的檔案的同名函式覆蓋。會被重新指派的 `let` 變數改用 `TimeFlow.exposeState(...)` 公開。
+  - 改了資料要存檔並重繪時呼叫 `TimeFlowStore.commit()`；只存檔用 `TimeFlowStore.save()`，只重繪用 `TimeFlowStore.refresh()`。不要直接呼叫 `saveData()`（只限 `data.js`）或 `updateAppUI()`（只限 `app.js`，它訂閱了 `change` 事件）。
+  - 載入當下就執行的程式碼不可引用之後才載入的腳本；在函式內呼叫後面模組的函式沒問題（執行時都已載入）。
 - **不使用 `style="..."`**：`style-src` 也只允許 `'self'`。模板的行內樣式請寫 `data-style="color:red; margin:4px"`；`js/core/inline-styles.js` 會在元素出現時用 CSSOM（`el.style.setProperty`）套用，效果與原本的行內樣式相同（程式之後用 `el.style.xxx` 設定的值優先）。程式碼裡要設定樣式請直接用 `el.style.xxx` 或 `el.style.cssText`，不要用 `setAttribute('style', ...)`，那會被 CSP 擋下。
 - 防點擊劫持不再使用行內 `<style>`：`components.css` 預設隱藏 `body`，`boot.js` 確認自己是最上層頁面後才加上 `tf-top` 顯示。
 

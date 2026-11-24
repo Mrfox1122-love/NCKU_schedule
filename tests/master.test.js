@@ -101,4 +101,20 @@ describe('calculateMasterGraduation', () => {
         const r = calc([c('本所必修', 3)], { masterProgram: '自訂', masterCustom: { totalCredits: 24 } });
         assert.equal(r.credits.own.earned, 3);
     });
+    test('seminarCreditsCount 開啟且專題討論為已抵免時，須同時計入抵免上限與專討次數', () => {
+        const PID_SEM = programs.find(p => p.versions[0].seminarCreditsCount).id;
+        app.ctx.__d = {
+            masterProgram: PID_SEM,
+            masterEntryYear: 114,
+            semesterOrder: ['一上'],
+            semesters: {
+                一上: [{ name: '專題討論(一)', type: '專題討論', credits: 1, status: '已抵免', score: null }]
+            }
+        };
+        const r = app.run('calculateMasterGraduation(__d)');
+        assert.equal(r.seminar.earned, 1);
+        assert.equal(r.credits.own.earned, 1);
+        assert.equal(r.credits.waived.earned, 1);
+        assert.equal(r.credits.waived.courses[0].name, '專題討論(一)');
+    });
 });
